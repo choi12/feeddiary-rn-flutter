@@ -2,7 +2,7 @@ import { formatAPIError } from '../formatAPIError';
 import request from '../request';
 import { APIResponse } from '../types';
 
-import { APIWriteDiaryParams, CreateDiaryResponse } from './types';
+import { APIWriteDiaryParams, CreateDiaryResponse, CreateDiaryResponseSchema } from './types';
 
 export const APICreateDiary = async ({ diaryFormData }: APIWriteDiaryParams): Promise<CreateDiaryResponse> => {
   const OPERATION_NAME = '일기 등록';
@@ -12,7 +12,7 @@ export const APICreateDiary = async ({ diaryFormData }: APIWriteDiaryParams): Pr
     });
     const responseData = response.data.resData!;
 
-    return responseData;
+    return CreateDiaryResponseSchema.parse(responseData);
   } catch (error) {
     throw formatAPIError(error, OPERATION_NAME);
   }

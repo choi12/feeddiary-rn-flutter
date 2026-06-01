@@ -40,7 +40,7 @@ request.interceptors.response.use(
       case API_CONFIG.STATUS.CONFLICT:
         return Promise.reject(new ConflictError(error));
       default:
-        return Promise.reject(new APIError(status, data.message ?? `[${status}] ${ERROR_MESSAGES.DEFAULT}`, error));
+        return Promise.reject(new APIError(status, data?.message ?? `[${status}] ${ERROR_MESSAGES.DEFAULT}`, error));
     }
   },
 );

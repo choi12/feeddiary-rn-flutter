@@ -4,7 +4,7 @@ import { formatAPIError } from '../formatAPIError';
 import request from '../request';
 import { APIResponse } from '../types';
 
-import { CompleteMissionRequest, CompleteMissionResponse } from './types';
+import { CompleteMissionRequest, CompleteMissionResponse, CompleteMissionResponseSchema } from './types';
 
 export interface APICompleteMissionParams {
   missionIdx: number;
@@ -21,7 +21,7 @@ export const APICompleteMission = async ({
     const response = await request.post<APIResponse<CompleteMissionResponse>>('/mission', requestData);
     const responseData = response.data.resData!;
 
-    return responseData;
+    return CompleteMissionResponseSchema.parse(responseData);
   } catch (error) {
     throw formatAPIError(error, OPERATION_NAME);
   }
