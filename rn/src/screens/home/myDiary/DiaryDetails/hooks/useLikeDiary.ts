@@ -1,3 +1,4 @@
+// 일기 좋아요 훅 — 좋아요 낙관적 토글과 좋아요 애니메이션 노출 제어
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useOptimistic, useState, useTransition } from 'react';
 

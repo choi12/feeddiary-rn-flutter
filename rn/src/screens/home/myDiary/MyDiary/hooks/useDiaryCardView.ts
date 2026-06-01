@@ -1,3 +1,4 @@
+// 내 일기 카드 뷰 훅 — 무한스크롤 일기 목록 페이징과 스크롤 상태 제공
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 

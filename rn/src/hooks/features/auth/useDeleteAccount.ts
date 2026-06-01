@@ -1,3 +1,4 @@
+// 회원 탈퇴 훅 — 확인 모달 후 탈퇴 API 호출과 인증 정리를 수행
 import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

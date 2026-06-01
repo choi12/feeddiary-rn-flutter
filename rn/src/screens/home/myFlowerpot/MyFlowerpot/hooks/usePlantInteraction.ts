@@ -1,3 +1,4 @@
+// 화분 상호작용 훅 — 물주기/사랑주기 mutation을 throttle로 처리하고 로티 애니메이션 트리거
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

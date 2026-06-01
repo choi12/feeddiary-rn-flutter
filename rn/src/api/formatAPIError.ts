@@ -1,3 +1,4 @@
+// API 호출 실패를 operation 정보를 덧붙여 재던지는 에러 포매팅 유틸
 import { API_CONFIG } from '@/constants';
 import { APIError } from '@/types/errors';
 import { getErrorMessage } from '@/utils/error/getErrorMessage';

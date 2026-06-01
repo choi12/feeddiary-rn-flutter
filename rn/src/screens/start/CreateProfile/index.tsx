@@ -1,3 +1,4 @@
+// 회원가입 프로필 작성 화면 — 닉네임·프로필 이미지 입력 후 가입 처리
 import React, { useRef } from 'react';
 import { ScrollView } from 'react-native';
 

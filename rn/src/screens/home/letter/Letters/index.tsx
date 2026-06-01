@@ -1,3 +1,4 @@
+// 편지함 화면 — 받은 편지 목록을 편집 모드/상세 모달과 함께 보여주는 메인 탭 화면
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import { StyleSheet, ImageBackground } from 'react-native';

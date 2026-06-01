@@ -1,3 +1,4 @@
+// 내 화분 화면 — 꽃 캔버스(물주기·사랑주기 성장)를 보여주는 메인 탭 화면
 import React from 'react';
 import { StatusBar } from 'react-native';
 

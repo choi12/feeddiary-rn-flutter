@@ -1,3 +1,4 @@
+// 댓글 작성 훅 — throttle로 중복 전송을 막으며 댓글 생성 mutation 처리
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

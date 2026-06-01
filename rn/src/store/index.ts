@@ -1,3 +1,4 @@
+// 도메인별 slice(modal·ui·user)를 결합한 전역 zustand store 진입점
 import { create } from 'zustand';
 
 import { createModalSlice } from './slices/modal/slice';

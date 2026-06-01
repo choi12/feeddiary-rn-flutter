@@ -1,3 +1,4 @@
+// 커뮤니티 일기 목록 훅 — 정렬별 무한스크롤 조회와 앱 포그라운드 복귀 시 재조회
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 import { AppState, AppStateStatus } from 'react-native';

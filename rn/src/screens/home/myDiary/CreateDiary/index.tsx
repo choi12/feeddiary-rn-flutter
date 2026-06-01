@@ -1,3 +1,4 @@
+// 일기 작성/수정 화면 — 스티커·본문·이미지·날짜 입력 후 등록 또는 수정
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 

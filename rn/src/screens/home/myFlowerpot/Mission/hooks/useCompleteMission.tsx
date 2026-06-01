@@ -1,3 +1,4 @@
+// 미션 완료 훅 — 미션 완료 mutation 후 보상 모달을 띄우고 홈으로 이동 처리
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback } from 'react';
 

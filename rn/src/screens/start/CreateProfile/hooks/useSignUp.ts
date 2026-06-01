@@ -1,3 +1,4 @@
+// 회원가입 오케스트레이션 훅 — 프로필 폼을 FormData로 전송·가입 후 토큰 저장 및 메인 진입
 import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

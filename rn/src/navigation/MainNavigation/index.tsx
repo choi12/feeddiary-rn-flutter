@@ -1,3 +1,4 @@
+// 앱 전체 네이티브 스택 네비게이터 — 인증·잠금·메인탭·상세 화면 라우트 등록
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 

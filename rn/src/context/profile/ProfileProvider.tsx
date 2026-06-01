@@ -1,3 +1,4 @@
+// 프로필 작성/수정 폼 상태(닉네임·배경·캐릭터·이미지)를 하위 화면에 공급하는 Context Provider
 import React, { PropsWithChildren, useMemo, useState } from 'react';
 
 import useCheckNickname from '@/hooks/features/profile/useCheckNickname';

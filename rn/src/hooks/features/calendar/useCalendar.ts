@@ -1,3 +1,4 @@
+// 달력 훅 — 기준 월을 [6주][7일] 2차원 배열로 변환(타 월 날짜는 null)
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 

@@ -1,3 +1,4 @@
+// 전역 모달 상태 slice — alert 모달·bottom sheet 열기/닫기 제어
 import { StateCreator } from 'zustand';
 
 import { ModalSlice } from './types';

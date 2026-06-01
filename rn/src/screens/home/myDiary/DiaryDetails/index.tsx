@@ -1,3 +1,4 @@
+// 일기 상세 화면 — 일기 내용·공개여부·작성자 액션과 이미지 모달을 표시
 import React from 'react';
 
 import SafeAreaContainer from '@/components/common/SafeAreaContainer';

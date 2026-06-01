@@ -1,3 +1,4 @@
+// 일기 작성/수정 훅 — 폼 상태·이미지 관리와 생성/수정 mutation, 성공 시 상세로 이동
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useCallback, useState } from 'react';

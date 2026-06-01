@@ -1,3 +1,4 @@
+// 메인 하단 탭 네비게이터 — 탭 화면 등록 + 잠금 가드·푸시 컨트롤러 래핑, 플랫폼별 탭바 높이 계산
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, { useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

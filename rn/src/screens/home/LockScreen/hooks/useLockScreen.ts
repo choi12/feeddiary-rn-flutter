@@ -1,3 +1,4 @@
+// 잠금 화면 훅 — 입력 비밀번호와 저장값 비교 후 잠금 해제(복귀/메인 진입) 처리
 import { useCallback, useEffect, useState } from 'react';
 import { BackHandler } from 'react-native';
 

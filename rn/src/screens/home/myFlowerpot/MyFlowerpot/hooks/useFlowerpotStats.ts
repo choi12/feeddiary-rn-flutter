@@ -1,3 +1,4 @@
+// 화분 통계 훅 — 화분 상태로부터 레벨·경험치·물주기/사랑 가능 여부 파생값 계산
 import { useMemo } from 'react';
 
 import { FLOWERPOT_CONFIG } from '@/constants';

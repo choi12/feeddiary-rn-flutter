@@ -1,3 +1,4 @@
+// Sentry 초기화 및 React Navigation 라우팅 계측 설정 (prod 빌드에서만 활성)
 import * as Sentry from '@sentry/react-native';
 import Config from 'react-native-config';
 

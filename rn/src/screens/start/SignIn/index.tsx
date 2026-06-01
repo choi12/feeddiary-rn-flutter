@@ -1,3 +1,4 @@
+// 로그인 화면 — 캐릭터 캔버스와 소셜 로그인 버튼을 배치하는 진입 화면
 import React from 'react';
 import { StyleSheet } from 'react-native';
 

@@ -1,3 +1,4 @@
+// 프로필 수정 화면 — 닉네임·프로필 이미지 변경과 회원 탈퇴 진입을 제공
 import React, { useRef } from 'react';
 import { ScrollView } from 'react-native';
 

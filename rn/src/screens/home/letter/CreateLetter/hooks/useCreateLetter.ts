@@ -1,3 +1,4 @@
+// 편지 작성 훅 — 편지 본문 전송 후 편지함으로 이동하고 완료 토스트 표시
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 

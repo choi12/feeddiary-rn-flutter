@@ -1,3 +1,4 @@
+// 앱 버전 조회 훅 — 버전 체크 결과를 조회하고 최신 여부 파생값 제공
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/constants';

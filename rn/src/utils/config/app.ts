@@ -1,3 +1,4 @@
+// 앱 시작 시 초기 설정 — 토큰 로드·스플래시 숨김·상태바·알림 권한 요청
 import { StatusBar } from 'react-native';
 import BootSplash from 'react-native-bootsplash';
 import { requestNotifications } from 'react-native-permissions';

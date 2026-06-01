@@ -1,3 +1,4 @@
+// 로그인 오케스트레이션 훅 — 구글/애플 OAuth·자동 로그인·토큰 저장 후 잠금/메인 진입 분기
 import appleAuth, { AppleRequestResponse, appleAuthAndroid } from '@invertase/react-native-apple-authentication';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 // Firebase Auth는 데모 트랙에서 제거. 원본은 GoogleSignin의 idToken으로 Firebase 인증 후 uid를 받는 구조.

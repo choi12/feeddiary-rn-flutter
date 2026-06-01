@@ -1,3 +1,4 @@
+// 잠금 화면 — 저장된 비밀번호를 입력받아 앱 잠금을 해제하는 화면
 import React from 'react';
 
 import Container from '@/components/common/Container';

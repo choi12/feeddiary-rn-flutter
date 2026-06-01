@@ -1,3 +1,4 @@
+// 일기 상세 액션 훅 — 공개 토글·수정 이동·삭제를 바텀시트/알림 모달로 구성
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback } from 'react';
 

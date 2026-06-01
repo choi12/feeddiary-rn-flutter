@@ -1,3 +1,4 @@
+// 잠금 설정 화면 — 비밀번호 잠금 사용 토글과 비밀번호 재설정 진입을 제공
 import React from 'react';
 import { Pressable, StyleSheet, Switch } from 'react-native';
 

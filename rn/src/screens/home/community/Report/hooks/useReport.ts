@@ -1,3 +1,4 @@
+// 신고 훅 — 신고 사유 전송 후 완료 모달 표시, 화면 포커스 시 입력창 자동 포커스
 import { useFocusEffect } from '@react-navigation/native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';

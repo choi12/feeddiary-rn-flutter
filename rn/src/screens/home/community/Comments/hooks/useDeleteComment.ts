@@ -1,3 +1,4 @@
+// 댓글 삭제 훅 — 낙관적 제거(실패 시 롤백)와 삭제 확인 모달 구성
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

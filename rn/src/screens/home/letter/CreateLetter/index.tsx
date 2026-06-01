@@ -1,3 +1,4 @@
+// 편지 작성 화면 — 편지 본문을 입력해 전송하는 화면
 import React from 'react';
 import { ImageBackground, StyleSheet } from 'react-native';
 

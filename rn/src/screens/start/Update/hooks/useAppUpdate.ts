@@ -1,3 +1,4 @@
+// 앱 버전 체크 훅 — 업데이트 필요 시 모달 안내, 아니면 자동 로그인으로 진행
 import { useCallback, useEffect } from 'react';
 import { Linking } from 'react-native';
 

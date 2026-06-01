@@ -1,3 +1,4 @@
+// 댓글 화면 — 특정 일기의 댓글 목록 표시와 댓글 작성 입력을 제공
 import React from 'react';
 import { StyleSheet } from 'react-native';
 

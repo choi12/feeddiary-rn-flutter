@@ -1,3 +1,4 @@
+// 화분 프리페치 훅 — 메인 진입 전 화분 데이터를 미리 캐시에 적재
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

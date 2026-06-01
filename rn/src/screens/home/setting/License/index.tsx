@@ -1,3 +1,4 @@
+// 오픈소스 라이선스 화면 — 사용 라이브러리 라이선스 목록을 나열
 import React from 'react';
 
 import CustomHeader from '@/components/common/CustomHeader';

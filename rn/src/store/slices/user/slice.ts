@@ -1,3 +1,4 @@
+// 로그인 사용자 정보 slice — 저장/삭제 시 Sentry user 컨텍스트 동기화
 import * as Sentry from '@sentry/react-native';
 import { StateCreator } from 'zustand';
 

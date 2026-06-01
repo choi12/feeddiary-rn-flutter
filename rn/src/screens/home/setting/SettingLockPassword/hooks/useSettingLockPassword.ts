@@ -1,3 +1,4 @@
+// 잠금 비밀번호 설정 훅 — 입력→확인 2단계 비밀번호 검증 후 저장·잠금 활성화
 import { useCallback, useEffect, useState } from 'react';
 
 import { MESSAGE, PASSWORD_LENGTH, TOAST_BOTTOM_OFFSET } from '@/constants';

@@ -1,3 +1,4 @@
+// 일기 상세 프리페치 훅 — 작성/수정 직후 상세 화면 데이터를 미리 캐시에 적재
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

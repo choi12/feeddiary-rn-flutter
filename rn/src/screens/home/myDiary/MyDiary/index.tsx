@@ -1,3 +1,4 @@
+// 내 일기 화면 — 달력/카드 탭 전환으로 내 일기 목록을 보여주는 메인 탭 화면
 import React, { useState } from 'react';
 
 import Container from '@/components/common/Container';

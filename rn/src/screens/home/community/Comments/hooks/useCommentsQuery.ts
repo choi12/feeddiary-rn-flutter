@@ -1,3 +1,4 @@
+// 댓글 목록 조회 훅 — 특정 일기의 댓글을 실시간 설정으로 조회
 import { useQuery } from '@tanstack/react-query';
 
 import { APIGetComments, APIGetCommentsParams } from '@/api/comment/APIGetComments';

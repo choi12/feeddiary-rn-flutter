@@ -1,3 +1,4 @@
+// 일기 상세 조회 훅 — 일기 쿼리·내 일기 판별·공개여부 낙관적 토글 제공
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useOptimistic, useTransition } from 'react';
 

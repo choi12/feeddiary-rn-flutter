@@ -1,3 +1,4 @@
+// 인증 정리 훅 — 로그아웃/탈퇴 시 구글 세션·토큰·스토리지·쿼리 캐시를 정리하고 로그인 화면으로 리셋
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';

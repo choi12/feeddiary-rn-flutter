@@ -1,3 +1,4 @@
+// 데모 모드(USE_MOCK) axios mock 어댑터 — 전체 API 엔드포인트를 가변 상태로 시뮬레이션
 import MockAdapter from 'axios-mock-adapter';
 import Config from 'react-native-config';
 

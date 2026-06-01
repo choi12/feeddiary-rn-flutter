@@ -1,3 +1,4 @@
+// 미션 프리페치 훅 — 미션 화면 진입 전 미션 목록을 미리 캐시에 적재
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

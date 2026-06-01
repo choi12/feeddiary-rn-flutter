@@ -1,3 +1,4 @@
+// 앱 버전 정보 화면 — 현재/최신 버전을 비교해 최신 여부를 안내
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Image as FastImage } from 'expo-image';

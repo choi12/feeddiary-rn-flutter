@@ -1,3 +1,4 @@
+// 커뮤니티 화면 — 공개된 일기 목록을 스크롤 헤더와 함께 보여주는 메인 탭 화면
 import React from 'react';
 
 import Container from '@/components/common/Container';

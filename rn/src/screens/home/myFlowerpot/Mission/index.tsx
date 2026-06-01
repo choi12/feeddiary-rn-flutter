@@ -1,3 +1,4 @@
+// 미션 화면 — 오늘의 미션 목록을 탭별로 표시, 이탈 시 화분 쿼리 무효화
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';

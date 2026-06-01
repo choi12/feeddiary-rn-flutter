@@ -1,3 +1,4 @@
+// 잠금 비밀번호 설정 화면 — 비밀번호 입력·확인 단계로 잠금 비밀번호를 등록
 import React from 'react';
 
 import Container from '@/components/common/Container';

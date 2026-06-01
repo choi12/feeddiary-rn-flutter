@@ -1,3 +1,4 @@
+// 로그아웃 훅 — 확인 모달 후 로그아웃 API 호출과 인증 정리를 수행
 import { useCallback } from 'react';
 
 import { APISignOut } from '@/api/auth/APISignOut';

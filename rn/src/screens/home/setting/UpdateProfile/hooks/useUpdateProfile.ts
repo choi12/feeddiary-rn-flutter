@@ -1,3 +1,4 @@
+// 프로필 수정 훅 — 변경 가능 여부 판별과 프로필 업데이트 후 사용자 정보 갱신
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 

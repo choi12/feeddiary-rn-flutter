@@ -1,3 +1,4 @@
+// 문의 이메일 발송 훅 — 사용자 정보를 담아 고객지원 메일 작성을 실행
 import { useState } from 'react';
 
 import { TOAST_BOTTOM_OFFSET } from '@/constants';

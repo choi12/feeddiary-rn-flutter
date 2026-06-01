@@ -1,3 +1,4 @@
+// 공용 axios 인스턴스 — 토큰 주입 요청 인터셉터 + 상태코드별 커스텀 에러 매핑 응답 인터셉터
 import axios, { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import Config from 'react-native-config';
 

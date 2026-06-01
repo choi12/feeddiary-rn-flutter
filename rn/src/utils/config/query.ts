@@ -1,3 +1,4 @@
+// React Query 기본 설정 및 데이터 성격별(독립/실시간) 쿼리 옵션 프리셋
 import { QueryClientConfig } from '@tanstack/react-query';
 
 // 기본 설정

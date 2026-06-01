@@ -1,3 +1,4 @@
+// 닉네임 검증 훅 — debounce 입력값에 대해 정규식·중복 검사 후 검증 상태 반환
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 

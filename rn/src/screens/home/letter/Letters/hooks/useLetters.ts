@@ -1,3 +1,4 @@
+// 편지 목록 훅 — 무한스크롤 편지 조회와 오늘 작성 여부·보유 여부 파생값 제공
 import { useInfiniteQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useCallback, useMemo } from 'react';

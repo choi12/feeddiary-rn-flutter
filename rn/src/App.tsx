@@ -1,3 +1,4 @@
+// 앱 루트 — 전역 Provider(SafeArea·Query·Navigation) 조립 및 mock/Sentry/초기설정 부트스트랩
 import { NavigationContainer } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

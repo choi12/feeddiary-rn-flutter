@@ -1,3 +1,4 @@
+// 미션 목록 훅 — 미션을 진행중/완료 탭으로 분류하고 탭 카운트·완료 처리 제공
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 

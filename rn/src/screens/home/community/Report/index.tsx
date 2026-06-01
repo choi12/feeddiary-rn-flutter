@@ -1,3 +1,4 @@
+// 신고/차단 화면 — 일기 신고 사유를 입력해 제출하는 화면
 import React from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 

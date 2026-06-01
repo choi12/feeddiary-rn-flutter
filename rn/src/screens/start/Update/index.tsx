@@ -1,3 +1,4 @@
+// 앱 최초 진입 화면 — 버전 체크/자동 로그인 분기를 수행하는 스플래시성 화면
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image as FastImage } from 'expo-image';
