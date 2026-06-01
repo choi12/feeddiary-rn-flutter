@@ -4,6 +4,32 @@ jest.mock('react-native-config', () => ({
   default: { USE_MOCK: 'false' },
 }));
 
+// reanimated v4의 공식 mock은 ESM이라 jest 변환 대상에서 제외됨 → 사용분만 경량 mock
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: { View, createAnimatedComponent: (component) => component },
+    View,
+    useSharedValue: (initial) => ({ value: initial }),
+    useAnimatedStyle: () => ({}),
+    withTiming: (value) => value,
+    withSpring: (value) => value,
+    Easing: { ease: () => {} },
+  };
+});
+
+jest.mock('react-native-safe-area-context', () => {
+  const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+  return {
+    __esModule: true,
+    SafeAreaProvider: ({ children }) => children,
+    SafeAreaView: ({ children }) => children,
+    useSafeAreaInsets: () => inset,
+    useSafeAreaFrame: () => ({ x: 0, y: 0, width: 390, height: 844 }),
+  };
+});
+
 jest.mock('@sentry/react-native', () => ({
   __esModule: true,
   init: jest.fn(),
