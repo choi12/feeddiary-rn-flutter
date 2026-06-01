@@ -7,11 +7,6 @@ import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { setupMockAdapter } from './api/mock';
-
-dayjs.extend(isSameOrBefore);
-
-setupMockAdapter();
-
 import DemoBanner from './components/common/DemoBanner';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import GlobalModals from './components/modal/GlobalModals';
@@ -22,6 +17,13 @@ import { initSentry, routingInstrumentation } from './utils/config/sentry';
 import { reportError } from './utils/error/reportError';
 import { navigationRef } from './utils/navigation/navigationRef';
 
+// dayjs 비교 플러그인 확장 (isSameOrBefore)
+dayjs.extend(isSameOrBefore);
+
+// mock 데모 모드(USE_MOCK=true)에서 axios 인스턴스에 mock 어댑터 부착
+setupMockAdapter();
+
+// Sentry 초기화 — enabled: !__DEV__ 이라 데모/dev 빌드에선 비활성(no-op)
 initSentry();
 
 const queryClient = new QueryClient(QUERY_CLIENT_CONFIG);
