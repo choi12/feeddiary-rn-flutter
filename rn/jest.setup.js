@@ -4,6 +4,17 @@ jest.mock('react-native-config', () => ({
   default: { USE_MOCK: 'false' },
 }));
 
+jest.mock('@sentry/react-native', () => ({
+  __esModule: true,
+  init: jest.fn(),
+  wrap: (component) => component,
+  setUser: jest.fn(),
+  captureException: jest.fn(),
+  reactNavigationIntegration: jest.fn(() => ({ registerNavigationContainer: jest.fn() })),
+  reactNativeTracingIntegration: jest.fn(),
+  reactNativeErrorHandlersIntegration: jest.fn(),
+}));
+
 jest.mock('react-native-keychain', () => {
   const store = new Map();
   return {
