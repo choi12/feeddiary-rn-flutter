@@ -1,0 +1,7 @@
+{
+  "APP_ENV": "DEVELOPMENT",
+  "USE_MOCK": true,
+  "API_SERVER": "https://mock.example.com",
+  "EMAIL_ADDRESS": "demo@example.com",
+  "SENTRY_DSN": ""
+}
