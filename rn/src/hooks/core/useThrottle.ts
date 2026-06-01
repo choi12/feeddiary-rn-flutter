@@ -1,6 +1,5 @@
 import { useCallback, useRef } from 'react';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFunction = (...args: any[]) => any;
 
 type UseThrottleReturn<T extends AnyFunction> = (...args: Parameters<T>) => ReturnType<T> | undefined;

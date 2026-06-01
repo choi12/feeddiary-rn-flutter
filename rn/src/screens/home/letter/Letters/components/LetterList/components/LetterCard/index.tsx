@@ -30,7 +30,7 @@ function LetterCard({ letter, letterIndex, editMode, onOpenLetterModal }: Letter
   const isEvenColumn = letterIndex % LETTER_NUM_COLUMNS === 0;
 
   return (
-    <View style={[styles.letterContainer, { marginTop: isEvenColumn ? 0 : 80 }]}>
+    <View style={[styles.letterContainer, !isEvenColumn && styles.oddColumnOffset]}>
       <Animated.View style={[isEvenColumn ? evenAnimatedStyle : oddAnimatedStyle]} entering={FadeIn} exiting={FadeOut}>
         <AnimatedPressable
           onPress={(event) => onOpenLetterModal(event, letter)}
@@ -56,6 +56,9 @@ const styles = StyleSheet.create({
   letterContainer: {
     width: '50%',
     alignItems: 'center',
+  },
+  oddColumnOffset: {
+    marginTop: 80,
   },
   letterBox: {
     width: LETTER_CARD_SIZE,

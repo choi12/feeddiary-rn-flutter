@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageBackground } from 'react-native';
+import { ImageBackground, StyleSheet } from 'react-native';
 
 import { LetterBoard } from '@/assets/images';
 import Container from '@/components/common/Container';
@@ -18,7 +18,7 @@ function CreateLetter() {
 
   return (
     <SafeAreaContainer edges={[]}>
-      <ImageBackground source={LetterBoard} style={{ flex: 1 }}>
+      <ImageBackground source={LetterBoard} style={styles.background}>
         <StatusBarBox backgroundColor={COLORS.TRANSPARENT.TRANSPARENT} />
         <CustomHeader title="편지 쓰기" font="ONGLE" hasCloseButton />
         <Container backgroundColor={COLORS.TRANSPARENT.TRANSPARENT} hasPadding>
@@ -35,5 +35,11 @@ function CreateLetter() {
     </SafeAreaContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
+});
 
 export default CreateLetter;

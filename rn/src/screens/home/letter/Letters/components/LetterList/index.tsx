@@ -28,7 +28,7 @@ function LetterList({ editMode, onOpenLetterModal }: LetterListProps) {
       data={letters}
       keyExtractor={(letter) => String(letter.idx)}
       renderItem={renderLetterCard}
-      contentContainerStyle={[styles.listContainer, letters.length === 0 && { paddingTop: 0, paddingBottom: 0 }]}
+      contentContainerStyle={[styles.listContainer, letters.length === 0 && styles.emptyListContainer]}
       numColumns={LETTER_NUM_COLUMNS}
       showsVerticalScrollIndicator={false}
       onEndReached={({ distanceFromEnd }) => {
@@ -49,6 +49,10 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingTop: 30,
     paddingBottom: 35 + LAYOUT.BOTTOM_TAB_HEIGHT,
+  },
+  emptyListContainer: {
+    paddingTop: 0,
+    paddingBottom: 0,
   },
 });
 

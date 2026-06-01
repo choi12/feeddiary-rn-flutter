@@ -40,10 +40,12 @@ function useReport() {
 
   const { mutateAsync: reportMutation, isPending } = useMutation({
     mutationFn: async (diaryIdx: number) => {
+      if (userIdx == null) return;
+
       const data: APIReportDiaryParams = {
         diaryIdx,
         text: text.trim(),
-        blockIdx: userIdx as number,
+        blockIdx: userIdx,
       };
       await APIReportDiary(data);
     },

@@ -15,6 +15,11 @@ import { TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
+const renderTabBarIcon =
+  (name: keyof TabParamList) =>
+  ({ focused }: { focused: boolean }) =>
+    <BottomTabIcon focused={focused} name={name} />;
+
 function BottomTabNavigation() {
   const { bottom: safeAreaBottomInset } = useSafeAreaInsets();
 
@@ -55,7 +60,7 @@ function BottomTabNavigation() {
                 name={name}
                 component={component}
                 options={{
-                  tabBarIcon: ({ focused }) => <BottomTabIcon focused={focused} name={name} />,
+                  tabBarIcon: renderTabBarIcon(name),
                   tabBarLabel: label,
                 }}
               />

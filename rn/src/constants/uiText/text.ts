@@ -37,6 +37,10 @@ export const TEXT = {
   COMMENT: {
     EMPTY: '첫 댓글을 작성해 주세요 :D',
   },
+  ERROR: {
+    RETRY: '다시 시도',
+    GO_BACK: '돌아가기',
+  },
   LETTER: {
     LETTER_EMPTY: '나에게 첫 편지를 보내 보세요 :D',
   },

@@ -15,7 +15,7 @@ function useTypedRoute<
     const route = useRoute<RouteProp<ParamList, RouteName>>();
 
     return route;
-  } catch (error) {
+  } catch {
     throw new Error('useTypedRoute must be used within a Navigation context');
   }
 }

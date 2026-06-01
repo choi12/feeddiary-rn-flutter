@@ -30,13 +30,13 @@ function CustomButton({ title, onPress, isAnimated, disabled, isLoading, ...prop
   );
 
   return (
-    <Animated.View style={[isAnimated ? animatedBoxStyle : styles.box]}>
+    <Animated.View style={isAnimated ? animatedBoxStyle : undefined}>
       <AnimatedPressable onPress={onPress} disabled={disabled || isLoading} {...props}>
         <View
           style={[
             styles.button,
             (disabled || isLoading) && { backgroundColor: COLORS.CORE.INPUT },
-            isAnimated && isKeyboardVisible && { borderRadius: 0 },
+            isAnimated && isKeyboardVisible && styles.buttonNoRadius,
           ]}
         >
           {isLoading ? (
@@ -51,7 +51,6 @@ function CustomButton({ title, onPress, isAnimated, disabled, isLoading, ...prop
 }
 
 const styles = StyleSheet.create({
-  box: {},
   button: {
     width: '100%',
     height: LAYOUT.BUTTON_HEIGHT,
@@ -59,6 +58,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.CORE.MAIN,
+  },
+  buttonNoRadius: {
+    borderRadius: 0,
   },
   text: {
     color: COLORS.GRAYSCALE.WHITE,

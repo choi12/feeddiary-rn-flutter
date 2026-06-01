@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { COLORS } from '@/constants';
 
 interface LineProps {
-  margin: number;
+  margin?: number;
 }
 
 function Line({ margin = 40 }: LineProps) {

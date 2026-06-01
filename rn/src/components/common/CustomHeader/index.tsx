@@ -28,7 +28,7 @@ function CustomHeader({
   return (
     <View
       {...props}
-      style={[styles.container, { backgroundColor }, hasCloseButton && { borderBottomWidth: 0 }, props.style]}
+      style={[styles.container, { backgroundColor }, hasCloseButton && styles.noBorderBottom, props.style]}
     >
       {hasBackButton && (
         <View style={styles.leftBox}>
@@ -54,6 +54,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderColor: COLORS.GRAYSCALE.WHITE_GRAY,
+  },
+  noBorderBottom: {
+    borderBottomWidth: 0,
   },
   leftBox: {
     position: 'absolute',

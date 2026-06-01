@@ -50,20 +50,6 @@ const styles = StyleSheet.create({
     color: COLORS.GRAYSCALE.BLACK,
     width: 55,
   },
-  notiBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    marginLeft: 55,
-  },
-  notiIcon: {
-    width: 13,
-    height: 13,
-  },
-  notiText: {
-    fontSize: 12,
-    marginLeft: 5,
-  },
 });
 
 export default NicknameSection;

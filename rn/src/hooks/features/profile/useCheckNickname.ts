@@ -5,11 +5,10 @@ import { APICheckNickname, APICheckNicknameParams } from '@/api/auth/APICheckNic
 import { NICKNAME_REGEX, TOAST_BOTTOM_OFFSET } from '@/constants';
 import useDebounce from '@/hooks/core/useDebounce';
 import useUserInfo from '@/hooks/store/useUserInfo';
+import useErrorToast from '@/hooks/ui/feedback/useErrorToast';
 import { ConflictError } from '@/types/errors';
 import { NicknameValidationStatus } from '@/types/profile';
 import { convertToLowercase } from '@/utils/common/convertCase';
-
-import useErrorToast from '../../ui/feedback/useErrorToast';
 
 function useCheckNickname() {
   const userNickname = useUserInfo('nickname');

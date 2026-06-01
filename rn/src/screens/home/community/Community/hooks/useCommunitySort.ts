@@ -8,8 +8,8 @@ function useCommunitySort() {
   const { closeBottomSheetModal } = useBottomSheetModal();
 
   const handleSetSortType = useCallback(
-    (sort: CommunitySort) => {
-      setSort(sort);
+    (nextSort: CommunitySort) => {
+      setSort(nextSort);
       closeBottomSheetModal();
     },
     [closeBottomSheetModal],

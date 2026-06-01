@@ -6,8 +6,6 @@ import type { MissionResponse, MissionsResponse, CompleteMissionResponse } from 
 import type { UserResponse } from '@/api/auth/types';
 import type { FlowerpotResponse } from '@/api/flowerpot/types';
 
-const NOW = '2026-05-27T10:00:00.000Z';
-
 export const MOCK_USER: UserResponse = {
   idx: 1,
   account: 'demo@example.com',

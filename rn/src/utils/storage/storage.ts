@@ -20,7 +20,7 @@ const parseStorageValue = <T>(value: string | undefined): T | null => {
       return parsed as T;
     }
     return value as T;
-  } catch (error) {
+  } catch {
     return value as T;
   }
 };
