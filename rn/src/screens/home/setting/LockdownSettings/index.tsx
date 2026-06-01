@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
     color: COLORS.GRAYSCALE.LIGHT_GRAY,
   },
   switch: {
-    transform: [{ scale: isAndroid ? 1 : 0.8 }],
+    alignSelf: 'center',
+    transform: [{ scale: isAndroid ? 1 : 0.6 }],
   },
 });
 
