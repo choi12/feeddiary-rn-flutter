@@ -1,0 +1,6 @@
+export const FLOWERPOT_CONFIG = {
+  MAX_LEVEL: 3,
+  DEFAULT_LEVEL: 1,
+  DEFAULT_EXP: 0,
+  DEFAULT_MAX_EXP: 1000,
+} as const;
