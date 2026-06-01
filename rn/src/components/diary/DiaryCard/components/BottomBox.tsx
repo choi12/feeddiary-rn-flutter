@@ -1,19 +1,19 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { CommunityDiaryDTO } from '@/api/community/types';
-import { MyDiaryDTO } from '@/api/diary/types';
 import { MAX_DISPLAY_COUNT, OVERFLOW_COUNT_TEXT } from '@/constants';
 
 import { useDiaryCardContext } from '../context/DiaryCardContext';
 
 import CountBox from './CountBox';
 
-type BottomBoxDiary = MyDiaryDTO | CommunityDiaryDTO;
-
 function BottomBox() {
   const { diary } = useDiaryCardContext();
-  const { likeCount, commentCount } = diary as BottomBoxDiary;
+
+  // 좋아요·댓글 카운트는 MyDiary·Community 일기에만 존재(DailyDiary 제외)
+  if (!('likeCount' in diary)) return null;
+
+  const { likeCount, commentCount } = diary;
 
   return (
     <View style={styles.bottomBox}>
