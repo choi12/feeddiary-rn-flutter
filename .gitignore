@@ -1,0 +1,39 @@
+# secrets
+.env
+.env.*
+!.env.example
+!env/.env.example
+!env/.env.development
+**/google-services.json
+**/GoogleService-Info.plist
+
+# rn
+rn/node_modules/
+rn/.expo/
+rn/android/app/build/
+rn/ios/Pods/
+
+# flutter
+flutter/build/
+flutter/.dart_tool/
+flutter/.flutter-plugins*
+
+# docs (작업용 — 공개 안 함)
+docs/
+
+# 문서 파일 — 완성본만 `git add -f` 로 명시적 commit
+*.md
+*.txt
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+
+# tooling cache
+**/.eslintcache
+**/.claude/
+
+# misc
+.DS_Store
+*.log
