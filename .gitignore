@@ -17,6 +17,9 @@ rn/ios/Pods/
 flutter/build/
 flutter/.dart_tool/
 flutter/.flutter-plugins*
+# 로컬 개발 툴링 (Flutter/Dart 에이전트 스킬 + 잠금) — .claude/ 처럼 공개 repo에서 제외
+flutter/.agents/
+flutter/skills-lock.json
 
 # docs (작업용 — 공개 안 함)
 docs/
