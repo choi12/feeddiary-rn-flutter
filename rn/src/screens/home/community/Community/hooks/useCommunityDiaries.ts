@@ -24,7 +24,6 @@ function useCommunityDiaries() {
     ...REALTIME_QUERY_CONFIG,
     queryKey: [QUERY_KEYS.COMMUNITY_DIARIES, sort],
     queryFn: ({ pageParam = 0 }) => {
-      console.log('communityDiariesData, pageParam', pageParam);
       const params: APIGetCommunityDiariesParams = {
         skip: pageParam,
         sortType: sort,

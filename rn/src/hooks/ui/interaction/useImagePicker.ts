@@ -22,10 +22,6 @@ function useImagePicker() {
     launchImageLibrary(options, (response) => {
       if (response.didCancel) return;
       if (response.errorCode) {
-        console.error('image selection failed: ', {
-          code: response.errorCode,
-          message: response.errorMessage,
-        });
         handleErrorWithToast(response.errorMessage, LAYOUT.BUTTON_HEIGHT + LAYOUT.PADDING + safeAreaBottomInset);
         return;
       }
@@ -37,7 +33,6 @@ function useImagePicker() {
         name: selected.fileName ?? 'image.jpg',
         type: selected.type ?? '',
       };
-      console.log('selected image', covert);
 
       return setSelectedImage(covert);
     });

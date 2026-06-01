@@ -24,7 +24,6 @@ function useDiaryCardView(): CardListProps {
     ...INDEPENDENT_QUERY_CONFIG,
     queryKey: [QUERY_KEYS.DIARIES],
     queryFn: ({ pageParam = 0 }) => {
-      console.log('pageParam', pageParam);
       const params: APIGetDiariesParams = {
         skip: pageParam,
       };
@@ -36,7 +35,7 @@ function useDiaryCardView(): CardListProps {
   });
 
   const diaries: MyDiaryDTO[] = useMemo(() => {
-    return (diaryData?.pages ? diaryData?.pages.flat() : []) as MyDiaryDTO[];
+    return diaryData?.pages ? diaryData.pages.flat() : [];
   }, [diaryData]);
 
   const handleFetchNextPage = useCallback(() => {

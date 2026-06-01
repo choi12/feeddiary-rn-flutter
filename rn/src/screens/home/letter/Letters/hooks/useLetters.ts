@@ -20,7 +20,6 @@ function useLetters() {
     ...INDEPENDENT_QUERY_CONFIG,
     queryKey: [QUERY_KEYS.LETTERS],
     queryFn: ({ pageParam = 0 }) => {
-      console.log('pageParam', pageParam);
       const params: APIGetLettersParams = {
         skip: pageParam,
       };
