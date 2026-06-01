@@ -19,7 +19,7 @@ function useDeleteAccount() {
   const { showToast } = useToast();
   const handleErrorWithToast = useErrorToast();
 
-  const { mutateAsync: deleteAccountMutation, isPending } = useMutation({
+  const { mutateAsync: deleteAccountMutation } = useMutation({
     mutationFn: APIDeleteAccount,
   });
 
@@ -54,11 +54,11 @@ function useDeleteAccount() {
       message: MODAL_CONTENT.ACCOUNT.DELETE_CONFIRM,
       buttons: [
         { text: MODAL_BUTTON.COMMON.CLOSE, onPress: closeAlertModal, style: 'cancel' },
-        { text: MODAL_BUTTON.ACCOUNT.DELETE, onPress: handleDeleteAccount, style: 'default', isLoading: isPending },
+        { text: MODAL_BUTTON.ACCOUNT.DELETE, onPress: handleDeleteAccount, style: 'default' },
       ],
     };
     openAlertModal(modalContent);
-  }, [openAlertModal, closeAlertModal, handleDeleteAccount, isPending]);
+  }, [openAlertModal, closeAlertModal, handleDeleteAccount]);
 
   return { openDeleteAccountModal };
 }
