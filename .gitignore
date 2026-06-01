@@ -17,6 +17,8 @@ rn/ios/Pods/
 flutter/build/
 flutter/.dart_tool/
 flutter/.flutter-plugins*
+# env 설정 — prod(실서버 값)는 제외, dev/example(mock·키없음)은 추적 (RN env/ 정책과 동일)
+flutter/config/prod.json
 # 로컬 개발 툴링 (Flutter/Dart 에이전트 스킬 + 잠금) — .claude/ 처럼 공개 repo에서 제외
 flutter/.agents/
 flutter/skills-lock.json
