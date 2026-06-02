@@ -1,6 +1,10 @@
 // 잠금 설정 화면 — 비밀번호 잠금 토글 + 비밀번호 재설정. RN screens/home/setting/LockdownSettings.
 import 'package:feeddiary/data/services/lock_storage.dart';
 import 'package:feeddiary/routing/routes.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +37,7 @@ class _LockdownSettingsScreenState extends ConsumerState<LockdownSettingsScreen>
   }
 
   void _toast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    showFeedToast(context, message);
   }
 
   Future<void> _toggle(bool value) async {
@@ -63,13 +67,14 @@ class _LockdownSettingsScreenState extends ConsumerState<LockdownSettingsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(SettingStrings.lockTitle)),
+      backgroundColor: FeedPalette.white,
+      appBar: const FeedHeader(title: SettingStrings.lockTitle, hasBackButton: true),
       body: ListView(
         children: [
           SwitchListTile(title: const Text(SettingStrings.lockUseSwitch), value: _useLock, onChanged: _toggle),
           ListTile(
             title: const Text(SettingStrings.lockResetPassword),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: const Icon(FeedIcons.menuChevron, size: 20, color: FeedPalette.lightGray),
             enabled: _hasPassword,
             onTap: _resetPassword,
           ),

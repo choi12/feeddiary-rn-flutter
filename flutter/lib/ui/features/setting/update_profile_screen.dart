@@ -2,6 +2,11 @@
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
+import 'package:feeddiary/ui/core/widgets/feed_button.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_text_field.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:feeddiary/ui/features/setting/update_profile_controller.dart';
 import 'package:feeddiary/ui/features/setting/widgets/nickname_noti.dart';
@@ -42,26 +47,24 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
     try {
       await _controller.submit();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(SettingStrings.profileUpdated)));
+      showFeedToast(context, SettingStrings.profileUpdated);
       context.pop();
     } on AppException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+      showFeedToast(context, e.displayMessage);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _confirmDeleteAccount() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showFeedAlert<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        content: const Text(SettingStrings.deleteAccountConfirm),
-        actions: [
-          TextButton(onPressed: () => context.pop(false), child: const Text(SettingStrings.cancel)),
-          TextButton(onPressed: () => context.pop(true), child: const Text(SettingStrings.deleteAccount)),
-        ],
-      ),
+      message: SettingStrings.deleteAccountConfirm,
+      actions: [
+        FeedAlertAction(text: SettingStrings.cancel, isCancel: true, onPressed: () => Navigator.of(context).pop(false)),
+        FeedAlertAction(text: SettingStrings.deleteAccount, onPressed: () => Navigator.of(context).pop(true)),
+      ],
     );
     if (confirmed != true) return;
     try {
@@ -69,7 +72,7 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
       await _controller.deleteAccount();
     } on AppException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+      showFeedToast(context, e.displayMessage);
     }
   }
 
@@ -77,14 +80,14 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(updateProfileControllerProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(SettingStrings.updateProfileTitle),
-        actions: [
-          TextButton(
-            onPressed: _confirmDeleteAccount,
-            child: const Text(SettingStrings.deleteAccount, style: TextStyle(color: FeedPalette.orange)),
-          ),
-        ],
+      backgroundColor: FeedPalette.white,
+      appBar: FeedHeader(
+        title: SettingStrings.updateProfileTitle,
+        hasBackButton: true,
+        rightItem: TextButton(
+          onPressed: _confirmDeleteAccount,
+          child: const Text(SettingStrings.deleteAccount, style: TextStyle(color: FeedPalette.orange)),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppDimens.padding),
@@ -101,26 +104,18 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
           const SizedBox(height: 24),
           const Text(SettingStrings.nicknameLabel, style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          TextField(
+          FeedTextField(
             controller: _nicknameController,
             maxLength: 8,
             onChanged: _controller.setNickname,
-            decoration: const InputDecoration(hintText: '닉네임을 입력해 주세요', counterText: ''),
+            hintText: '닉네임을 입력해 주세요',
           ),
           NicknameNoti(status: state.nicknameStatus),
         ],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(AppDimens.padding),
-        child: SizedBox(
-          height: AppDimens.buttonHeight,
-          child: FilledButton(
-            onPressed: state.canSubmit && !_saving ? _save : null,
-            child: _saving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text(SettingStrings.save),
-          ),
-        ),
+        child: FeedButton(title: SettingStrings.save, onPressed: _save, disabled: !state.canSubmit, isLoading: _saving),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:feeddiary/config/app_info.dart';
 import 'package:feeddiary/data/repositories/app_version_repository.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,8 @@ class AppVersionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final latest = ref.watch(latestAppVersionProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text(SettingStrings.appVersionTitle)),
+      backgroundColor: FeedPalette.white,
+      appBar: const FeedHeader(title: SettingStrings.appVersionTitle, hasBackButton: true),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
