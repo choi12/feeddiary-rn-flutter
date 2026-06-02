@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:feeddiary/config/api_config.dart';
+import 'package:feeddiary/config/app_info.dart';
 import 'package:feeddiary/config/flowerpot_config.dart';
 
 /// USE_MOCK 데모 모드에서 Dio 의 [HttpClientAdapter]를 대체해 엔드포인트를 mock 한다.
@@ -55,6 +56,9 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 물/사랑 1회당 경험치 증가량(데모 게임 루프용).
   static const int _expPerAction = 250;
 
+  /// 인메모리 데모 사용자(회원가입/프로필 수정으로 갱신 — 세션 동안 유지). RN mock user stateful.
+  late final Map<String, dynamic> _user = _demoUser();
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -81,6 +85,25 @@ class DemoApiAdapter implements HttpClientAdapter {
     if (segments.isNotEmpty && segments.first == 'mission') {
       return _handleMission(options, segments);
     }
+    if (segments.isNotEmpty && segments.first == 'user') {
+      return _handleUser(options, segments);
+    }
+    if (segments.isNotEmpty && segments.first == 'etc') {
+      return _handleEtc(options, segments);
+    }
+    return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
+  }
+
+  // --- etc (앱 버전) ---
+
+  ResponseBody _handleEtc(RequestOptions options, List<String> segments) {
+    if (segments.length == 2 && segments[1] == 'app-version' && options.method.toUpperCase() == 'GET') {
+      // 현재 버전과 동일 값 반환 → AppVersion 화면이 "최신 버전" 정상 분기를 보여 준다.
+      return _json(200, {
+        'status': 'success',
+        'resData': {'app_version_android': AppInfo.version, 'app_version_ios': AppInfo.version},
+      });
+    }
     return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
   }
 
@@ -91,9 +114,16 @@ class DemoApiAdapter implements HttpClientAdapter {
       case '/auth/sign-in':
         return _json(401, {'status': 'failed', 'message': '신규 사용자'});
       case '/auth/sign-in-auto/v2':
-        return _json(200, {'status': 'success', 'resData': _demoUser()});
+        return _json(200, {
+          'status': 'success',
+          'resData': {..._user},
+        });
       case '/auth/sign-up':
-        return _json(200, {'status': 'success', 'resData': _demoUser(form: options.data)});
+        _applyUserForm(options.data);
+        return _json(200, {
+          'status': 'success',
+          'resData': {..._user},
+        });
       case '/auth/check-nickname':
         return _checkNickname(options.data);
       case '/auth/sign-out':
@@ -110,29 +140,62 @@ class DemoApiAdapter implements HttpClientAdapter {
     return _json(200, {'status': 'success'});
   }
 
-  /// 데모 사용자(snake_case). 회원가입이면 폼의 닉네임/캐릭터를 echo 한다.
-  Map<String, dynamic> _demoUser({Object? form}) {
-    var nickname = '새싹이';
-    var character = 'Chick';
-    if (form is FormData) {
-      for (final field in form.fields) {
-        if (field.key == 'nickname' && field.value.isNotEmpty) nickname = field.value;
-        if (field.key == 'character' && field.value.isNotEmpty) character = field.value;
-      }
-    }
+  /// 데모 사용자 시드(snake_case). 회원가입/프로필 수정으로 [_user]가 갱신된다.
+  Map<String, dynamic> _demoUser() {
     return {
       'idx': 1,
       'account': 'demo@example.com',
       'user_id': 'mock_user_id',
-      'nickname': nickname,
+      'nickname': '새싹이',
       'image': '',
       'background': '',
-      'character': character,
+      'character': 'Chick',
       'type': 'google',
       'created_time': '2026-01-01T00:00:00.000Z',
       'token': _demoToken,
       'fcm_token': '',
     };
+  }
+
+  /// 멀티파트 폼의 텍스트 필드를 [_user]에 머지한다(회원가입/프로필 수정 공용). 빈 값은 기존 값을 유지한다.
+  /// 사진(image)은 [MultipartFile]이라 data.files 에 있어 여기서 무시한다 — 데모는 이미지 호스팅이 없어
+  /// 클라이언트가 세션 로컬 아바타(LocalAvatar)로 표시한다(RN 데모와 동일한 mock 경계 한계).
+  void _applyUserForm(Object? data) {
+    if (data is! FormData) return;
+    for (final field in data.fields) {
+      if (field.value.isEmpty) continue;
+      switch (field.key) {
+        case 'nickname':
+          _user['nickname'] = field.value;
+        case 'character':
+          _user['character'] = field.value;
+        case 'background':
+          _user['background'] = field.value;
+        case 'account':
+          _user['account'] = field.value;
+        case 'type':
+          _user['type'] = field.value;
+      }
+    }
+  }
+
+  // --- user (설정: 프로필 수정/탈퇴) ---
+
+  ResponseBody _handleUser(RequestOptions options, List<String> segments) {
+    final method = options.method.toUpperCase();
+    if (segments.length == 1) {
+      if (method == 'PUT') {
+        _applyUserForm(options.data);
+        return _json(200, {
+          'status': 'success',
+          'resData': {..._user},
+        });
+      }
+      if (method == 'DELETE') {
+        return _json(200, {'status': 'success', 'resData': 'ok'});
+      }
+    }
+    return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
   }
 
   // --- diary (PR④) ---
