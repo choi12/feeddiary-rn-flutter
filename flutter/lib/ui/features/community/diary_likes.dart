@@ -1,5 +1,7 @@
 // 좋아요 글로벌 동기화 — idx별 좋아요 override 를 한곳에 모아 목록↔상세를 단일 소스로 묶는다. RN useLikeDiary+invalidateQueries.likeDiary 의 글로벌 Provider 승격.
 import 'package:feeddiary/data/repositories/diary_repository.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/mission_controller.dart';
 import 'package:feeddiary/utils/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -31,6 +33,9 @@ class DiaryLikes extends _$DiaryLikes {
     try {
       final result = await ref.read(diaryRepositoryProvider).likeDiary(diaryIdx: idx);
       state = {...state, idx: (isLike: result.isLike, likeCount: result.likeCount)};
+      // 좋아요는 미션 진행(좋아요 미션)·화분을 교차 무효화한다(RN likeDiary → MISSION_GROUP).
+      ref.invalidate(missionsControllerProvider);
+      ref.invalidate(flowerpotControllerProvider);
     } catch (error, stackTrace) {
       AppLogger.error('좋아요 실패', error: error, stackTrace: stackTrace);
       state = {...state, idx: current};

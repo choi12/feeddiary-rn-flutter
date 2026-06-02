@@ -2,6 +2,8 @@
 import 'package:feeddiary/data/models/comment.dart';
 import 'package:feeddiary/data/repositories/community_repository.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/mission_controller.dart';
 import 'package:feeddiary/utils/cache_policy.dart';
 import 'package:feeddiary/utils/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -28,6 +30,9 @@ class CommentsController extends _$CommentsController {
     final repository = ref.read(communityRepositoryProvider);
     await repository.createComment(diaryIdx: diaryIdx, text: trimmed);
     ref.invalidate(diaryDetailControllerProvider(diaryIdx));
+    // 댓글 작성은 미션 진행(댓글 미션)·화분을 교차 무효화한다(RN createComment → MISSION_GROUP).
+    ref.invalidate(missionsControllerProvider);
+    ref.invalidate(flowerpotControllerProvider);
     state = await AsyncValue.guard(() => repository.getComments(diaryIdx: diaryIdx));
   }
 
