@@ -4,6 +4,7 @@ import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/features/community/community_screen.dart';
 import 'package:feeddiary/ui/features/diary/my_diary_screen.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,8 +18,8 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  // RN 초기 탭은 화분이지만, 데모가 실화면(일기)에 착지하도록 PR④에서는 일기(index 1)로 시작한다.
-  int _index = 1;
+  // RN 초기 탭은 화분(index 0). PR⑥에서 화분이 실화면이 되어 RN 과 동일하게 화분으로 시작한다.
+  int _index = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       body: IndexedStack(
         index: _index,
         children: const [
-          _PlaceholderTab(icon: Icons.local_florist_outlined, label: '나의 화분'),
+          FlowerpotScreen(),
           MyDiaryScreen(),
           CommunityScreen(),
           _PlaceholderTab(icon: Icons.mail_outline, label: '나의 편지'),
