@@ -46,7 +46,7 @@ final class AuthControllerProvider extends $NotifierProvider<AuthController, Aut
   }
 }
 
-String _$authControllerHash() => r'4d2c9a717b0856fdd51c3e2552886d4f6062d9ba';
+String _$authControllerHash() => r'ed595bc930f009e03f94ec7eb4a3b5b0a3b9bd42';
 
 /// 인증 흐름을 조율하는 컨트롤러. RN `useSignIn`/`useSignUp`/`useSignOut` 의 오케스트레이션을
 /// 하나의 Riverpod Notifier 로 모은다. [build]는 [AuthStatus.unknown]을 반환하고, 실제 세션 복원은

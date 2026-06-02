@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>프로필 사진을 선택하기 위해 사진 보관함 접근이 필요해요.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>프로필 사진을 촬영하기 위해 카메라 접근이 필요해요.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

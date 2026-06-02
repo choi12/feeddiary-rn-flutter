@@ -8,17 +8,17 @@ part of 'create_profile_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증한다.
-/// RN `useCheckNickname`(debounce + 정규식 + 중복검사) + `ProfileProvider`(캐릭터 선택)를 합친 ViewModel.
+/// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증하고,
+/// 프로필 이미지(사진 업로드/캐릭터 프리셋)를 고른 뒤 가입한다. RN `useCheckNickname` + `ProfileProvider` + `useSignUp` ViewModel.
 
 @ProviderFor(CreateProfileController)
 final createProfileControllerProvider = CreateProfileControllerProvider._();
 
-/// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증한다.
-/// RN `useCheckNickname`(debounce + 정규식 + 중복검사) + `ProfileProvider`(캐릭터 선택)를 합친 ViewModel.
+/// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증하고,
+/// 프로필 이미지(사진 업로드/캐릭터 프리셋)를 고른 뒤 가입한다. RN `useCheckNickname` + `ProfileProvider` + `useSignUp` ViewModel.
 final class CreateProfileControllerProvider extends $NotifierProvider<CreateProfileController, CreateProfileState> {
-  /// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증한다.
-  /// RN `useCheckNickname`(debounce + 정규식 + 중복검사) + `ProfileProvider`(캐릭터 선택)를 합친 ViewModel.
+  /// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증하고,
+  /// 프로필 이미지(사진 업로드/캐릭터 프리셋)를 고른 뒤 가입한다. RN `useCheckNickname` + `ProfileProvider` + `useSignUp` ViewModel.
   CreateProfileControllerProvider._()
     : super(
         from: null,
@@ -43,10 +43,10 @@ final class CreateProfileControllerProvider extends $NotifierProvider<CreateProf
   }
 }
 
-String _$createProfileControllerHash() => r'7f96a53a6b3b3a11b4fd8235dc0e76159cfb3a5b';
+String _$createProfileControllerHash() => r'314cf29fe60a5a84281370f96b672c5692136a23';
 
-/// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증한다.
-/// RN `useCheckNickname`(debounce + 정규식 + 중복검사) + `ProfileProvider`(캐릭터 선택)를 합친 ViewModel.
+/// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증하고,
+/// 프로필 이미지(사진 업로드/캐릭터 프리셋)를 고른 뒤 가입한다. RN `useCheckNickname` + `ProfileProvider` + `useSignUp` ViewModel.
 
 abstract class _$CreateProfileController extends $Notifier<CreateProfileState> {
   CreateProfileState build();

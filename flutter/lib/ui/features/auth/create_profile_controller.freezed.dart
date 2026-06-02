@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CreateProfileState {
 
- String get nickname; NicknameStatus? get nicknameStatus; String? get character;
+ String get nickname; NicknameStatus? get nicknameStatus; String? get character; String get background; ProfileImageType? get imageType; Uint8List? get imageBytes;
 /// Create a copy of CreateProfileState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $CreateProfileStateCopyWith<CreateProfileState> get copyWith => _$CreateProfileS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateProfileState&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.nicknameStatus, nicknameStatus) || other.nicknameStatus == nicknameStatus)&&(identical(other.character, character) || other.character == character));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateProfileState&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.nicknameStatus, nicknameStatus) || other.nicknameStatus == nicknameStatus)&&(identical(other.character, character) || other.character == character)&&(identical(other.background, background) || other.background == background)&&(identical(other.imageType, imageType) || other.imageType == imageType)&&const DeepCollectionEquality().equals(other.imageBytes, imageBytes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,nickname,nicknameStatus,character);
+int get hashCode => Object.hash(runtimeType,nickname,nicknameStatus,character,background,imageType,const DeepCollectionEquality().hash(imageBytes));
 
 @override
 String toString() {
-  return 'CreateProfileState(nickname: $nickname, nicknameStatus: $nicknameStatus, character: $character)';
+  return 'CreateProfileState(nickname: $nickname, nicknameStatus: $nicknameStatus, character: $character, background: $background, imageType: $imageType, imageBytes: $imageBytes)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $CreateProfileStateCopyWith<$Res>  {
   factory $CreateProfileStateCopyWith(CreateProfileState value, $Res Function(CreateProfileState) _then) = _$CreateProfileStateCopyWithImpl;
 @useResult
 $Res call({
- String nickname, NicknameStatus? nicknameStatus, String? character
+ String nickname, NicknameStatus? nicknameStatus, String? character, String background, ProfileImageType? imageType, Uint8List? imageBytes
 });
 
 
@@ -62,12 +62,15 @@ class _$CreateProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of CreateProfileState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? nickname = null,Object? nicknameStatus = freezed,Object? character = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? nickname = null,Object? nicknameStatus = freezed,Object? character = freezed,Object? background = null,Object? imageType = freezed,Object? imageBytes = freezed,}) {
   return _then(_self.copyWith(
 nickname: null == nickname ? _self.nickname : nickname // ignore: cast_nullable_to_non_nullable
 as String,nicknameStatus: freezed == nicknameStatus ? _self.nicknameStatus : nicknameStatus // ignore: cast_nullable_to_non_nullable
 as NicknameStatus?,character: freezed == character ? _self.character : character // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,background: null == background ? _self.background : background // ignore: cast_nullable_to_non_nullable
+as String,imageType: freezed == imageType ? _self.imageType : imageType // ignore: cast_nullable_to_non_nullable
+as ProfileImageType?,imageBytes: freezed == imageBytes ? _self.imageBytes : imageBytes // ignore: cast_nullable_to_non_nullable
+as Uint8List?,
   ));
 }
 
@@ -152,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nickname,  NicknameStatus? nicknameStatus,  String? character)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nickname,  NicknameStatus? nicknameStatus,  String? character,  String background,  ProfileImageType? imageType,  Uint8List? imageBytes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateProfileState() when $default != null:
-return $default(_that.nickname,_that.nicknameStatus,_that.character);case _:
+return $default(_that.nickname,_that.nicknameStatus,_that.character,_that.background,_that.imageType,_that.imageBytes);case _:
   return orElse();
 
 }
@@ -173,10 +176,10 @@ return $default(_that.nickname,_that.nicknameStatus,_that.character);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nickname,  NicknameStatus? nicknameStatus,  String? character)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nickname,  NicknameStatus? nicknameStatus,  String? character,  String background,  ProfileImageType? imageType,  Uint8List? imageBytes)  $default,) {final _that = this;
 switch (_that) {
 case _CreateProfileState():
-return $default(_that.nickname,_that.nicknameStatus,_that.character);case _:
+return $default(_that.nickname,_that.nicknameStatus,_that.character,_that.background,_that.imageType,_that.imageBytes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -193,10 +196,10 @@ return $default(_that.nickname,_that.nicknameStatus,_that.character);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nickname,  NicknameStatus? nicknameStatus,  String? character)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nickname,  NicknameStatus? nicknameStatus,  String? character,  String background,  ProfileImageType? imageType,  Uint8List? imageBytes)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateProfileState() when $default != null:
-return $default(_that.nickname,_that.nicknameStatus,_that.character);case _:
+return $default(_that.nickname,_that.nicknameStatus,_that.character,_that.background,_that.imageType,_that.imageBytes);case _:
   return null;
 
 }
@@ -208,12 +211,15 @@ return $default(_that.nickname,_that.nicknameStatus,_that.character);case _:
 
 
 class _CreateProfileState extends CreateProfileState {
-  const _CreateProfileState({this.nickname = '', this.nicknameStatus, this.character}): super._();
+  const _CreateProfileState({this.nickname = '', this.nicknameStatus, this.character, this.background = '', this.imageType, this.imageBytes}): super._();
   
 
 @override@JsonKey() final  String nickname;
 @override final  NicknameStatus? nicknameStatus;
 @override final  String? character;
+@override@JsonKey() final  String background;
+@override final  ProfileImageType? imageType;
+@override final  Uint8List? imageBytes;
 
 /// Create a copy of CreateProfileState
 /// with the given fields replaced by the non-null parameter values.
@@ -225,16 +231,16 @@ _$CreateProfileStateCopyWith<_CreateProfileState> get copyWith => __$CreateProfi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateProfileState&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.nicknameStatus, nicknameStatus) || other.nicknameStatus == nicknameStatus)&&(identical(other.character, character) || other.character == character));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateProfileState&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.nicknameStatus, nicknameStatus) || other.nicknameStatus == nicknameStatus)&&(identical(other.character, character) || other.character == character)&&(identical(other.background, background) || other.background == background)&&(identical(other.imageType, imageType) || other.imageType == imageType)&&const DeepCollectionEquality().equals(other.imageBytes, imageBytes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,nickname,nicknameStatus,character);
+int get hashCode => Object.hash(runtimeType,nickname,nicknameStatus,character,background,imageType,const DeepCollectionEquality().hash(imageBytes));
 
 @override
 String toString() {
-  return 'CreateProfileState(nickname: $nickname, nicknameStatus: $nicknameStatus, character: $character)';
+  return 'CreateProfileState(nickname: $nickname, nicknameStatus: $nicknameStatus, character: $character, background: $background, imageType: $imageType, imageBytes: $imageBytes)';
 }
 
 
@@ -245,7 +251,7 @@ abstract mixin class _$CreateProfileStateCopyWith<$Res> implements $CreateProfil
   factory _$CreateProfileStateCopyWith(_CreateProfileState value, $Res Function(_CreateProfileState) _then) = __$CreateProfileStateCopyWithImpl;
 @override @useResult
 $Res call({
- String nickname, NicknameStatus? nicknameStatus, String? character
+ String nickname, NicknameStatus? nicknameStatus, String? character, String background, ProfileImageType? imageType, Uint8List? imageBytes
 });
 
 
@@ -262,12 +268,15 @@ class __$CreateProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of CreateProfileState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? nickname = null,Object? nicknameStatus = freezed,Object? character = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? nickname = null,Object? nicknameStatus = freezed,Object? character = freezed,Object? background = null,Object? imageType = freezed,Object? imageBytes = freezed,}) {
   return _then(_CreateProfileState(
 nickname: null == nickname ? _self.nickname : nickname // ignore: cast_nullable_to_non_nullable
 as String,nicknameStatus: freezed == nicknameStatus ? _self.nicknameStatus : nicknameStatus // ignore: cast_nullable_to_non_nullable
 as NicknameStatus?,character: freezed == character ? _self.character : character // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,background: null == background ? _self.background : background // ignore: cast_nullable_to_non_nullable
+as String,imageType: freezed == imageType ? _self.imageType : imageType // ignore: cast_nullable_to_non_nullable
+as ProfileImageType?,imageBytes: freezed == imageBytes ? _self.imageBytes : imageBytes // ignore: cast_nullable_to_non_nullable
+as Uint8List?,
   ));
 }
 

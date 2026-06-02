@@ -43,6 +43,8 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   shared_preferences: ^2.5.5
   lottie: ^3.3.1
+  image_picker: ^1.1.0
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
@@ -76,6 +78,8 @@ flutter:
     - assets/images/sticker/
     - assets/images/letter/
     - assets/images/home/
+    - assets/images/character/
+    - assets/images/signin/
     - assets/lottie/
 
   # 폰트 — RN assets/fonts 이식. Dovemayo_gothic=본문/UI 기본(단일 weight), Ownglyph=손글씨 강조.

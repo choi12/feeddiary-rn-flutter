@@ -22,4 +22,9 @@ abstract final class AppAssets {
   // Lottie(물/사랑 피드백). RN assets/lottie.
   static const String lottieRain = '$_lottie/rain.json';
   static const String lottieHeart = '$_lottie/heart.json';
+
+  // 로그인/계정(앱 버전 로고·설정 계정 박스 소셜 로고). RN assets/images/signIn.
+  static const String logo = '$_img/signin/logo.png';
+  static const String appleIcon = '$_img/signin/apple.png';
+  static const String googleIcon = '$_img/signin/google.png';
 }

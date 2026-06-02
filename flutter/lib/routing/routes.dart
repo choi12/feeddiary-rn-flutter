@@ -27,4 +27,16 @@ abstract final class Routes {
 
   /// 편지 작성(편지함에서 push). 파라미터 없음.
   static const String letterWrite = '/letter/write';
+
+  /// 프로필 수정(설정에서 push). 파라미터 없음.
+  static const String settingProfile = '/settings/profile';
+
+  /// 앱 버전 정보(설정에서 push). 파라미터 없음.
+  static const String settingAppVersion = '/settings/app-version';
+
+  /// 잠금 설정(설정에서 push). 파라미터 없음.
+  static const String settingLockdown = '/settings/lockdown';
+
+  /// 잠금 비밀번호 설정(잠금 설정에서 push). 파라미터 없음.
+  static const String settingLockPassword = '/settings/lockdown/password';
 }

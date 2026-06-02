@@ -1,4 +1,6 @@
 // 인증 저장소 — 로그인/자동로그인/회원가입/닉네임검사/로그아웃. RN api/auth/APIxxx 1:1 (core Dio+guardApiCall 위).
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:feeddiary/data/models/api_response.dart';
 import 'package:feeddiary/data/models/user.dart';
@@ -45,10 +47,10 @@ class AuthRepository {
     required String email,
     required SignInType type,
     required String nickname,
-    required String image,
     required String background,
     required String character,
     required String fcmToken,
+    Uint8List? imageBytes,
   }) {
     return guardApiCall('회원가입', () async {
       final form = FormData.fromMap({
@@ -56,7 +58,7 @@ class AuthRepository {
         'account': email,
         'user_id': userId,
         'nickname': nickname,
-        'image': image,
+        'image': imageBytes != null ? MultipartFile.fromBytes(imageBytes, filename: 'profile.jpg') : '',
         'background': background,
         'character': character,
         'fcm_token': fcmToken,
