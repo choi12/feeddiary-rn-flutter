@@ -1,6 +1,10 @@
 // 댓글 화면 — 특정 일기의 댓글 목록 + 작성 입력. RN screens/home/community/Comments 대응(별도 화면 push).
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_text_field.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/community/comments_controller.dart';
 import 'package:feeddiary/ui/features/community/widgets/comment_card.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
@@ -17,9 +21,10 @@ class CommentsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final comments = ref.watch(commentsControllerProvider(diaryIdx));
+    final title = comments.maybeWhen(data: (list) => '댓글 (${list.length})', orElse: () => '댓글');
     return Scaffold(
-      backgroundColor: context.colors.background,
-      appBar: AppBar(title: const Text('댓글')),
+      backgroundColor: FeedPalette.background,
+      appBar: FeedHeader(title: title, hasCloseButton: true, backgroundColor: FeedPalette.background),
       body: Column(
         children: [
           Expanded(
@@ -60,10 +65,26 @@ class _CommentInput extends ConsumerStatefulWidget {
 class _CommentInputState extends ConsumerState<_CommentInput> {
   final TextEditingController _controller = TextEditingController();
   bool _sending = false;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    final hasText = _controller.text.trim().isNotEmpty;
+    if (hasText != _hasText) {
+      setState(() => _hasText = hasText);
+    }
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller
+      ..removeListener(_onTextChanged)
+      ..dispose();
     super.dispose();
   }
 
@@ -77,9 +98,7 @@ class _CommentInputState extends ConsumerState<_CommentInput> {
       await ref.read(commentsControllerProvider(widget.diaryIdx).notifier).create(text);
       _controller.clear();
     } on AppException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
-      }
+      if (mounted) showFeedToast(context, e.displayMessage);
     } finally {
       if (mounted) {
         setState(() => _sending = false);
@@ -90,36 +109,63 @@ class _CommentInputState extends ConsumerState<_CommentInput> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        border: Border(top: BorderSide(color: context.colors.outline, width: 0.5)),
+      padding: const EdgeInsets.all(10),
+      decoration: const BoxDecoration(
+        color: FeedPalette.white,
+        border: Border(top: BorderSide(color: FeedPalette.whiteGray)),
       ),
       child: SafeArea(
         top: false,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: TextField(
+              child: FeedTextField(
                 controller: _controller,
                 minLines: 1,
                 maxLines: 3,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _submit(),
-                decoration: InputDecoration(
-                  hintText: '댓글을 입력해 주세요.',
-                  filled: true,
-                  fillColor: context.colors.inputBackground,
-                  border: const OutlineInputBorder(borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
+                hintText: '댓글을 입력해 주세요.',
               ),
             ),
-            IconButton(
-              onPressed: _sending ? null : _submit,
-              icon: Icon(Icons.send, color: context.colors.primary),
-            ),
+            const SizedBox(width: 8),
+            _SendButton(enabled: _hasText && !_sending, sending: _sending, onTap: _submit),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 댓글 등록 버튼 — MAIN 정사각 버튼·종이비행기. 빈 입력/전송 중에는 INPUT 회색. RN `CreateCommentButton` 대응.
+class _SendButton extends StatelessWidget {
+  const _SendButton({required this.enabled, required this.sending, required this.onTap});
+
+  final bool enabled;
+  final bool sending;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 52,
+      height: 52,
+      child: Material(
+        color: enabled ? FeedPalette.main : FeedPalette.input,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(14),
+          child: Center(
+            child: sending
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: FeedPalette.white),
+                  )
+                : const Icon(FeedIcons.send, size: 20, color: FeedPalette.white),
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 // 미션/보상 표시 매핑 — 미션 종류별 제목·설명·아이콘, 보상 아이템별 라벨·아이콘. RN Mission/data(MISSION_PRESET·REWARD_PRESET) 대응.
 import 'package:feeddiary/domain/models/mission_type.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:flutter/material.dart';
 
 /// 미션 종류별 화면 표시 정보. RN `MISSION_PRESET`(TEXT.MISSION).
@@ -18,11 +19,12 @@ extension MissionTypePresentation on MissionType {
     MissionType.like => '다른 유저의 일기에 좋아요를 눌러 보세요.',
   };
 
+  // RN MISSION_PRESET 아이콘(FA5 book·Ionicons eye·MCI comment-processing·Ionicons heart)과 동일 글리프.
   IconData get icon => switch (this) {
-    MissionType.diary => Icons.menu_book,
-    MissionType.visible => Icons.visibility,
-    MissionType.comment => Icons.chat_bubble,
-    MissionType.like => Icons.favorite,
+    MissionType.diary => FeedIcons.tabDiary,
+    MissionType.visible => FeedIcons.visibleOn,
+    MissionType.comment => FeedIcons.comment,
+    MissionType.like => FeedIcons.like,
   };
 }
 

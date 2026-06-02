@@ -1,19 +1,21 @@
-// 로그인 화면 — 구글/애플 소셜 로그인 진입. RN screens/start/SignIn 대응(OAuth 데모 우회).
+// 로그인 화면 — FIELD_GREEN 배경·캐릭터 캔버스(로고/해/물뿌리개/레모니)·소셜 로그인 버튼. RN screens/start/SignIn 대응.
 import 'dart:async';
 
+import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/domain/models/sign_in_type.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/routing/routes.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// 소셜 로그인 진입 화면. 버튼 탭 → [AuthController.signIn] → 신규 사용자면 CreateProfile 로 분기,
-/// 기존 사용자면 redirect 가 home 으로 이동시킨다.
+/// 기존 사용자면 redirect 가 home 으로 이동시킨다. RN `SignIn`(CharacterCanvas + ButtonBox) 1:1.
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
 
@@ -33,9 +35,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       }
       // 성공(null)이면 인증 상태 전환으로 redirect 가 home 으로 이동.
     } on AppException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
-      }
+      if (mounted) showFeedToast(context, e.displayMessage);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -48,38 +48,88 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final order = isIOS ? const [SignInType.apple, SignInType.google] : const [SignInType.google, SignInType.apple];
 
     return Scaffold(
+      backgroundColor: FeedPalette.fieldGreen,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.padding),
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.eco, size: 88, color: context.colors.primary),
-                      const SizedBox(height: 20),
-                      Text('새싹일기', style: Theme.of(context).textTheme.headlineMedium),
-                      const SizedBox(height: 8),
-                      Text('하루 한 줄, 마음을 심어요', style: TextStyle(color: context.colors.textSecondary)),
-                    ],
-                  ),
-                ),
-              ),
-              for (final type in order) ...[
-                _SocialButton(type: type, onPressed: _loading ? null : () => _signIn(type)),
-                const SizedBox(height: 10),
-              ],
-            ],
-          ),
+        top: false,
+        child: Column(
+          children: [
+            const Expanded(flex: 14, child: _CharacterCanvas()),
+            Expanded(
+              flex: 10,
+              child: _ButtonBox(order: order, onSignIn: _loading ? null : _signIn),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// 소셜 로그인 버튼. RN SignInButton + data.ts(색상/라벨) 대응.
+/// 상단 캐릭터 캔버스 — 로고·해·물뿌리개·레모니 캐릭터를 배치한다. RN `CharacterCanvas`(absolute 배치) 대응.
+class _CharacterCanvas extends StatelessWidget {
+  const _CharacterCanvas();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: 40,
+          left: 0,
+          right: 0,
+          child: Center(child: Image.asset(AppAssets.logo, height: 50, fit: BoxFit.contain)),
+        ),
+        Positioned(left: 20, bottom: 130, child: Image.asset(AppAssets.signInSun, width: 70, height: 70)),
+        Positioned(
+          right: 15,
+          bottom: 140,
+          child: Image.asset(AppAssets.signInWatering, height: 120, fit: BoxFit.contain),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: -20,
+          child: Center(child: Image.asset(AppAssets.signInLemony, height: 180, fit: BoxFit.contain)),
+        ),
+      ],
+    );
+  }
+}
+
+/// 하단 버튼 영역 — 잔디밭 배경 위에 소셜 로그인 버튼을 세로로 쌓는다. RN `ButtonBox`(Field 배경 + buttonWrapper) 대응.
+class _ButtonBox extends StatelessWidget {
+  const _ButtonBox({required this.order, required this.onSignIn});
+
+  final List<SignInType> order;
+  final ValueChanged<SignInType>? onSignIn;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(child: Image.asset(AppAssets.signInField, fit: BoxFit.fill)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final type in order) ...[
+                  _SocialButton(type: type, onPressed: onSignIn == null ? null : () => onSignIn!(type)),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 소셜 로그인 버튼. RN SignInButton + ButtonContent(google=흰 배경·검정 글자 / apple=검정 배경·흰 글자) 1:1.
 class _SocialButton extends StatelessWidget {
   const _SocialButton({required this.type, required this.onPressed});
 
@@ -89,25 +139,34 @@ class _SocialButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isApple = type == SignInType.apple;
-    final background = isApple ? FeedPalette.darkBlack : context.colors.surface;
-    final foreground = isApple ? FeedPalette.white : context.colors.textPrimary;
+    final background = isApple ? FeedPalette.darkBlack : FeedPalette.white;
+    final foreground = isApple ? FeedPalette.white : FeedPalette.black;
     final label = isApple ? 'Sign in with Apple' : 'Sign in with Google';
-    final icon = isApple ? Icons.apple : Icons.account_circle;
+    final iconAsset = isApple ? AppAssets.appleIcon : AppAssets.googleIcon;
 
     return SizedBox(
       width: double.infinity,
       height: AppDimens.buttonHeight,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: background,
-          foregroundColor: foreground,
-          elevation: 0,
-          side: isApple ? null : BorderSide(color: context.colors.outline),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.borderRadius)),
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(AppDimens.borderRadius),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(AppDimens.borderRadius),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(right: 10, bottom: isApple ? 5 : 0),
+                child: Image.asset(iconAsset, width: 21, height: 22, fit: BoxFit.contain),
+              ),
+              Text(
+                label,
+                style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 16, color: foreground),
+              ),
+            ],
+          ),
         ),
-        icon: Icon(icon, size: 22),
-        label: Text(label, style: const TextStyle(fontSize: 16)),
       ),
     );
   }

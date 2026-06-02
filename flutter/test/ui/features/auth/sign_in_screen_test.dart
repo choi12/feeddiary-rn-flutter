@@ -16,6 +16,7 @@ void main() {
 
     expect(find.text('Sign in with Google'), findsOneWidget);
     expect(find.text('Sign in with Apple'), findsOneWidget);
-    expect(find.text('새싹일기'), findsOneWidget);
+    // 브랜드는 로고 이미지 + 캐릭터 캔버스로 표현된다(RN CharacterCanvas).
+    expect(find.byType(Image), findsWidgets);
   });
 }

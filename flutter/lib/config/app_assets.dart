@@ -27,4 +27,10 @@ abstract final class AppAssets {
   static const String logo = '$_img/signin/logo.png';
   static const String appleIcon = '$_img/signin/apple.png';
   static const String googleIcon = '$_img/signin/google.png';
+
+  // 로그인 화면 캐릭터 캔버스(잔디밭·레모니·해·물뿌리개). RN assets/images/signIn.
+  static const String signInField = '$_img/signin/field.png';
+  static const String signInLemony = '$_img/signin/lemony_main.png';
+  static const String signInSun = '$_img/signin/sun.png';
+  static const String signInWatering = '$_img/signin/watering.png';
 }

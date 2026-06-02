@@ -3,8 +3,15 @@ import 'package:feeddiary/data/models/community_diary.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/routing/routes.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
+import 'package:feeddiary/ui/core/widgets/feed_bottom_sheet.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/community/diary_likes.dart';
 import 'package:feeddiary/ui/features/community/report_dialog.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
@@ -16,7 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 일기 상세. 작성자 본인이면 AppBar 의 더보기로 공개/수정/삭제 액션을 연다.
+/// 일기 상세. 작성자 본인이면 헤더의 더보기(점 3개)로 공개/수정/삭제 액션 시트를 연다. RN `DiaryDetails` 1:1.
 class DiaryDetailScreen extends ConsumerWidget {
   const DiaryDetailScreen({required this.diaryIdx, super.key});
 
@@ -30,16 +37,17 @@ class DiaryDetailScreen extends ConsumerWidget {
     final isMine = diary != null && diary.nickname == myNickname;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('일기'),
-        actions: [
-          if (isMine)
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              tooltip: '더보기',
-              onPressed: () => _openActions(context, ref, diary),
-            ),
-        ],
+      backgroundColor: FeedPalette.white,
+      appBar: FeedHeader(
+        title: diary == null ? '일기' : (isMine ? '나의 일기' : diary.nickname),
+        hasBackButton: true,
+        rightItem: isMine
+            ? InkResponse(
+                onTap: () => _openActions(context, ref, diary),
+                radius: 24,
+                child: const Icon(FeedIcons.more, size: 18, color: FeedPalette.lightBlack),
+              )
+            : null,
       ),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -54,85 +62,60 @@ class DiaryDetailScreen extends ConsumerWidget {
     );
   }
 
+  /// 작성자 액션 시트 — 공개 토글·수정·삭제. RN `useDiaryActions.handleOpenDiaryActionModal`.
   void _openActions(BuildContext context, WidgetRef ref, CommunityDiary diary) {
-    showModalBottomSheet<void>(
+    showFeedSheet(
       context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(diary.isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-              title: Text(diary.isVisible ? '비공개로 전환' : '공개로 전환'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                unawaitedToggleVisibility(context, ref, diary);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('수정'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                context.push(Routes.diaryWrite, extra: diary.toMyDiary());
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.delete_outline, color: context.colors.error),
-              title: Text('삭제', style: TextStyle(color: context.colors.error)),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                unawaitedConfirmDelete(context, ref, diary.idx);
-              },
-            ),
-          ],
+      items: [
+        FeedSheetItem(
+          title: diary.isVisible ? '비공개로 전환하기' : '공개로 전환하기',
+          icon: diary.isVisible ? FeedIcons.visibleOff : FeedIcons.visibleOn,
+          color: diary.isVisible ? FeedPalette.darkGray : FeedPalette.main,
+          onPressed: () => _toggleVisibility(context, ref, diary),
         ),
-      ),
+        FeedSheetItem(
+          title: '수정',
+          color: FeedPalette.lightBlack,
+          onPressed: () => context.push(Routes.diaryWrite, extra: diary.toMyDiary()),
+        ),
+        FeedSheetItem(title: '삭제', color: FeedPalette.orange, onPressed: () => _confirmDelete(context, ref, diary.idx)),
+      ],
     );
   }
 
-  // 시트 콜백(VoidCallback)에서 비동기 작업을 시작만 하고 결과 처리는 내부에서 한다.
-  void unawaitedToggleVisibility(BuildContext context, WidgetRef ref, CommunityDiary diary) {
+  void _toggleVisibility(BuildContext context, WidgetRef ref, CommunityDiary diary) {
     () async {
       try {
         await ref.read(diaryDetailControllerProvider(diary.idx).notifier).toggleVisibility();
         if (context.mounted) {
-          final message = diary.isVisible ? '비공개로 전환했어요.' : '공개로 전환했어요.';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          // 토글 후 새 상태 기준 안내. RN MESSAGE.DIARY.PUBLISHED/UNPUBLISHED.
+          showFeedToast(context, diary.isVisible ? '일기가 비공개로 설정되었어요.' : '일기가 공개되었어요.');
         }
       } on AppException catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
-        }
+        if (context.mounted) showFeedToast(context, e.displayMessage);
       }
     }();
   }
 
-  void unawaitedConfirmDelete(BuildContext context, WidgetRef ref, int idx) {
+  void _confirmDelete(BuildContext context, WidgetRef ref, int idx) {
     () async {
-      final confirmed = await showDialog<bool>(
+      final confirmed = await showFeedAlert<bool>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          content: const Text('이 일기를 삭제할까요?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('닫기')),
-            TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('삭제')),
-          ],
-        ),
+        message: '일기를 삭제하시겠어요?',
+        actions: [
+          FeedAlertAction(text: '닫기', isCancel: true, onPressed: () => Navigator.of(context).pop(false)),
+          FeedAlertAction(text: '삭제하기', onPressed: () => Navigator.of(context).pop(true)),
+        ],
       );
-      if (confirmed != true) {
-        return;
-      }
+      if (confirmed != true) return;
       try {
         await ref.read(diaryDetailControllerProvider(idx).notifier).delete();
         if (context.mounted) {
           context.pop();
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('일기를 삭제했어요.')));
+          showFeedToast(context, '일기가 삭제되었어요.');
         }
       } on AppException catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
-        }
+        if (context.mounted) showFeedToast(context, e.displayMessage);
       }
     }();
   }
@@ -156,7 +139,15 @@ class _Content extends StatelessWidget {
           const SizedBox(height: 28),
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(diary.text, style: TextStyle(color: context.colors.textPrimary, fontSize: 15, height: 1.7)),
+            child: Text(
+              diary.text,
+              style: const TextStyle(
+                fontFamily: FeedFonts.ownglyph,
+                color: FeedPalette.lightBlack,
+                fontSize: 17,
+                height: 22 / 17,
+              ),
+            ),
           ),
         ],
       ),
@@ -172,7 +163,7 @@ class _BottomBar extends ConsumerWidget {
 
   Future<void> _like(BuildContext context, WidgetRef ref, LikeState like) async {
     if (isMine) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('내 일기에는 좋아요를 누를 수 없어요.')));
+      showFeedToast(context, '다른 사람의 일기에만 좋아요를 할 수 있어요.');
       return;
     }
     try {
@@ -180,9 +171,7 @@ class _BottomBar extends ConsumerWidget {
           .read(diaryLikesProvider.notifier)
           .toggle(idx: diary.idx, baseIsLike: like.isLike, baseLikeCount: like.likeCount);
     } on AppException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
-      }
+      if (context.mounted) showFeedToast(context, e.displayMessage);
     }
   }
 
@@ -192,36 +181,80 @@ class _BottomBar extends ConsumerWidget {
     final override = ref.watch(diaryLikesProvider.select((likes) => likes[diary.idx]));
     final like = override ?? (isLike: diary.isLike, likeCount: diary.likeCount);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding, vertical: 12),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        border: Border(top: BorderSide(color: context.colors.outline, width: 0.5)),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding, vertical: 15),
+      decoration: const BoxDecoration(
+        color: FeedPalette.white,
+        border: Border(top: BorderSide(color: FeedPalette.whiteGray)),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            onPressed: () => _like(context, ref, like),
-            icon: Icon(
-              like.isLike ? Icons.favorite : Icons.favorite_border,
-              color: like.isLike ? context.colors.error : context.colors.textSecondary,
-            ),
+          Row(
+            children: [
+              _CountAction(
+                icon: FeedIcons.like,
+                iconColor: isMine ? FeedPalette.lightGray : (like.isLike ? FeedPalette.main : FeedPalette.lightGray),
+                count: like.likeCount,
+                onTap: () => _like(context, ref, like),
+              ),
+              const SizedBox(width: 20),
+              _CountAction(
+                icon: FeedIcons.comment,
+                iconColor: FeedPalette.lightGray,
+                count: diary.commentCount,
+                onTap: () => context.push(Routes.diaryCommentsPath(diary.idx), extra: diary.nickname),
+              ),
+            ],
           ),
-          Text('${like.likeCount}', style: TextStyle(color: context.colors.textSecondary)),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: () => context.push(Routes.diaryCommentsPath(diary.idx), extra: diary.nickname),
-            icon: Icon(Icons.chat_bubble_outline, size: 20, color: context.colors.textSecondary),
-            label: Text('${diary.commentCount}', style: TextStyle(color: context.colors.textSecondary)),
-          ),
-          const Spacer(),
           if (isMine)
             VisibilityBadge(isVisible: diary.isVisible)
           else
-            IconButton(
-              tooltip: '신고/차단',
-              onPressed: () => showReportDialog(context, ref, diaryIdx: diary.idx),
-              icon: Icon(Icons.flag_outlined, color: context.colors.textSecondary),
+            InkResponse(
+              onTap: () => showReportDialog(context, ref, diaryIdx: diary.idx),
+              radius: 24,
+              child: const Padding(
+                padding: EdgeInsets.all(5),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(FeedIcons.report, size: 14, color: FeedPalette.red),
+                    SizedBox(width: 2),
+                    Text(
+                      '신고/차단',
+                      style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.red),
+                    ),
+                  ],
+                ),
+              ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 좋아요/댓글 카운트 액션 — 아이콘 + 개수. RN LikeButton/CommentButton 의 countBox 대응.
+class _CountAction extends StatelessWidget {
+  const _CountAction({required this.icon, required this.iconColor, required this.count, required this.onTap});
+
+  final IconData icon;
+  final Color iconColor;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkResponse(
+      onTap: onTap,
+      radius: 24,
+      child: Row(
+        children: [
+          Icon(icon, size: 25, color: iconColor),
+          const SizedBox(width: 6),
+          Text(
+            '$count',
+            style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 16, color: FeedPalette.black),
+          ),
         ],
       ),
     );

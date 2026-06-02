@@ -1,12 +1,13 @@
 // 프로필 이미지 편집기(공유) — 사진/캐릭터 토글·캐릭터 그리드·배경 스와치·image_picker. RN components/profile/ProfileImageSection 1:1, 가입/수정 공용.
 import 'dart:typed_data';
 
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/widgets/feed_bottom_sheet.dart';
 import 'package:feeddiary/ui/features/setting/character_catalog.dart';
 import 'package:feeddiary/ui/features/setting/profile_image_type.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// 프로필 이미지 입력 영역. 사진(갤러리/카메라 업로드)과 캐릭터(36 프리셋 + 배경색)를 토글로 전환한다.
@@ -58,28 +59,17 @@ class ProfileImageEditor extends StatelessWidget {
     return Color(value);
   }
 
-  Future<void> _pickPhoto(BuildContext context) async {
-    final source = await showModalBottomSheet<ImageSource>(
+  void _pickPhoto(BuildContext context) {
+    showFeedSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('갤러리에서 선택'),
-              onTap: () => context.pop(ImageSource.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('카메라로 촬영'),
-              onTap: () => context.pop(ImageSource.camera),
-            ),
-          ],
-        ),
-      ),
+      items: [
+        FeedSheetItem(title: '갤러리에서 선택', onPressed: () => _pickFrom(ImageSource.gallery)),
+        FeedSheetItem(title: '카메라로 촬영', onPressed: () => _pickFrom(ImageSource.camera)),
+      ],
     );
-    if (source == null) return;
+  }
+
+  Future<void> _pickFrom(ImageSource source) async {
     final file = await ImagePicker().pickImage(source: source, imageQuality: 70);
     if (file == null) return;
     final bytes = await file.readAsBytes();
@@ -113,7 +103,7 @@ class ProfileImageEditor extends StatelessWidget {
         if (_usePhoto)
           OutlinedButton.icon(
             onPressed: () => _pickPhoto(context),
-            icon: const Icon(Icons.image_outlined),
+            icon: const Icon(FeedIcons.addPhoto),
             label: const Text(SettingStrings.pickPhoto),
           )
         else ...[
@@ -160,7 +150,7 @@ class _Avatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Icon(Icons.question_mark, color: context.colors.textSecondary),
+      child: Icon(FeedIcons.question, color: context.colors.textSecondary),
     );
   }
 }

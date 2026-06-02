@@ -3,7 +3,10 @@ import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/domain/models/mission_type.dart';
 import 'package:feeddiary/routing/routes.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_stats.dart';
@@ -41,7 +44,7 @@ class _FlowerpotScreenState extends ConsumerState<FlowerpotScreen> {
       }
     } on AppException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+        showFeedToast(context, e.displayMessage);
       }
     }
   }
@@ -51,16 +54,17 @@ class _FlowerpotScreenState extends ConsumerState<FlowerpotScreen> {
     final async = ref.watch(flowerpotControllerProvider);
     return Scaffold(
       backgroundColor: context.colors.background,
-      appBar: AppBar(
-        title: const Text('나의 화분'),
-        actions: [
-          IconButton(
-            tooltip: '오늘의 미션',
-            onPressed: () => context.push(Routes.mission),
-            // 받을 보상이 있으면 배지(미션→화분 단서). RN SidePanel MissionButton showBadge.
-            icon: Badge(isLabelVisible: async.value?.showBadge ?? false, child: const Icon(Icons.assignment_outlined)),
+      appBar: FeedHeader(
+        title: '나의 화분',
+        // 받을 보상이 있으면 배지(미션→화분 단서). RN SidePanel MissionButton showBadge.
+        rightItem: InkResponse(
+          onTap: () => context.push(Routes.mission),
+          radius: 24,
+          child: Badge(
+            isLabelVisible: async.value?.showBadge ?? false,
+            child: const Icon(Icons.assignment_outlined, color: FeedPalette.black),
           ),
-        ],
+        ),
       ),
       body: async.when(
         skipLoadingOnReload: true,

@@ -1,8 +1,11 @@
 // 오늘의 미션 화면 — 진행중/완료 탭 + 미션 목록 + 완료(보상 모달·완료 시 화분 무효화). RN Mission 대응(결정②).
 import 'package:feeddiary/data/models/mission.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_controller.dart';
@@ -45,7 +48,7 @@ class _MissionScreenState extends ConsumerState<MissionScreen> {
       }
     } on AppException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+        showFeedToast(context, e.displayMessage);
       }
     } finally {
       if (mounted) {
@@ -58,8 +61,8 @@ class _MissionScreenState extends ConsumerState<MissionScreen> {
   Widget build(BuildContext context) {
     final missions = ref.watch(missionsControllerProvider);
     return Scaffold(
-      backgroundColor: context.colors.background,
-      appBar: AppBar(title: const Text('오늘의 미션')),
+      backgroundColor: FeedPalette.background,
+      appBar: const FeedHeader(title: '오늘의 미션', hasCloseButton: true, backgroundColor: FeedPalette.background),
       body: missions.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(missionsControllerProvider)),
@@ -100,6 +103,7 @@ class _MissionScreenState extends ConsumerState<MissionScreen> {
   }
 }
 
+/// 진행 중/완료 탭 — 2분할 토글. RN `TabButtonBox`(비활성 SILVER_GRAY/활성 SLATE_GRAY) 대응.
 class _TabBar extends StatelessWidget {
   const _TabBar({
     required this.tab,
@@ -116,14 +120,77 @@ class _TabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding, vertical: 12),
-      child: SegmentedButton<_MissionTab>(
-        segments: [
-          ButtonSegment(value: _MissionTab.inProgress, label: Text('진행 중 ($inProgressCount)')),
-          ButtonSegment(value: _MissionTab.completed, label: Text('완료 ($completedCount)')),
+      padding: const EdgeInsets.fromLTRB(AppDimens.padding, 10, AppDimens.padding, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TabButton(
+              label: '진행 중',
+              count: inProgressCount,
+              active: tab == _MissionTab.inProgress,
+              onTap: () => onSelect(_MissionTab.inProgress),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _TabButton(
+              label: '완료',
+              count: completedCount,
+              active: tab == _MissionTab.completed,
+              onTap: () => onSelect(_MissionTab.completed),
+            ),
+          ),
         ],
-        selected: {tab},
-        onSelectionChanged: (selection) => onSelect(selection.first),
+      ),
+    );
+  }
+}
+
+/// 탭 버튼 한 개 — "라벨 N"(개수는 MAIN, 0이면 비활성·회색). RN `TabButton` 1:1.
+class _TabButton extends StatelessWidget {
+  const _TabButton({required this.label, required this.count, required this.active, required this.onTap});
+
+  final String label;
+  final int count;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = count < 1;
+    return Material(
+      color: active ? FeedPalette.slateGray : FeedPalette.silverGray,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: disabled ? null : onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 42,
+          child: Center(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$label ',
+                    style: TextStyle(
+                      fontFamily: FeedFonts.dovemayo,
+                      fontSize: 15,
+                      color: active ? FeedPalette.white : FeedPalette.mediumGray,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '$count',
+                    style: TextStyle(
+                      fontFamily: FeedFonts.dovemayo,
+                      fontSize: 16,
+                      color: disabled ? FeedPalette.lightGray : FeedPalette.main,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

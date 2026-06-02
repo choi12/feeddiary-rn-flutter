@@ -2,6 +2,7 @@
 import 'package:feeddiary/domain/models/sign_in_type.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
+import 'package:feeddiary/ui/core/widgets/feed_button.dart';
 import 'package:feeddiary/ui/features/auth/create_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +28,7 @@ void main() {
     expect(find.text('새싹일기 시작하기'), findsOneWidget);
 
     // canSubmit=false(닉네임 미검증 + 프로필 이미지 미선택) → 가입 버튼 비활성.
-    final button = tester.widget<FilledButton>(find.byType(FilledButton));
-    expect(button.onPressed, isNull);
+    final button = tester.widget<FeedButton>(find.byType(FeedButton));
+    expect(button.disabled, isTrue);
   });
 }
