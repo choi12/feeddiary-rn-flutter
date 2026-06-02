@@ -2,6 +2,7 @@
 import 'package:dio/dio.dart';
 import 'package:feeddiary/config/api_config.dart';
 import 'package:feeddiary/config/app_config.dart';
+import 'package:feeddiary/data/services/demo_api_adapter.dart';
 import 'package:feeddiary/data/services/dio_interceptors.dart';
 import 'package:feeddiary/data/services/token_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -30,4 +31,11 @@ Dio buildDio(TokenStorage tokenStorage) {
 }
 
 @Riverpod(keepAlive: true)
-Dio dio(Ref ref) => buildDio(ref.watch(tokenStorageProvider));
+Dio dio(Ref ref) {
+  final dio = buildDio(ref.watch(tokenStorageProvider));
+  // 데모 모드: 네트워크 경계를 mock 어댑터로 교체(키 없이 실행). 테스트는 dioProvider 를 override 하므로 무관.
+  if (AppConfig.useMock) {
+    dio.httpClientAdapter = DemoApiAdapter();
+  }
+  return dio;
+}
