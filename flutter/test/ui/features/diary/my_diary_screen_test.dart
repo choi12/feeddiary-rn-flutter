@@ -29,7 +29,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('일기 쓰기'), findsOneWidget);
+    expect(find.text('일기 쓰러 가기'), findsOneWidget);
     expect(find.text('이 날의 일기가 없어요.'), findsOneWidget);
   });
 }

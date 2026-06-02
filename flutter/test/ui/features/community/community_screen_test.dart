@@ -48,8 +48,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('최신'), findsOneWidget);
-    expect(find.text('인기'), findsOneWidget);
+    // 정렬 드롭다운은 현재 정렬 라벨만 보인다(나머지는 시트를 열어야 — RN SortButton).
+    expect(find.text('최신글'), findsOneWidget);
     expect(find.text('공유 일기 본문입니다.'), findsOneWidget);
     expect(find.text('햇살이'), findsOneWidget);
   });

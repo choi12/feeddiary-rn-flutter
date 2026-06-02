@@ -1,6 +1,7 @@
 // CommentsScreen 위젯 스모크 — 댓글 목록 + 입력창 렌더 (widget test, dio mock).
 import 'package:feeddiary/data/services/dio_client.dart';
 import 'package:feeddiary/data/services/token_storage.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
 import 'package:feeddiary/ui/features/community/comments_screen.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +45,7 @@ void main() {
 
     expect(find.text('좋은 글이에요.'), findsOneWidget);
     expect(find.text('구름이'), findsOneWidget);
-    expect(find.byIcon(Icons.send), findsOneWidget);
+    expect(find.byIcon(FeedIcons.send), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
   });
 }
