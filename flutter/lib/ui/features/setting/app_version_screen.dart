@@ -2,6 +2,7 @@
 import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/config/app_info.dart';
 import 'package:feeddiary/data/repositories/app_version_repository.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
@@ -64,7 +65,7 @@ class _VersionNoti extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.info_outline, size: 16, color: color),
+        Icon(FeedIcons.alert, size: 16, color: color),
         const SizedBox(width: 6),
         Text(text, style: TextStyle(color: color)),
       ],
