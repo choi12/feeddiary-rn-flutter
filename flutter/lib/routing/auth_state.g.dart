@@ -8,24 +8,27 @@ part of 'auth_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 현재 인증 상태를 노출하는 Notifier. 지금은 [AuthStatus.unauthenticated] 고정 placeholder이며,
-/// auth PR에서 토큰 저장소·세션 복원 로직으로 대체한다. GoRouter redirect 가 이 값을 watch 한다.
+/// 인증 흐름을 조율하는 컨트롤러. RN `useSignIn`/`useSignUp`/`useSignOut` 의 오케스트레이션을
+/// 하나의 Riverpod Notifier 로 모은다. [build]는 [AuthStatus.unknown]을 반환하고, 실제 세션 복원은
+/// splash 화면이 [restore]를 트리거한다(RN `Update` 화면이 `useAppUpdate` 로 트리거하는 것과 대응).
 
 @ProviderFor(AuthController)
 final authControllerProvider = AuthControllerProvider._();
 
-/// 현재 인증 상태를 노출하는 Notifier. 지금은 [AuthStatus.unauthenticated] 고정 placeholder이며,
-/// auth PR에서 토큰 저장소·세션 복원 로직으로 대체한다. GoRouter redirect 가 이 값을 watch 한다.
-final class AuthControllerProvider extends $NotifierProvider<AuthController, AuthStatus> {
-  /// 현재 인증 상태를 노출하는 Notifier. 지금은 [AuthStatus.unauthenticated] 고정 placeholder이며,
-  /// auth PR에서 토큰 저장소·세션 복원 로직으로 대체한다. GoRouter redirect 가 이 값을 watch 한다.
+/// 인증 흐름을 조율하는 컨트롤러. RN `useSignIn`/`useSignUp`/`useSignOut` 의 오케스트레이션을
+/// 하나의 Riverpod Notifier 로 모은다. [build]는 [AuthStatus.unknown]을 반환하고, 실제 세션 복원은
+/// splash 화면이 [restore]를 트리거한다(RN `Update` 화면이 `useAppUpdate` 로 트리거하는 것과 대응).
+final class AuthControllerProvider extends $NotifierProvider<AuthController, AuthState> {
+  /// 인증 흐름을 조율하는 컨트롤러. RN `useSignIn`/`useSignUp`/`useSignOut` 의 오케스트레이션을
+  /// 하나의 Riverpod Notifier 로 모은다. [build]는 [AuthStatus.unknown]을 반환하고, 실제 세션 복원은
+  /// splash 화면이 [restore]를 트리거한다(RN `Update` 화면이 `useAppUpdate` 로 트리거하는 것과 대응).
   AuthControllerProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'authControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -38,24 +41,25 @@ final class AuthControllerProvider extends $NotifierProvider<AuthController, Aut
   AuthController create() => AuthController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AuthStatus value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AuthStatus>(value));
+  Override overrideWithValue(AuthState value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AuthState>(value));
   }
 }
 
-String _$authControllerHash() => r'8aba8fded08736cfd729f8909c3372d6360f68fd';
+String _$authControllerHash() => r'4d2c9a717b0856fdd51c3e2552886d4f6062d9ba';
 
-/// 현재 인증 상태를 노출하는 Notifier. 지금은 [AuthStatus.unauthenticated] 고정 placeholder이며,
-/// auth PR에서 토큰 저장소·세션 복원 로직으로 대체한다. GoRouter redirect 가 이 값을 watch 한다.
+/// 인증 흐름을 조율하는 컨트롤러. RN `useSignIn`/`useSignUp`/`useSignOut` 의 오케스트레이션을
+/// 하나의 Riverpod Notifier 로 모은다. [build]는 [AuthStatus.unknown]을 반환하고, 실제 세션 복원은
+/// splash 화면이 [restore]를 트리거한다(RN `Update` 화면이 `useAppUpdate` 로 트리거하는 것과 대응).
 
-abstract class _$AuthController extends $Notifier<AuthStatus> {
-  AuthStatus build();
+abstract class _$AuthController extends $Notifier<AuthState> {
+  AuthState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AuthStatus, AuthStatus>;
+    final ref = this.ref as $Ref<AuthState, AuthState>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AuthStatus, AuthStatus>, AuthStatus, Object?, Object?>;
+        ref.element as $ClassProviderElement<AnyNotifier<AuthState, AuthState>, AuthState, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
