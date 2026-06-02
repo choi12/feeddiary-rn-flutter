@@ -5,8 +5,13 @@ import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/data/models/letter.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/routing/routes.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
 import 'package:feeddiary/ui/features/letter/letter_list_controller.dart';
 import 'package:feeddiary/ui/features/letter/letter_strings.dart';
@@ -51,31 +56,26 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
   }
 
   Future<void> _confirmDelete(Letter letter) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showFeedAlert<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        content: const Text(LetterStrings.deleteConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text(LetterStrings.closeButton),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(LetterStrings.deleteButton),
-          ),
-        ],
-      ),
+      message: LetterStrings.deleteConfirm,
+      actions: [
+        FeedAlertAction(
+          text: LetterStrings.closeButton,
+          isCancel: true,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        FeedAlertAction(text: LetterStrings.deleteButton, onPressed: () => Navigator.of(context).pop(true)),
+      ],
     );
     if (confirmed != true || !mounted) {
       return;
     }
-    final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(letterListProvider.notifier).delete(letter.idx);
-      messenger.showSnackBar(const SnackBar(content: Text(LetterStrings.deletedToast)));
+      if (mounted) showFeedToast(context, LetterStrings.deletedToast);
     } on AppException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.displayMessage)));
+      if (mounted) showFeedToast(context, e.displayMessage);
     }
   }
 
@@ -88,34 +88,36 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
     final editMode = hasLetter && _editMode;
 
     return Scaffold(
-      backgroundColor: context.colors.background,
-      appBar: AppBar(
-        title: const Text(LetterStrings.headerTitle),
-        actions: [
-          if (hasLetter)
-            TextButton(
-              onPressed: () => setState(() => _editMode = !_editMode),
-              child: Text(editMode ? LetterStrings.editOff : LetterStrings.editOn),
-            ),
-        ],
+      backgroundColor: FeedPalette.background,
+      appBar: FeedHeader(
+        title: LetterStrings.headerTitle,
+        font: FeedHeaderFont.ownglyph,
+        rightItem: hasLetter
+            ? TextButton(
+                onPressed: () => setState(() => _editMode = !_editMode),
+                child: Text(
+                  editMode ? LetterStrings.editOff : LetterStrings.editOn,
+                  style: TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
+                    fontSize: 13,
+                    color: editMode ? FeedPalette.orange : FeedPalette.main,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              )
+            : null,
       ),
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(image: AssetImage(AppAssets.letterBoard), fit: BoxFit.cover),
         ),
         child: SafeArea(
+          top: false,
           child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppDimens.padding, 12, AppDimens.padding, 4),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: isTodayWritten ? null : () => context.push(Routes.letterWrite),
-                    icon: Icon(isTodayWritten ? Icons.check_circle_outline : Icons.edit_outlined),
-                    label: Text(isTodayWritten ? LetterStrings.writeDone : LetterStrings.writeCta),
-                  ),
-                ),
+                child: _WriteLetterButton(done: isTodayWritten, onTap: () => context.push(Routes.letterWrite)),
               ),
               Expanded(
                 child: state.when(
@@ -139,6 +141,52 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
                   },
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "오늘의 나에게 편지 쓰기" 버튼 — 하늘색 알약·Ownglyph·오른쪽 캐럿. 작성 완료면 회색 비활성. RN `CreateLetterButton` 대응.
+class _WriteLetterButton extends StatelessWidget {
+  const _WriteLetterButton({required this.done, required this.onTap});
+
+  final bool done;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: done ? FeedPalette.lightGray : FeedPalette.skyblue,
+      borderRadius: BorderRadius.circular(25),
+      child: InkWell(
+        onTap: done ? null : onTap,
+        borderRadius: BorderRadius.circular(25),
+        child: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                done ? LetterStrings.writeDone : LetterStrings.writeCta,
+                style: const TextStyle(
+                  fontFamily: FeedFonts.ownglyph,
+                  fontSize: 18,
+                  color: FeedPalette.white,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              if (!done)
+                const Padding(
+                  padding: EdgeInsets.only(left: 3),
+                  child: RotatedBox(
+                    quarterTurns: 3,
+                    child: Icon(FeedIcons.caretDown, size: 20, color: FeedPalette.white),
+                  ),
+                ),
             ],
           ),
         ),
