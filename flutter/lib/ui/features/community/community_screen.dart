@@ -1,9 +1,13 @@
-// 공유 일기 화면 — 정렬(최신/인기) + 무한스크롤 목록. RN screens/home/community/Community 대응.
+// 공유 일기 화면 — 정렬(최신/인기) 드롭다운 + 무한스크롤 목록. RN screens/home/community/Community 대응.
 import 'dart:async';
 
 import 'package:feeddiary/domain/models/community_sort.dart';
 import 'package:feeddiary/routing/routes.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_bottom_sheet.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
 import 'package:feeddiary/ui/features/community/community_list_controller.dart';
 import 'package:feeddiary/ui/features/community/community_sort_provider.dart';
 import 'package:feeddiary/ui/features/community/widgets/community_diary_card.dart';
@@ -18,10 +22,10 @@ class CommunityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.colors.background,
-      appBar: AppBar(title: const Text('공유 일기')),
-      body: const Column(
+    return const Scaffold(
+      backgroundColor: FeedPalette.background,
+      appBar: FeedHeader(title: '공유 일기'),
+      body: Column(
         children: [
           _SortBar(),
           Expanded(child: _CommunityList()),
@@ -31,22 +35,59 @@ class CommunityScreen extends StatelessWidget {
   }
 }
 
-/// 정렬 SegmentedButton(최신/인기). 변경 시 목록 컨트롤러 build 가 재실행돼 1페이지부터 다시 로드된다.
+/// 정렬 드롭다운 — "최신글 ⌄" 버튼을 탭하면 바텀시트에서 최신/인기를 고른다. RN `SortButton` 대응.
 class _SortBar extends ConsumerWidget {
   const _SortBar();
+
+  void _openSortSheet(BuildContext context, WidgetRef ref, CommunitySort current) {
+    showFeedSheet(
+      context: context,
+      items: [
+        for (final sort in CommunitySort.values)
+          FeedSheetItem(
+            title: sort.label,
+            icon: sort == current ? FeedIcons.check : null,
+            color: sort == current ? FeedPalette.main : FeedPalette.darkGray,
+            onPressed: () => ref.read(communitySortControllerProvider.notifier).set(sort),
+          ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sort = ref.watch(communitySortControllerProvider);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: SegmentedButton<CommunitySort>(
-        segments: const [
-          ButtonSegment(value: CommunitySort.latest, label: Text('최신'), icon: Icon(Icons.schedule)),
-          ButtonSegment(value: CommunitySort.popular, label: Text('인기'), icon: Icon(Icons.favorite)),
-        ],
-        selected: {sort},
-        onSelectionChanged: (selection) => ref.read(communitySortControllerProvider.notifier).set(selection.first),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Material(
+          color: FeedPalette.white,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: () => _openSortSheet(context, ref, sort),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: FeedPalette.whiteGray),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    sort.label,
+                    style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.lightBlack),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(FeedIcons.caretDown, size: 20, color: FeedPalette.main),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
