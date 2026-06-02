@@ -1,10 +1,13 @@
-// GoRouter 설정 — AuthState 기반 redirect + 인증 흐름 라우트(splash/signIn/createProfile/home). (Riverpod 코드젠)
+// GoRouter 설정 — AuthState 기반 redirect + 인증/일기 라우트(splash/signIn/createProfile/home/diary). (Riverpod 코드젠)
+import 'package:feeddiary/data/models/diary.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/routing/routes.dart';
 import 'package:feeddiary/ui/features/auth/create_profile_screen.dart';
 import 'package:feeddiary/ui/features/auth/sign_in_screen.dart';
 import 'package:feeddiary/ui/features/auth/splash_screen.dart';
-import 'package:feeddiary/ui/features/home/home_screen.dart';
+import 'package:feeddiary/ui/features/diary/create_diary_screen.dart';
+import 'package:feeddiary/ui/features/diary/diary_detail_screen.dart';
+import 'package:feeddiary/ui/features/home/main_shell.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -49,7 +52,16 @@ GoRouter appRouter(Ref ref) {
         path: Routes.createProfile,
         builder: (_, state) => CreateProfileScreen(info: state.extra! as NewUserInfo),
       ),
-      GoRoute(path: Routes.home, builder: (_, _) => const HomeScreen()),
+      GoRoute(path: Routes.home, builder: (_, _) => const MainShell()),
+      // diaryWrite(정적)를 diaryDetail(:idx)보다 먼저 등록해 'write'가 idx 로 매칭되지 않게 한다.
+      GoRoute(
+        path: Routes.diaryWrite,
+        builder: (_, state) => CreateDiaryScreen(initial: state.extra as MyDiary?),
+      ),
+      GoRoute(
+        path: Routes.diaryDetail,
+        builder: (_, state) => DiaryDetailScreen(diaryIdx: int.parse(state.pathParameters['idx']!)),
+      ),
     ],
   );
 }
