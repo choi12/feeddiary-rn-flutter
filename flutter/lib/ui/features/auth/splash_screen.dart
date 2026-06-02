@@ -1,11 +1,14 @@
-// 부트스트랩 화면 — 세션 복원(자동 로그인)을 트리거하고 결과를 기다린다. RN Update 화면 대응(버전체크는 후속).
+// 부트스트랩 화면 — 세션 복원(자동 로그인)을 트리거하고 결과를 기다린다. RN screens/start/Update 대응.
+import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/routing/auth_state.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 앱 진입 직후의 스플래시. [AuthController.restore]로 토큰 기반 세션 복원을 시작하고,
-/// 인증 상태가 정해지면 GoRouter redirect 가 SignIn/Home 으로 이동시킨다.
+/// 인증 상태가 정해지면 GoRouter redirect 가 SignIn/Home 으로 이동시킨다. RN `Update` 화면 1:1.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -26,15 +29,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: FeedPalette.white,
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.eco, size: 72, color: context.colors.primary),
-            const SizedBox(height: 16),
-            Text('새싹일기', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 32),
-            const CircularProgressIndicator(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 50),
+              child: Image.asset(AppAssets.logo, height: 37, fit: BoxFit.contain),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 15),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(FeedIcons.alert, size: 15, color: FeedPalette.main),
+                  SizedBox(width: 5),
+                  Text(
+                    '앱 버전 확인 중...',
+                    style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.main),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
