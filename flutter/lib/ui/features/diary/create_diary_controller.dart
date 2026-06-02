@@ -5,6 +5,8 @@ import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
 import 'package:feeddiary/ui/features/diary/diary_list_controller.dart';
 import 'package:feeddiary/ui/features/diary/monthly_diaries_provider.dart';
 import 'package:feeddiary/ui/features/diary/sticker_catalog.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/mission_controller.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -57,9 +59,13 @@ class CreateDiaryController extends _$CreateDiaryController {
           );
     ref.invalidate(diaryListProvider);
     ref.invalidate(monthlyDiariesProvider);
-    // 수정이면 해당 상세 캐시도 무효화해 pushReplacement 후 최신 내용으로 다시 불러온다.
     if (target != null) {
+      // 수정이면 해당 상세 캐시도 무효화해 pushReplacement 후 최신 내용으로 다시 불러온다.
       ref.invalidate(diaryDetailControllerProvider(target.idx));
+    } else {
+      // 신규 등록은 미션 진행(일기 미션)·화분을 교차 무효화한다(RN diaryAction 신규 → MISSION_GROUP).
+      ref.invalidate(missionsControllerProvider);
+      ref.invalidate(flowerpotControllerProvider);
     }
     return idx;
   }

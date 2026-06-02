@@ -55,7 +55,7 @@ final class DiaryLikesProvider extends $NotifierProvider<DiaryLikes, Map<int, Li
   }
 }
 
-String _$diaryLikesHash() => r'c4099561a0d14f214cadb83871e3c1ce56246fd3';
+String _$diaryLikesHash() => r'982eb90209a20a6a23af3013a7c9d81fe12749ec';
 
 /// 좋아요 글로벌 override 저장소. 같은 일기가 community 목록 카드와 상세에 동시 등장하므로,
 /// 좋아요를 화면 로컬이 아닌 이 keepAlive provider 한 곳에 모아 양쪽이 같은 소스를 구독한다

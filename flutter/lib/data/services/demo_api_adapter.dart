@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:feeddiary/config/api_config.dart';
+import 'package:feeddiary/config/flowerpot_config.dart';
 
 /// USE_MOCK 데모 모드에서 Dio 의 [HttpClientAdapter]를 대체해 엔드포인트를 mock 한다.
 /// 응답을 백엔드 원본과 같은 snake_case 로 내려보내 인터셉터·DTO 매핑이 실제로 실행되게 한다(가이드 원칙2).
@@ -33,6 +34,21 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 새 댓글에 부여할 다음 idx(시드 최대 idx 다음부터).
   int _nextCommentIdx = 5004;
 
+  /// 인메모리 화분 상태(레벨·경험치·물주기/사랑 충전). 물주기/사랑·미션 완료로 변형된다. RN mock flowerpot stateful.
+  late final Map<String, dynamic> _flowerpot = {
+    'level': 1,
+    'exp': 200,
+    'max_exp': FlowerpotConfig.defaultMaxExp,
+    'watering_count': 2,
+    'love_count': 1,
+  };
+
+  /// 인메모리 미션 상태(진행중/완료). 일기/댓글/좋아요/공개 액션으로 진행되고 완료 시 이동한다. RN mock missions stateful.
+  late final Map<String, List<Map<String, dynamic>>> _missions = _seedMissions();
+
+  /// 물/사랑 1회당 경험치 증가량(데모 게임 루프용).
+  static const int _expPerAction = 250;
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -49,6 +65,12 @@ class DemoApiAdapter implements HttpClientAdapter {
     }
     if (segments.isNotEmpty && segments.first == 'comment') {
       return _handleComment(options, segments);
+    }
+    if (segments.isNotEmpty && segments.first == 'flowerpot') {
+      return _handleFlowerpot(options, segments);
+    }
+    if (segments.isNotEmpty && segments.first == 'mission') {
+      return _handleMission(options, segments);
     }
     return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
   }
@@ -171,6 +193,7 @@ class DemoApiAdapter implements HttpClientAdapter {
         created: DateTime.tryParse(fields['date'] ?? '') ?? DateTime.now(),
       ),
     );
+    _progressMission('diary');
     return _json(200, {
       'status': 'success',
       'resData': {'diaryIdx': idx},
@@ -211,6 +234,9 @@ class DemoApiAdapter implements HttpClientAdapter {
     final likeCount = _diaries[i]['like_count'] as int;
     final nextCount = wasLiked ? likeCount - 1 : likeCount + 1;
     _diaries[i] = {..._diaries[i], 'isLike': !wasLiked, 'like_count': nextCount};
+    if (!wasLiked) {
+      _progressMission('like');
+    }
     return _json(200, {
       'status': 'success',
       'resData': {'like_count': nextCount, 'isLike': !wasLiked},
@@ -224,6 +250,9 @@ class DemoApiAdapter implements HttpClientAdapter {
     }
     final next = (_diaries[i]['is_visible'] as int) == 1 ? 0 : 1;
     _diaries[i] = {..._diaries[i], 'is_visible': next};
+    if (next == 1) {
+      _progressMission('visible');
+    }
     return _json(200, {
       'status': 'success',
       'resData': {'is_visible': next},
@@ -290,6 +319,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     final idx = _nextCommentIdx++;
     (_commentsByDiary[diaryIdx] ??= []).add(_comment(idx: idx, text: text, created: DateTime.now()));
     _bumpCommentCount(diaryIdx, 1);
+    _progressMission('comment');
     return _json(200, {'status': 'success', 'resData': '$idx'});
   }
 
@@ -311,6 +341,144 @@ class DemoApiAdapter implements HttpClientAdapter {
       final next = ((_diaries[i]['commentCount'] as int) + delta).clamp(0, 1 << 30);
       _diaries[i] = {..._diaries[i], 'commentCount': next};
     }
+  }
+
+  // --- flowerpot / mission (PR⑥) ---
+
+  ResponseBody _handleFlowerpot(RequestOptions options, List<String> segments) {
+    final method = options.method.toUpperCase();
+    if (segments.length == 1 && method == 'GET') {
+      return _getFlowerpot();
+    }
+    if (segments.length == 2 && method == 'POST') {
+      if (segments[1] == 'watering') {
+        return _plantAction('watering_count');
+      }
+      if (segments[1] == 'love') {
+        return _plantAction('love_count');
+      }
+    }
+    return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
+  }
+
+  ResponseBody _handleMission(RequestOptions options, List<String> segments) {
+    final method = options.method.toUpperCase();
+    if (segments.length == 1 && method == 'POST') {
+      return _completeMission(options.data);
+    }
+    if (segments.length == 2 && segments[1] == 'list' && method == 'GET') {
+      return _getMissions();
+    }
+    return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
+  }
+
+  ResponseBody _getFlowerpot() {
+    return _json(200, {'status': 'success', 'resData': _flowerpotJson()});
+  }
+
+  /// 화분 응답. showBadge 는 받을 수 있는(달성한) 진행중 미션 존재 여부로 동적 계산한다(미션→화분 단서 시연).
+  Map<String, dynamic> _flowerpotJson() {
+    final hasClaimable = _missions['inProgress']!.any((m) => (m['count'] as int) >= (m['max_count'] as int));
+    return {..._flowerpot, 'showBadge': hasClaimable};
+  }
+
+  /// 물주기/사랑주기 공통 — 충전 1 소비 + 경험치 증가 + 레벨업(최대 레벨 상한). RN watering/love(서버 계산).
+  ResponseBody _plantAction(String chargeKey) {
+    final charges = _flowerpot[chargeKey] as int;
+    var level = _flowerpot['level'] as int;
+    // 충전이 없거나 이미 최대 레벨이면 변화 없이 성공 응답(클라 canWater 가 막지만 안전망).
+    if (charges < 1 || level >= FlowerpotConfig.maxLevel) {
+      return _json(200, {'status': 'success', 'resData': 'ok'});
+    }
+    _flowerpot[chargeKey] = charges - 1;
+    final maxExp = _flowerpot['max_exp'] as int;
+    var exp = (_flowerpot['exp'] as int) + _expPerAction;
+    while (exp >= maxExp && level < FlowerpotConfig.maxLevel) {
+      exp -= maxExp;
+      level += 1;
+    }
+    if (level >= FlowerpotConfig.maxLevel) {
+      exp = maxExp; // 최대 레벨이면 경험치를 가득 채워 더 자라지 않음을 표현.
+    }
+    _flowerpot['level'] = level;
+    _flowerpot['exp'] = exp;
+    return _json(200, {'status': 'success', 'resData': 'ok'});
+  }
+
+  ResponseBody _getMissions() {
+    return _json(200, {
+      'status': 'success',
+      'resData': {'completed': _missions['completed'], 'inProgress': _missions['inProgress']},
+    });
+  }
+
+  /// 미션 완료 — 진행중에서 빼 완료로 옮기고 보상 충전을 지급한 뒤, 갱신된 묶음+보상을 반환. RN completeMission.
+  ResponseBody _completeMission(Object? data) {
+    final missionIdx = data is Map ? (data['mission_idx'] as num?)?.toInt() : null;
+    final inProgress = _missions['inProgress']!;
+    final i = missionIdx == null ? -1 : inProgress.indexWhere((m) => m['idx'] == missionIdx);
+    if (i == -1) {
+      return _json(404, {'status': 'failed', 'message': '미션을 찾을 수 없습니다.'});
+    }
+    final mission = inProgress.removeAt(i);
+    mission['count'] = mission['max_count'];
+    mission['is_completed'] = 1;
+    _missions['completed']!.insert(0, mission);
+    final reward = _rewardFor(mission['type'] as String);
+    final chargeKey = reward['item'] == 'watering' ? 'watering_count' : 'love_count';
+    _flowerpot[chargeKey] = (_flowerpot[chargeKey] as int) + (reward['count'] as int);
+    return _json(200, {
+      'status': 'success',
+      'resData': {
+        'missions': {'completed': _missions['completed'], 'inProgress': _missions['inProgress']},
+        'reward': reward,
+      },
+    });
+  }
+
+  /// 미션 보상 규칙(미션 종류별 결정적). RN 서버 보상 계산 대응.
+  Map<String, dynamic> _rewardFor(String type) {
+    switch (type) {
+      case 'diary':
+        return {'count': 2, 'item': 'watering'};
+      case 'visible':
+        return {'count': 1, 'item': 'watering'};
+      case 'comment':
+        return {'count': 2, 'item': 'love'};
+      case 'like':
+      default:
+        return {'count': 1, 'item': 'love'};
+    }
+  }
+
+  /// 게임 루프 — 해당 종류의 진행중 미션 진행도를 1 올린다(목표 초과 금지). 일기/댓글/좋아요/공개에서 호출. RN MISSION_GROUP.
+  void _progressMission(String type) {
+    for (final mission in _missions['inProgress']!) {
+      if (mission['type'] == type) {
+        final next = (mission['count'] as int) + 1;
+        final max = mission['max_count'] as int;
+        mission['count'] = next > max ? max : next;
+        break;
+      }
+    }
+  }
+
+  /// 시드 미션 — 4종(진행중) + 완료 비움. visible 은 이미 달성(1/1)이라 즉시 완료 시연 가능.
+  Map<String, List<Map<String, dynamic>>> _seedMissions() {
+    return {
+      'inProgress': [
+        _mission(idx: 1, type: 'diary', count: 1, maxCount: 3),
+        _mission(idx: 2, type: 'comment', count: 0, maxCount: 2),
+        _mission(idx: 3, type: 'visible', count: 1, maxCount: 1),
+        _mission(idx: 4, type: 'like', count: 0, maxCount: 3),
+      ],
+      'completed': <Map<String, dynamic>>[],
+    };
+  }
+
+  /// 미션 한 건(snake_case, 진행중 기본 is_completed 0).
+  Map<String, dynamic> _mission({required int idx, required String type, required int count, required int maxCount}) {
+    return {'idx': idx, 'type': type, 'count': count, 'max_count': maxCount, 'is_completed': 0};
   }
 
   // --- helpers ---

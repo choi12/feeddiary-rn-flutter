@@ -53,7 +53,7 @@ final class CommentsControllerProvider extends $AsyncNotifierProvider<CommentsCo
   }
 }
 
-String _$commentsControllerHash() => r'cdb47b870e99f39990018605794ef3d97657a4d4';
+String _$commentsControllerHash() => r'120718d21509459f3b292bfc93b7fc9b7486bddb';
 
 /// 특정 일기의 댓글 목록 + 작성/삭제. 타인 액션 반영 가능성으로 realtime 캐시한다.
 /// 작성은 비낙관(성공 후 재조회 — 서버 idx/시각 확정), 삭제는 낙관 제거 후 실패 시 롤백한다(RN 거동).

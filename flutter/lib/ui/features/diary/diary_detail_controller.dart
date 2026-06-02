@@ -3,6 +3,8 @@ import 'package:feeddiary/data/models/community_diary.dart';
 import 'package:feeddiary/data/repositories/diary_repository.dart';
 import 'package:feeddiary/ui/features/diary/diary_list_controller.dart';
 import 'package:feeddiary/ui/features/diary/monthly_diaries_provider.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/mission_controller.dart';
 import 'package:feeddiary/utils/cache_policy.dart';
 import 'package:feeddiary/utils/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -30,6 +32,9 @@ class DiaryDetailController extends _$DiaryDetailController {
     try {
       final visible = await ref.read(diaryRepositoryProvider).setVisibility(diaryIdx: diaryIdx);
       state = AsyncData(current.copyWith(isVisible: visible));
+      // 공개 전환은 미션 진행(공개 미션)·화분을 교차 무효화한다(RN setVisibility → MISSION_GROUP).
+      ref.invalidate(missionsControllerProvider);
+      ref.invalidate(flowerpotControllerProvider);
     } catch (error, stackTrace) {
       AppLogger.error('공개 설정 실패', error: error, stackTrace: stackTrace);
       state = AsyncData(current);

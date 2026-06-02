@@ -21,4 +21,7 @@ abstract final class Routes {
 
   /// 일기 댓글 푸시 경로 생성. 예: `/diary/123/comments`.
   static String diaryCommentsPath(int idx) => '/diary/$idx/comments';
+
+  /// 오늘의 미션(화분 화면에서 push). 파라미터 없음.
+  static const String mission = '/mission';
 }
