@@ -10,6 +10,7 @@ import 'package:feeddiary/ui/features/diary/create_diary_screen.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_screen.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_screen.dart';
 import 'package:feeddiary/ui/features/home/main_shell.dart';
+import 'package:feeddiary/ui/features/letter/create_letter_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -70,6 +71,7 @@ GoRouter appRouter(Ref ref) {
             CommentsScreen(diaryIdx: int.parse(state.pathParameters['idx']!), author: state.extra as String?),
       ),
       GoRoute(path: Routes.mission, builder: (_, _) => const MissionScreen()),
+      GoRoute(path: Routes.letterWrite, builder: (_, _) => const CreateLetterScreen()),
     ],
   );
 }

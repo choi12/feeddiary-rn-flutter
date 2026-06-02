@@ -24,4 +24,7 @@ abstract final class Routes {
 
   /// 오늘의 미션(화분 화면에서 push). 파라미터 없음.
   static const String mission = '/mission';
+
+  /// 편지 작성(편지함에서 push). 파라미터 없음.
+  static const String letterWrite = '/letter/write';
 }

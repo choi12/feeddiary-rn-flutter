@@ -1,5 +1,6 @@
 // 캘린더 격자 유틸 — 기준 월을 6주 x 7일 2차원 배열로 변환(타 월 날짜는 null). RN hooks/features/calendar/useCalendar 1:1.
 import 'package:feeddiary/data/models/diary.dart';
+import 'package:feeddiary/utils/date_format.dart';
 
 /// 기준 [month]를 받아 6주 x 7일 격자를 만든다. 이전/다음 달 칸은 null.
 /// RN `useCalendar`: 시작 요일만큼 null + 이번 달 날짜 + 마지막 주 빈 칸 null → 6주로 분할(일요일 시작).
@@ -20,10 +21,8 @@ List<List<DateTime?>> buildCalendarGrid(DateTime month) {
   return [for (var week = 0; week < 6; week++) cells.sublist(week * 7, week * 7 + 7)];
 }
 
-/// 같은 날짜(연·월·일)인지 비교. RN dayjs isSame(date, 'day').
-bool isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
-
 /// [diaries] 중 [day]에 작성된 항목만 필터링. RN useDiaryCalendarView 의 dailyDiaries.
+/// 동일 일자 비교는 공용 `isSameDay`(utils/date_format)를 쓴다.
 List<DailyDiary> diariesOn(List<DailyDiary> diaries, DateTime day) =>
     diaries.where((d) => isSameDay(d.createdAt, day)).toList();
 

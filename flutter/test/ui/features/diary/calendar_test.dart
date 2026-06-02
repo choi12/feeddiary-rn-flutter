@@ -1,6 +1,7 @@
 // 캘린더 격자 유틸 — 6주x7일 격자·null 패딩·동일일자 필터·마킹 (unit, Tier A).
 import 'package:feeddiary/data/models/diary.dart';
 import 'package:feeddiary/ui/features/diary/calendar_grid.dart';
+import 'package:feeddiary/utils/date_format.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

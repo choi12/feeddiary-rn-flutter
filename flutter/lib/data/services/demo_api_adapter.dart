@@ -25,6 +25,9 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 인메모리 댓글 저장소(diaryIdx → 댓글 목록). RN mock commentsByDiary 대응.
   late final Map<int, List<Map<String, dynamic>>> _commentsByDiary = _seedComments();
 
+  /// 인메모리 편지 저장소(나에게 쓰는 편지). 작성/삭제로 변형된다(격리 — 게임 루프 무관). RN mock letters stateful.
+  late final List<Map<String, dynamic>> _letters = _seedLetters();
+
   /// 신고로 차단된 작성자 user_idx 집합(community 목록에서 제외).
   final Set<int> _blockedUsers = {};
 
@@ -33,6 +36,9 @@ class DemoApiAdapter implements HttpClientAdapter {
 
   /// 새 댓글에 부여할 다음 idx(시드 최대 idx 다음부터).
   int _nextCommentIdx = 5004;
+
+  /// 새 편지에 부여할 다음 idx(시드 최대 idx 다음부터).
+  int _nextLetterIdx = 7007;
 
   /// 인메모리 화분 상태(레벨·경험치·물주기/사랑 충전). 물주기/사랑·미션 완료로 변형된다. RN mock flowerpot stateful.
   late final Map<String, dynamic> _flowerpot = {
@@ -65,6 +71,9 @@ class DemoApiAdapter implements HttpClientAdapter {
     }
     if (segments.isNotEmpty && segments.first == 'comment') {
       return _handleComment(options, segments);
+    }
+    if (segments.isNotEmpty && segments.first == 'letter') {
+      return _handleLetter(options, segments);
     }
     if (segments.isNotEmpty && segments.first == 'flowerpot') {
       return _handleFlowerpot(options, segments);
@@ -341,6 +350,44 @@ class DemoApiAdapter implements HttpClientAdapter {
       final next = ((_diaries[i]['commentCount'] as int) + delta).clamp(0, 1 << 30);
       _diaries[i] = {..._diaries[i], 'commentCount': next};
     }
+  }
+
+  // --- letter (PR⑦) ---
+
+  ResponseBody _handleLetter(RequestOptions options, List<String> segments) {
+    final method = options.method.toUpperCase();
+    if (segments.length == 1 && method == 'POST') {
+      return _createLetter(options.data);
+    }
+    if (segments.length == 2) {
+      if (segments[1] == 'list' && method == 'GET') {
+        return _getLetters(options);
+      }
+      final idx = int.tryParse(segments[1]);
+      if (idx != null && method == 'DELETE') {
+        return _deleteLetter(idx);
+      }
+    }
+    return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
+  }
+
+  ResponseBody _getLetters(RequestOptions options) {
+    final skip = int.tryParse(options.uri.queryParameters['skip'] ?? '0') ?? 0;
+    final sorted = [..._letters]..sort((a, b) => (b['created_time'] as String).compareTo(a['created_time'] as String));
+    final page = sorted.skip(skip).take(ApiConfig.itemsPerPage).toList();
+    return _json(200, {'status': 'success', 'resData': page});
+  }
+
+  ResponseBody _createLetter(Object? data) {
+    final text = data is Map ? (data['text']?.toString() ?? '') : '';
+    final letter = _letterEntry(idx: _nextLetterIdx++, text: text, created: DateTime.now());
+    _letters.insert(0, letter);
+    return _json(200, {'status': 'success', 'resData': letter});
+  }
+
+  ResponseBody _deleteLetter(int letterIdx) {
+    _letters.removeWhere((letter) => letter['idx'] == letterIdx);
+    return _json(200, {'status': 'success', 'resData': 'ok'});
   }
 
   // --- flowerpot / mission (PR⑥) ---
@@ -655,6 +702,27 @@ class DemoApiAdapter implements HttpClientAdapter {
       ],
       1013: [_comment(idx: 5003, nickname: '구름이', character: 'Cat', text: '커피 한 잔의 여유 좋죠.', created: hoursAgo(8))],
     };
+  }
+
+  /// 데모 편지 한 건(snake_case). deleted_time 은 미사용(RN 과 동일하게 무시).
+  Map<String, dynamic> _letterEntry({required int idx, required String text, required DateTime created}) {
+    return {'idx': idx, 'text': text, 'created_time': created.toIso8601String(), 'deleted_time': null};
+  }
+
+  /// 시드 편지 — now 상대 ~6건. 최신=어제(daysAgo 1)라 시작 시 '오늘 작성 가능'(작성하면 오늘이 되어 하루 한 통 게이팅 시연).
+  /// 한 건은 작년으로 둬 formatRelativeDate 의 'YYYY년 …' 분기를 노출한다.
+  List<Map<String, dynamic>> _seedLetters() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    DateTime daysAgo(int d) => today.subtract(Duration(days: d));
+    return [
+      _letterEntry(idx: 7006, text: '어제의 나에게. 오늘도 충분히 잘하고 있어, 너무 몰아붙이지 말자.', created: daysAgo(1)),
+      _letterEntry(idx: 7005, text: '조급해하지 말기. 천천히, 그러나 멈추지 않고 가자.', created: daysAgo(4)),
+      _letterEntry(idx: 7004, text: '작은 성취도 칭찬해 주기. 오늘 하루도 수고했어.', created: daysAgo(9)),
+      _letterEntry(idx: 7003, text: '힘든 날이 와도 나는 나를 믿어. 잘 지나갈 거야.', created: daysAgo(16)),
+      _letterEntry(idx: 7002, text: '읽고 싶던 책을 드디어 펼쳤다. 꾸준히 읽어 보자.', created: daysAgo(30)),
+      _letterEntry(idx: 7001, text: '일 년 전 오늘 적은 다짐, 여전히 유효하다.', created: daysAgo(370)),
+    ];
   }
 
   ResponseBody _json(int statusCode, Map<String, dynamic> body) {
