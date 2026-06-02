@@ -150,7 +150,7 @@ class _Content extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Text(StickerCatalog.emojiFor(diary.sticker), style: const TextStyle(fontSize: 56)),
+          Image.asset(StickerCatalog.assetFor(diary.sticker), width: 72, height: 72, fit: BoxFit.contain),
           const SizedBox(height: 16),
           Text(formatDiaryDate(diary.createdAt), style: TextStyle(color: context.colors.textSecondary)),
           const SizedBox(height: 28),
