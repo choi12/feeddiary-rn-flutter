@@ -49,4 +49,4 @@ final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter, Go
   }
 }
 
-String _$appRouterHash() => r'25a58b4e74f962b206927b754f085443209e7914';
+String _$appRouterHash() => r'4df849b9807237051b0c93b2f02ab73cd5a992a1';

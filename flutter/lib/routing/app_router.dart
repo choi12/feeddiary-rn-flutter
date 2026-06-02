@@ -11,6 +11,10 @@ import 'package:feeddiary/ui/features/diary/diary_detail_screen.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_screen.dart';
 import 'package:feeddiary/ui/features/home/main_shell.dart';
 import 'package:feeddiary/ui/features/letter/create_letter_screen.dart';
+import 'package:feeddiary/ui/features/setting/app_version_screen.dart';
+import 'package:feeddiary/ui/features/setting/lock_password_screen.dart';
+import 'package:feeddiary/ui/features/setting/lockdown_settings_screen.dart';
+import 'package:feeddiary/ui/features/setting/update_profile_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -72,6 +76,10 @@ GoRouter appRouter(Ref ref) {
       ),
       GoRoute(path: Routes.mission, builder: (_, _) => const MissionScreen()),
       GoRoute(path: Routes.letterWrite, builder: (_, _) => const CreateLetterScreen()),
+      GoRoute(path: Routes.settingProfile, builder: (_, _) => const UpdateProfileScreen()),
+      GoRoute(path: Routes.settingAppVersion, builder: (_, _) => const AppVersionScreen()),
+      GoRoute(path: Routes.settingLockdown, builder: (_, _) => const LockdownSettingsScreen()),
+      GoRoute(path: Routes.settingLockPassword, builder: (_, _) => const LockPasswordScreen()),
     ],
   );
 }
