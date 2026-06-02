@@ -1,4 +1,6 @@
 // 인증 상태 컨트롤러 — 세션 복원·로그인·회원가입·로그아웃. GoRouter redirect 가 구독. RN useSignIn/useSignUp/useSignOut 대응.
+import 'dart:typed_data';
+
 import 'package:feeddiary/config/app_config.dart';
 import 'package:feeddiary/data/models/user.dart';
 import 'package:feeddiary/data/repositories/auth_repository.dart';
@@ -72,7 +74,14 @@ class AuthController extends _$AuthController {
   }
 
   /// 프로필 작성 후 회원가입. 성공 시 authenticated 로 전환. RN `useSignUp.handleSignUp`.
-  Future<void> signUp({required NewUserInfo info, required String nickname, required String character}) async {
+  /// 프로필 이미지는 사진([imageBytes]) 또는 캐릭터([character]+[background]) 중 하나다.
+  Future<void> signUp({
+    required NewUserInfo info,
+    required String nickname,
+    required String character,
+    String background = '',
+    Uint8List? imageBytes,
+  }) async {
     final user = await ref
         .read(authRepositoryProvider)
         .signUp(
@@ -80,10 +89,10 @@ class AuthController extends _$AuthController {
           email: info.email,
           type: info.type,
           nickname: nickname,
-          image: '',
-          background: '',
+          background: background,
           character: character,
           fcmToken: _demoFcmToken,
+          imageBytes: imageBytes,
         );
     await _completeSignIn(user);
   }
@@ -93,6 +102,11 @@ class AuthController extends _$AuthController {
     await ref.read(authRepositoryProvider).signOut();
     await ref.read(tokenStorageProvider).clear();
     state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  /// 프로필 수정 후 사용자 정보를 갱신한다(인증 상태는 유지). RN user slice `saveUser` 대응.
+  void setUser(User user) {
+    state = state.copyWith(user: user);
   }
 
   /// 토큰 저장 + authenticated 전환. RN `completeSignIn`(잠금/프리페치는 후속 PR).
