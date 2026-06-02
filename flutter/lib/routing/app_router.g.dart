@@ -9,17 +9,17 @@ part of 'app_router.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// 앱 전역 [GoRouter]. [AuthController]의 상태를 watch 해 redirect 로 분기한다.
-/// PR① 골격 — 라우트 타겟은 모두 [PlaceholderPage]이고, 실제 화면은 기능 PR에서 채운다.
+/// 인증 흐름: splash(부트스트랩) → unauthenticated 면 signIn/createProfile, authenticated 면 home.
 
 @ProviderFor(appRouter)
 final appRouterProvider = AppRouterProvider._();
 
 /// 앱 전역 [GoRouter]. [AuthController]의 상태를 watch 해 redirect 로 분기한다.
-/// PR① 골격 — 라우트 타겟은 모두 [PlaceholderPage]이고, 실제 화면은 기능 PR에서 채운다.
+/// 인증 흐름: splash(부트스트랩) → unauthenticated 면 signIn/createProfile, authenticated 면 home.
 
 final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter, GoRouter> with $Provider<GoRouter> {
   /// 앱 전역 [GoRouter]. [AuthController]의 상태를 watch 해 redirect 로 분기한다.
-  /// PR① 골격 — 라우트 타겟은 모두 [PlaceholderPage]이고, 실제 화면은 기능 PR에서 채운다.
+  /// 인증 흐름: splash(부트스트랩) → unauthenticated 면 signIn/createProfile, authenticated 면 home.
   AppRouterProvider._()
     : super(
         from: null,
@@ -49,4 +49,4 @@ final class AppRouterProvider extends $FunctionalProvider<GoRouter, GoRouter, Go
   }
 }
 
-String _$appRouterHash() => r'262824bdc537c191a04bf988972c88a64ed342fa';
+String _$appRouterHash() => r'0dda97e3a3f467028b490c03388ad71745ab96fa';
