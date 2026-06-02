@@ -1,8 +1,7 @@
-// DiaryDetailController — 좋아요 낙관 갱신·실패 revert·공개여부 토글 (Provider/Notifier test, http_mock_adapter).
+// DiaryDetailController — 공개여부 낙관 토글 (Provider/Notifier test, http_mock_adapter). 좋아요는 diary_likes_test.
 import 'package:dio/dio.dart';
 import 'package:feeddiary/data/services/dio_client.dart';
 import 'package:feeddiary/data/services/token_storage.dart';
-import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -40,42 +39,6 @@ void main() {
   setUp(() {
     dio = buildDio(TokenStorage(const FlutterSecureStorage()));
     adapter = DioAdapter(dio: dio);
-  });
-
-  test('toggleLike 가 낙관적으로 반영하고 서버 결과로 보정한다', () async {
-    adapter
-      ..onGet('/diary/1', (server) => server.reply(200, {'status': 'success', 'resData': diaryJson(likeCount: 2)}))
-      ..onPost(
-        '/diary/like',
-        (server) => server.reply(200, {
-          'status': 'success',
-          'resData': {'like_count': 3, 'isLike': true},
-        }),
-        data: Matchers.any,
-      );
-
-    final container = makeContainer();
-    await container.read(diaryDetailControllerProvider(1).future);
-    await container.read(diaryDetailControllerProvider(1).notifier).toggleLike();
-    final diary = container.read(diaryDetailControllerProvider(1)).value!;
-    expect(diary.isLike, true);
-    expect(diary.likeCount, 3);
-  });
-
-  test('toggleLike 실패 시 이전 상태로 되돌린다', () async {
-    adapter
-      ..onGet('/diary/1', (server) => server.reply(200, {'status': 'success', 'resData': diaryJson(likeCount: 2)}))
-      ..onPost('/diary/like', (server) => server.reply(500, {'message': '실패'}), data: Matchers.any);
-
-    final container = makeContainer();
-    await container.read(diaryDetailControllerProvider(1).future);
-    await expectLater(
-      container.read(diaryDetailControllerProvider(1).notifier).toggleLike(),
-      throwsA(isA<AppException>()),
-    );
-    final diary = container.read(diaryDetailControllerProvider(1)).value!;
-    expect(diary.isLike, false);
-    expect(diary.likeCount, 2);
   });
 
   test('toggleVisibility 가 공개 여부를 토글한다', () async {

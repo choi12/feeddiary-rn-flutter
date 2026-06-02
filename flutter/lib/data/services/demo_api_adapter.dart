@@ -1,4 +1,4 @@
-// 데모 API 어댑터 — USE_MOCK 시 auth·diary 엔드포인트를 인메모리로 응답(네트워크 경계 격리). RN App.tsx setupMockAdapter(axios-mock-adapter) 대응.
+// 데모 API 어댑터 — USE_MOCK 시 auth·diary·community 엔드포인트를 인메모리로 응답(네트워크 경계 격리). RN App.tsx setupMockAdapter(axios-mock-adapter) 대응.
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -9,7 +9,8 @@ import 'package:feeddiary/config/api_config.dart';
 /// 응답을 백엔드 원본과 같은 snake_case 로 내려보내 인터셉터·DTO 매핑이 실제로 실행되게 한다(가이드 원칙2).
 ///
 /// auth: 로그인은 항상 신규 사용자(401)로 처리해 CreateProfile 온보딩을 노출하고, 회원가입/자동로그인은
-/// 사용자+토큰을 발급한다. diary: 인메모리 state 로 목록/캘린더/상세/CRUD/좋아요/공개토글을 실제로 변형한다(RN mock state).
+/// 사용자+토큰을 발급한다. diary: 인메모리 state 로 목록(본인)/캘린더/상세/CRUD/좋아요/공개토글을 실제로 변형한다(RN mock state).
+/// community: 공개 일기 피드(정렬·페이지네이션)·댓글 CRUD·신고(작성자 차단)를 인메모리 맵/셋으로 시연한다.
 /// 전 도메인 종합 + 실패 시나리오 주입은 후속 polish PR(가이드 C-1).
 class DemoApiAdapter implements HttpClientAdapter {
   /// 닉네임 중복으로 처리할 예약어(중복 상태 시연용).
@@ -20,8 +21,17 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 인메모리 일기 저장소(community superset 형태로 보관 — 목록은 잉여 키 무시, 상세는 전체 반환).
   late final List<Map<String, dynamic>> _diaries = _seedDiaries();
 
+  /// 인메모리 댓글 저장소(diaryIdx → 댓글 목록). RN mock commentsByDiary 대응.
+  late final Map<int, List<Map<String, dynamic>>> _commentsByDiary = _seedComments();
+
+  /// 신고로 차단된 작성자 user_idx 집합(community 목록에서 제외).
+  final Set<int> _blockedUsers = {};
+
   /// 새 일기에 부여할 다음 idx(시드 최대 idx 다음부터).
   int _nextIdx = 1014;
+
+  /// 새 댓글에 부여할 다음 idx(시드 최대 idx 다음부터).
+  int _nextCommentIdx = 5004;
 
   @override
   Future<ResponseBody> fetch(
@@ -36,6 +46,9 @@ class DemoApiAdapter implements HttpClientAdapter {
     final segments = options.uri.pathSegments;
     if (segments.isNotEmpty && segments.first == 'diary') {
       return _handleDiary(options, segments);
+    }
+    if (segments.isNotEmpty && segments.first == 'comment') {
+      return _handleComment(options, segments);
     }
     return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
   }
@@ -102,10 +115,14 @@ class DemoApiAdapter implements HttpClientAdapter {
       switch (segments[1]) {
         case 'list':
           return _listDiaries(options);
+        case 'community-list':
+          return _communityList(options);
         case 'like':
           return _likeDiary(options.data);
         case 'visibility':
           return _setVisibility(options.data);
+        case 'report':
+          return _reportDiary(options.data);
         default:
           final idx = int.tryParse(segments[1]);
           if (idx != null) {
@@ -121,13 +138,15 @@ class DemoApiAdapter implements HttpClientAdapter {
 
   ResponseBody _listDiaries(RequestOptions options) {
     final skip = int.tryParse(options.uri.queryParameters['skip'] ?? '0') ?? 0;
-    final sorted = [..._diaries]..sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
-    final page = sorted.skip(skip).take(ApiConfig.itemsPerPage).toList();
+    // 나의 일기 탭은 본인(user_idx==1) 일기만. 타작성자 시드는 community 피드 전용.
+    final own = _diaries.where((d) => d['user_idx'] == 1).toList()
+      ..sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
+    final page = own.skip(skip).take(ApiConfig.itemsPerPage).toList();
     return _json(200, {'status': 'success', 'resData': page});
   }
 
   ResponseBody _monthlyDiaries(String month) {
-    final list = _diaries.where((d) => _createdAt(d).startsWith(month)).toList()
+    final list = _diaries.where((d) => d['user_idx'] == 1 && _createdAt(d).startsWith(month)).toList()
       ..sort((a, b) => _createdAt(a).compareTo(_createdAt(b)));
     return _json(200, {'status': 'success', 'resData': list});
   }
@@ -211,6 +230,89 @@ class DemoApiAdapter implements HttpClientAdapter {
     });
   }
 
+  // --- community / comment (PR⑤) ---
+
+  ResponseBody _communityList(RequestOptions options) {
+    final skip = int.tryParse(options.uri.queryParameters['skip'] ?? '0') ?? 0;
+    final sortType = options.uri.queryParameters['sort_type'] ?? 'latest';
+    // 공개(is_visible) + 신고로 차단되지 않은 작성자의 일기만 노출.
+    final visible = _diaries.where((d) => d['is_visible'] == 1 && !_blockedUsers.contains(d['user_idx'])).toList();
+    if (sortType == 'popular') {
+      visible.sort((a, b) => (b['like_count'] as int).compareTo(a['like_count'] as int));
+    } else {
+      visible.sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
+    }
+    final page = visible.skip(skip).take(ApiConfig.itemsPerPage).toList();
+    return _json(200, {'status': 'success', 'resData': page});
+  }
+
+  ResponseBody _reportDiary(Object? data) {
+    final diaryIdx = data is Map ? (data['diary_idx'] as num?)?.toInt() : null;
+    final matches = diaryIdx == null
+        ? const <Map<String, dynamic>>[]
+        : _diaries.where((d) => d['idx'] == diaryIdx).toList();
+    if (matches.isNotEmpty) {
+      _blockedUsers.add(matches.first['user_idx'] as int);
+    }
+    return _json(200, {'status': 'success', 'resData': 'ok'});
+  }
+
+  ResponseBody _handleComment(RequestOptions options, List<String> segments) {
+    final method = options.method.toUpperCase();
+    if (segments.length == 1 && method == 'POST') {
+      return _createComment(options.data);
+    }
+    if (segments.length == 2) {
+      final idx = int.tryParse(segments[1]);
+      if (idx != null && method == 'DELETE') {
+        return _deleteComment(idx);
+      }
+    }
+    if (segments.length == 3 && segments[1] == 'list') {
+      final idx = int.tryParse(segments[2]);
+      if (idx != null) {
+        return _getComments(idx);
+      }
+    }
+    return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
+  }
+
+  ResponseBody _getComments(int diaryIdx) {
+    return _json(200, {'status': 'success', 'resData': _commentsByDiary[diaryIdx] ?? <Map<String, dynamic>>[]});
+  }
+
+  ResponseBody _createComment(Object? data) {
+    final diaryIdx = data is Map ? (data['diary_idx'] as num?)?.toInt() : null;
+    final text = data is Map ? (data['text']?.toString() ?? '') : '';
+    if (diaryIdx == null) {
+      return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
+    }
+    final idx = _nextCommentIdx++;
+    (_commentsByDiary[diaryIdx] ??= []).add(_comment(idx: idx, text: text, created: DateTime.now()));
+    _bumpCommentCount(diaryIdx, 1);
+    return _json(200, {'status': 'success', 'resData': '$idx'});
+  }
+
+  ResponseBody _deleteComment(int commentIdx) {
+    for (final entry in _commentsByDiary.entries) {
+      final before = entry.value.length;
+      entry.value.removeWhere((c) => c['idx'] == commentIdx);
+      if (entry.value.length != before) {
+        _bumpCommentCount(entry.key, -1);
+        break;
+      }
+    }
+    return _json(200, {'status': 'success', 'resData': 'ok'});
+  }
+
+  void _bumpCommentCount(int diaryIdx, int delta) {
+    final i = _diaries.indexWhere((d) => d['idx'] == diaryIdx);
+    if (i != -1) {
+      final next = ((_diaries[i]['commentCount'] as int) + delta).clamp(0, 1 << 30);
+      _diaries[i] = {..._diaries[i], 'commentCount': next};
+    }
+  }
+
   // --- helpers ---
 
   String _createdAt(Map<String, dynamic> diary) => diary['created_time'] as String;
@@ -227,7 +329,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     return {for (final field in data.fields) field.key: field.value};
   }
 
-  /// 데모 일기 한 건(community superset). 목록/상세 응답이 공유한다.
+  /// 데모 일기 한 건(community superset). 목록/상세 응답이 공유한다. [userIdx]가 1이 아니면 타작성자(community 피드 전용).
   Map<String, dynamic> _diary({
     required int idx,
     required String sticker,
@@ -236,11 +338,14 @@ class DemoApiAdapter implements HttpClientAdapter {
     bool visible = false,
     int likeCount = 0,
     int commentCount = 0,
+    int userIdx = 1,
+    String nickname = '새싹이',
+    String character = 'Chick',
   }) {
     return {
       'idx': idx,
-      'user_idx': 1,
-      'nickname': '새싹이',
+      'user_idx': userIdx,
+      'nickname': nickname,
       'sticker': sticker,
       'text': text,
       'image': '',
@@ -251,8 +356,27 @@ class DemoApiAdapter implements HttpClientAdapter {
       'commentCount': commentCount,
       'user_image': '',
       'background': '',
-      'character': 'Chick',
+      'character': character,
       'isLike': false,
+    };
+  }
+
+  /// 데모 댓글 한 건(snake_case). 기본 작성자는 데모 사용자('새싹이')라 데모상 삭제 가능하다.
+  Map<String, dynamic> _comment({
+    required int idx,
+    required String text,
+    required DateTime created,
+    String nickname = '새싹이',
+    String character = 'Chick',
+  }) {
+    return {
+      'idx': idx,
+      'nickname': nickname,
+      'background': '',
+      'character': character,
+      'text': text,
+      'created_time': created.toIso8601String(),
+      'user_image': '',
     };
   }
 
@@ -303,7 +427,66 @@ class DemoApiAdapter implements HttpClientAdapter {
         visible: true,
         likeCount: 6,
       ),
+      // --- community 피드 전용: 타작성자 공개 일기(좋아요·신고·인기정렬 시연용, My-Diary 에는 미노출) ---
+      _diary(
+        idx: 2001,
+        userIdx: 2,
+        nickname: '햇살이',
+        character: 'Bear',
+        sticker: 'Sunny',
+        text: '아침 산책길에 햇살이 좋아 한참을 걸었어요. 다들 좋은 하루 보내세요!',
+        created: daysAgo(0),
+        visible: true,
+        likeCount: 12,
+        commentCount: 2,
+      ),
+      _diary(
+        idx: 2002,
+        userIdx: 3,
+        nickname: '구름이',
+        character: 'Cat',
+        sticker: 'Coffee',
+        text: '카페에서 책 한 권을 다 읽었다. 작은 성취감.',
+        created: daysAgo(1),
+        visible: true,
+        likeCount: 7,
+      ),
+      _diary(
+        idx: 2003,
+        userIdx: 4,
+        nickname: '바다',
+        character: 'Whale',
+        sticker: 'Rain',
+        text: '비 오는 날엔 음악이 더 잘 들린다. 플레이리스트를 새로 만들었다.',
+        created: daysAgo(2),
+        visible: true,
+        likeCount: 3,
+      ),
+      _diary(
+        idx: 2004,
+        userIdx: 2,
+        nickname: '햇살이',
+        character: 'Bear',
+        sticker: 'Flower',
+        text: '베란다 꽃이 드디어 피었어요. 기다린 보람이 있네요.',
+        created: daysAgo(4),
+        visible: true,
+        likeCount: 9,
+      ),
     ];
+  }
+
+  /// 시드 댓글(일부 일기에 표시용). 작성자 본인 댓글은 인증 배지 시연용이다.
+  Map<int, List<Map<String, dynamic>>> _seedComments() {
+    final now = DateTime.now();
+    DateTime hoursAgo(int h) => now.subtract(Duration(hours: h));
+    return {
+      2001: [
+        _comment(idx: 5001, nickname: '구름이', character: 'Cat', text: '사진 없이도 글이 참 따뜻하네요.', created: hoursAgo(5)),
+        _comment(idx: 5002, nickname: '햇살이', character: 'Bear', text: '감사해요! 자주 들러주세요.', created: hoursAgo(3)),
+      ],
+      1013: [_comment(idx: 5003, nickname: '구름이', character: 'Cat', text: '커피 한 잔의 여유 좋죠.', created: hoursAgo(8))],
+    };
   }
 
   ResponseBody _json(int statusCode, Map<String, dynamic> body) {

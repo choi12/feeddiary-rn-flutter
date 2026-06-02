@@ -8,17 +8,20 @@ part of 'diary_detail_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 일기 상세 상태. 좋아요/공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
-/// (RN useOptimistic + useTransition). 타인 액션 반영 가능성으로 realtime 캐시.
+/// 일기 상세 상태. 공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
+/// (RN useOptimistic). 좋아요는 목록↔상세 동기화를 위해 `DiaryLikes` 글로벌 provider 가 담당한다.
+/// 타인 액션 반영 가능성으로 realtime 캐시.
 
 @ProviderFor(DiaryDetailController)
 final diaryDetailControllerProvider = DiaryDetailControllerFamily._();
 
-/// 일기 상세 상태. 좋아요/공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
-/// (RN useOptimistic + useTransition). 타인 액션 반영 가능성으로 realtime 캐시.
+/// 일기 상세 상태. 공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
+/// (RN useOptimistic). 좋아요는 목록↔상세 동기화를 위해 `DiaryLikes` 글로벌 provider 가 담당한다.
+/// 타인 액션 반영 가능성으로 realtime 캐시.
 final class DiaryDetailControllerProvider extends $AsyncNotifierProvider<DiaryDetailController, CommunityDiary> {
-  /// 일기 상세 상태. 좋아요/공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
-  /// (RN useOptimistic + useTransition). 타인 액션 반영 가능성으로 realtime 캐시.
+  /// 일기 상세 상태. 공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
+  /// (RN useOptimistic). 좋아요는 목록↔상세 동기화를 위해 `DiaryLikes` 글로벌 provider 가 담당한다.
+  /// 타인 액션 반영 가능성으로 realtime 캐시.
   DiaryDetailControllerProvider._({required DiaryDetailControllerFamily super.from, required int super.argument})
     : super(
         retry: null,
@@ -53,10 +56,11 @@ final class DiaryDetailControllerProvider extends $AsyncNotifierProvider<DiaryDe
   }
 }
 
-String _$diaryDetailControllerHash() => r'940602e1ce41147acf5deade7ad6e1572035879c';
+String _$diaryDetailControllerHash() => r'71aba16fa526c8188f3ea86c3aea6e0912437b8a';
 
-/// 일기 상세 상태. 좋아요/공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
-/// (RN useOptimistic + useTransition). 타인 액션 반영 가능성으로 realtime 캐시.
+/// 일기 상세 상태. 공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
+/// (RN useOptimistic). 좋아요는 목록↔상세 동기화를 위해 `DiaryLikes` 글로벌 provider 가 담당한다.
+/// 타인 액션 반영 가능성으로 realtime 캐시.
 
 final class DiaryDetailControllerFamily extends $Family
     with
@@ -76,8 +80,9 @@ final class DiaryDetailControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// 일기 상세 상태. 좋아요/공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
-  /// (RN useOptimistic + useTransition). 타인 액션 반영 가능성으로 realtime 캐시.
+  /// 일기 상세 상태. 공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
+  /// (RN useOptimistic). 좋아요는 목록↔상세 동기화를 위해 `DiaryLikes` 글로벌 provider 가 담당한다.
+  /// 타인 액션 반영 가능성으로 realtime 캐시.
 
   DiaryDetailControllerProvider call(int diaryIdx) => DiaryDetailControllerProvider._(argument: diaryIdx, from: this);
 
@@ -85,8 +90,9 @@ final class DiaryDetailControllerFamily extends $Family
   String toString() => r'diaryDetailControllerProvider';
 }
 
-/// 일기 상세 상태. 좋아요/공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
-/// (RN useOptimistic + useTransition). 타인 액션 반영 가능성으로 realtime 캐시.
+/// 일기 상세 상태. 공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
+/// (RN useOptimistic). 좋아요는 목록↔상세 동기화를 위해 `DiaryLikes` 글로벌 provider 가 담당한다.
+/// 타인 액션 반영 가능성으로 realtime 캐시.
 
 abstract class _$DiaryDetailController extends $AsyncNotifier<CommunityDiary> {
   late final _$args = ref.$arg as int;

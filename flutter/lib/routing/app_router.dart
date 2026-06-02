@@ -5,6 +5,7 @@ import 'package:feeddiary/routing/routes.dart';
 import 'package:feeddiary/ui/features/auth/create_profile_screen.dart';
 import 'package:feeddiary/ui/features/auth/sign_in_screen.dart';
 import 'package:feeddiary/ui/features/auth/splash_screen.dart';
+import 'package:feeddiary/ui/features/community/comments_screen.dart';
 import 'package:feeddiary/ui/features/diary/create_diary_screen.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_screen.dart';
 import 'package:feeddiary/ui/features/home/main_shell.dart';
@@ -61,6 +62,11 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.diaryDetail,
         builder: (_, state) => DiaryDetailScreen(diaryIdx: int.parse(state.pathParameters['idx']!)),
+      ),
+      GoRoute(
+        path: Routes.diaryComments,
+        builder: (_, state) =>
+            CommentsScreen(diaryIdx: int.parse(state.pathParameters['idx']!), author: state.extra as String?),
       ),
     ],
   );

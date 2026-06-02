@@ -2,6 +2,7 @@
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/features/community/community_screen.dart';
 import 'package:feeddiary/ui/features/diary/my_diary_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +28,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         children: const [
           _PlaceholderTab(icon: Icons.local_florist_outlined, label: '나의 화분'),
           MyDiaryScreen(),
-          _PlaceholderTab(icon: Icons.people_alt_outlined, label: '공유 일기'),
+          CommunityScreen(),
           _PlaceholderTab(icon: Icons.mail_outline, label: '나의 편지'),
           _SettingPlaceholder(),
         ],
