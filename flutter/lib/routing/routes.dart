@@ -15,4 +15,10 @@ abstract final class Routes {
 
   /// 일기 상세 푸시 경로 생성. 예: `/diary/123`.
   static String diaryDetailPath(int idx) => '/diary/$idx';
+
+  /// 일기 댓글(:idx). 푸시 경로는 [diaryCommentsPath].
+  static const String diaryComments = '/diary/:idx/comments';
+
+  /// 일기 댓글 푸시 경로 생성. 예: `/diary/123/comments`.
+  static String diaryCommentsPath(int idx) => '/diary/$idx/comments';
 }

@@ -5,6 +5,8 @@ import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/routing/routes.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/features/community/diary_likes.dart';
+import 'package:feeddiary/ui/features/community/report_dialog.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
 import 'package:feeddiary/ui/features/diary/sticker_catalog.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_card.dart';
@@ -168,13 +170,15 @@ class _BottomBar extends ConsumerWidget {
   final CommunityDiary diary;
   final bool isMine;
 
-  Future<void> _like(BuildContext context, WidgetRef ref) async {
+  Future<void> _like(BuildContext context, WidgetRef ref, LikeState like) async {
     if (isMine) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('내 일기에는 좋아요를 누를 수 없어요.')));
       return;
     }
     try {
-      await ref.read(diaryDetailControllerProvider(diary.idx).notifier).toggleLike();
+      await ref
+          .read(diaryLikesProvider.notifier)
+          .toggle(idx: diary.idx, baseIsLike: like.isLike, baseLikeCount: like.likeCount);
     } on AppException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
@@ -184,6 +188,9 @@ class _BottomBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 좋아요는 목록과 동기화되도록 DiaryLikes 글로벌 override 를 구독한다(override 없으면 서버값 사용).
+    final override = ref.watch(diaryLikesProvider.select((likes) => likes[diary.idx]));
+    final like = override ?? (isLike: diary.isLike, likeCount: diary.likeCount);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding, vertical: 12),
       decoration: BoxDecoration(
@@ -193,19 +200,28 @@ class _BottomBar extends ConsumerWidget {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => _like(context, ref),
+            onPressed: () => _like(context, ref, like),
             icon: Icon(
-              diary.isLike ? Icons.favorite : Icons.favorite_border,
-              color: diary.isLike ? context.colors.error : context.colors.textSecondary,
+              like.isLike ? Icons.favorite : Icons.favorite_border,
+              color: like.isLike ? context.colors.error : context.colors.textSecondary,
             ),
           ),
-          Text('${diary.likeCount}', style: TextStyle(color: context.colors.textSecondary)),
-          const SizedBox(width: 16),
-          Icon(Icons.chat_bubble_outline, size: 22, color: context.colors.textSecondary),
-          const SizedBox(width: 6),
-          Text('${diary.commentCount}', style: TextStyle(color: context.colors.textSecondary)),
+          Text('${like.likeCount}', style: TextStyle(color: context.colors.textSecondary)),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => context.push(Routes.diaryCommentsPath(diary.idx), extra: diary.nickname),
+            icon: Icon(Icons.chat_bubble_outline, size: 20, color: context.colors.textSecondary),
+            label: Text('${diary.commentCount}', style: TextStyle(color: context.colors.textSecondary)),
+          ),
           const Spacer(),
-          if (isMine) VisibilityBadge(isVisible: diary.isVisible),
+          if (isMine)
+            VisibilityBadge(isVisible: diary.isVisible)
+          else
+            IconButton(
+              tooltip: '신고/차단',
+              onPressed: () => showReportDialog(context, ref, diaryIdx: diary.idx),
+              icon: Icon(Icons.flag_outlined, color: context.colors.textSecondary),
+            ),
         ],
       ),
     );
