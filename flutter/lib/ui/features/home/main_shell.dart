@@ -5,11 +5,12 @@ import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/features/community/community_screen.dart';
 import 'package:feeddiary/ui/features/diary/my_diary_screen.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_screen.dart';
+import 'package:feeddiary/ui/features/letter/letters_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 인증 후 진입하는 메인 셸. 5개 탭을 IndexedStack 으로 상태 보존하며, 현재는 일기 탭만 실화면이고
-/// 나머지(화분/공유/편지/설정)는 후속 PR 에서 대체할 placeholder 다. RN React Navigation bottom-tabs → IndexedStack.
+/// 인증 후 진입하는 메인 셸. 5개 탭을 IndexedStack 으로 상태 보존하며, 현재 설정 탭만 placeholder 이고
+/// 나머지(화분/일기/공유/편지)는 실화면이다. RN React Navigation bottom-tabs → IndexedStack.
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
 
@@ -26,13 +27,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     return Scaffold(
       body: IndexedStack(
         index: _index,
-        children: const [
-          FlowerpotScreen(),
-          MyDiaryScreen(),
-          CommunityScreen(),
-          _PlaceholderTab(icon: Icons.mail_outline, label: '나의 편지'),
-          _SettingPlaceholder(),
-        ],
+        children: const [FlowerpotScreen(), MyDiaryScreen(), CommunityScreen(), LettersScreen(), _SettingPlaceholder()],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -52,31 +47,6 @@ class _MainShellState extends ConsumerState<MainShell> {
           NavigationDestination(icon: Icon(Icons.mail_outline), selectedIcon: Icon(Icons.mail), label: '편지'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: '설정'),
         ],
-      ),
-    );
-  }
-}
-
-/// 후속 PR 에서 실화면으로 대체할 탭 placeholder.
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(label)),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 56, color: context.colors.outline),
-            const SizedBox(height: 12),
-            Text('$label 화면은 다음 PR에서 구현됩니다.', style: TextStyle(color: context.colors.textSecondary)),
-          ],
-        ),
       ),
     );
   }
