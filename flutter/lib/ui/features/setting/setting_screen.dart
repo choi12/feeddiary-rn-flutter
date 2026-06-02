@@ -8,13 +8,17 @@ import 'package:feeddiary/data/models/user.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/routing/routes.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_menu_row.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/setting/character_catalog.dart';
 import 'package:feeddiary/ui/features/setting/local_avatar.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
-import 'package:feeddiary/ui/features/setting/widgets/setting_menu_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,23 +29,19 @@ class SettingScreen extends ConsumerWidget {
   const SettingScreen({super.key});
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showFeedAlert<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        content: const Text(SettingStrings.signOutConfirm),
-        actions: [
-          TextButton(onPressed: () => context.pop(false), child: const Text(SettingStrings.cancel)),
-          TextButton(onPressed: () => context.pop(true), child: const Text(SettingStrings.signOut)),
-        ],
-      ),
+      message: SettingStrings.signOutConfirm,
+      actions: [
+        FeedAlertAction(text: SettingStrings.cancel, isCancel: true, onPressed: () => Navigator.of(context).pop(false)),
+        FeedAlertAction(text: SettingStrings.signOut, onPressed: () => Navigator.of(context).pop(true)),
+      ],
     );
     if (confirmed != true) return;
     try {
       await ref.read(authControllerProvider.notifier).signOut();
     } on AppException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
-      }
+      if (context.mounted) showFeedToast(context, e.displayMessage);
     }
   }
 
@@ -58,7 +58,7 @@ class SettingScreen extends ConsumerWidget {
     );
     final launched = await launchUrl(uri);
     if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(SettingStrings.supportUnavailable)));
+      showFeedToast(context, SettingStrings.supportUnavailable);
     }
   }
 
@@ -75,34 +75,31 @@ class SettingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user;
     return Scaffold(
-      appBar: AppBar(title: const Text(SettingStrings.title)),
+      backgroundColor: FeedPalette.white,
+      appBar: const FeedHeader(title: SettingStrings.title),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding),
+        padding: EdgeInsets.zero,
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding, vertical: 12),
+            child: _ProfileBox(user: user, onTap: () => context.push(Routes.settingProfile)),
+          ),
           const SizedBox(height: 8),
-          _ProfileBox(user: user, onTap: () => context.push(Routes.settingProfile)),
-          const Divider(height: 32),
-          SettingMenuItem(
-            icon: Icons.lock_outline,
+          FeedMenuRow(
+            icon: FeedIcons.settingLock,
+            iconSize: 19,
             label: SettingStrings.menuLock,
             onTap: () => context.push(Routes.settingLockdown),
           ),
-          SettingMenuItem(
-            icon: Icons.mail_outline,
+          FeedMenuRow(
+            icon: FeedIcons.settingSupport,
+            iconSize: 17,
             label: SettingStrings.menuSupport,
             onTap: () => _sendSupportEmail(context, user),
           ),
-          SettingMenuItem(
-            icon: Icons.description_outlined,
-            label: SettingStrings.menuLicense,
-            onTap: () => _showLicenses(context),
-          ),
-          SettingMenuItem(
-            icon: Icons.info_outline,
-            label: SettingStrings.menuAppVersion,
-            onTap: () => context.push(Routes.settingAppVersion),
-          ),
-          const Divider(height: 32),
+          FeedMenuRow(label: SettingStrings.menuLicense, onTap: () => _showLicenses(context)),
+          FeedMenuRow(label: SettingStrings.menuAppVersion, onTap: () => context.push(Routes.settingAppVersion)),
+          const SizedBox(height: 28),
           Center(
             child: TextButton(
               onPressed: () => _signOut(context, ref),
@@ -177,7 +174,7 @@ class _ProfileBox extends ConsumerWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: context.colors.outline),
+            const Icon(FeedIcons.menuChevron, size: 20, color: FeedPalette.lightGray),
           ],
         ),
       ),
@@ -221,7 +218,7 @@ class _Avatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(color: context.colors.background, shape: BoxShape.circle),
-      child: Icon(Icons.question_mark, color: context.colors.textSecondary),
+      child: Icon(FeedIcons.question, size: 22, color: context.colors.textSecondary),
     );
   }
 }

@@ -1,5 +1,8 @@
 // 잠금 비밀번호 설정 화면 — 4자리 2단계(입력→확인). RN screens/home/setting/SettingLockPassword.
 import 'package:feeddiary/data/services/lock_storage.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:feeddiary/ui/features/setting/widgets/digit_keypad.dart';
 import 'package:feeddiary/ui/features/setting/widgets/password_dots.dart';
@@ -53,7 +56,7 @@ class _LockPasswordScreenState extends ConsumerState<LockPasswordScreen> {
 
   Future<void> _validate() async {
     if (_first != _confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(SettingStrings.passwordMismatch)));
+      showFeedToast(context, SettingStrings.passwordMismatch);
       setState(() => _confirm = '');
       return;
     }
@@ -61,14 +64,15 @@ class _LockPasswordScreenState extends ConsumerState<LockPasswordScreen> {
     await lock.setPassword(_first);
     await lock.enableLock();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(SettingStrings.passwordSet)));
+    showFeedToast(context, SettingStrings.passwordSet);
     context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(SettingStrings.lockSetTitle)),
+      backgroundColor: FeedPalette.white,
+      appBar: const FeedHeader(title: SettingStrings.lockSetTitle, hasBackButton: true),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),

@@ -1,4 +1,5 @@
 // 숫자 키패드 — 3×4(마지막 행 [빈칸, 0, 삭제]). RN components/lock/DigitKeypad + LOCK_SCREEN_DIGITS.
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class DigitKeypad extends StatelessWidget {
         label: SettingStrings.keypadDeleteLabel,
         child: InkResponse(
           onTap: onDelete,
-          child: SizedBox(height: 72, child: Icon(Icons.backspace_outlined, color: context.colors.textSecondary)),
+          child: SizedBox(height: 72, child: Icon(FeedIcons.keypadDelete, color: context.colors.textSecondary)),
         ),
       );
     }

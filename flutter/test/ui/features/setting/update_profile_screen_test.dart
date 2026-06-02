@@ -5,6 +5,7 @@ import 'package:feeddiary/data/services/token_storage.dart';
 import 'package:feeddiary/domain/models/sign_in_type.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
+import 'package:feeddiary/ui/core/widgets/feed_button.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:feeddiary/ui/features/setting/update_profile_screen.dart';
 import 'package:flutter/material.dart';
@@ -41,14 +42,14 @@ void main() {
     );
     await tester.pump();
 
-    // 사진/캐릭터 토글(상단·항상 빌드)·탈퇴(AppBar)·저장(bottomNav)을 확인한다.
+    // 사진/캐릭터 토글(상단·항상 빌드)·탈퇴(헤더 rightItem)·저장(bottomNav)을 확인한다.
     // 닉네임 TextField 는 36개 캐릭터 그리드 아래라 lazy ListView 에서 뷰포트 밖 → 폼 로직은 컨트롤러 테스트가 커버.
     expect(find.text(SettingStrings.pickCharacter), findsOneWidget);
     expect(find.text(SettingStrings.save), findsOneWidget);
     expect(find.text(SettingStrings.deleteAccount), findsOneWidget);
 
     // 변경 전이라 저장 버튼 비활성(canSubmit=false).
-    final button = tester.widget<FilledButton>(find.byType(FilledButton));
-    expect(button.onPressed, isNull);
+    final button = tester.widget<FeedButton>(find.byType(FeedButton));
+    expect(button.disabled, isTrue);
   });
 }
