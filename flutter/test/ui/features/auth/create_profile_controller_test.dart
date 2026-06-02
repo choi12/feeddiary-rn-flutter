@@ -57,7 +57,7 @@ void main() {
     final controller = container.read(createProfileControllerProvider.notifier);
     await controller.validateNickname('새싹');
     expect(container.read(createProfileControllerProvider).canSubmit, isFalse);
-    controller.setCharacter('Chick');
+    controller.selectCharacter('Chick');
     expect(container.read(createProfileControllerProvider).canSubmit, isTrue);
   });
 }

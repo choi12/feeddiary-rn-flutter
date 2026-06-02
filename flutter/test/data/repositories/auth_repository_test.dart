@@ -78,7 +78,6 @@ void main() {
       email: 'e@e.com',
       type: SignInType.google,
       nickname: '가입',
-      image: '',
       background: '',
       character: 'Chick',
       fcmToken: '',
