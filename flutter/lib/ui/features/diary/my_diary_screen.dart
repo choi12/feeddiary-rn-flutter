@@ -2,7 +2,9 @@
 import 'dart:async';
 
 import 'package:feeddiary/routing/routes.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/diary/diary_list_controller.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_calendar.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_card.dart';
@@ -27,7 +29,7 @@ class _MyDiaryScreenState extends ConsumerState<MyDiaryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colors.background,
+      backgroundColor: FeedPalette.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -44,6 +46,7 @@ class _MyDiaryScreenState extends ConsumerState<MyDiaryScreen> {
   }
 }
 
+/// 상단 헤더 — 캘린더/리스트 토글 + "일기 쓰러 가기" 버튼. RN `MyDiaryHeader` 대응.
 class _Header extends StatelessWidget {
   const _Header({required this.tab, required this.onSelectTab, required this.onCreate});
 
@@ -54,10 +57,10 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        border: Border(bottom: BorderSide(color: context.colors.outline, width: 0.5)),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      decoration: const BoxDecoration(
+        color: FeedPalette.background,
+        border: Border(bottom: BorderSide(color: FeedPalette.whiteGray)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -65,45 +68,90 @@ class _Header extends StatelessWidget {
           Row(
             children: [
               _ToggleButton(
-                icon: Icons.calendar_today_outlined,
-                label: '캘린더 보기',
+                icon: FeedIcons.calendar,
+                iconSize: 20,
                 selected: tab == _DiaryTab.calendar,
                 onTap: () => onSelectTab(_DiaryTab.calendar),
               ),
+              const SizedBox(width: 7),
               _ToggleButton(
-                icon: Icons.view_list_outlined,
-                label: '리스트 보기',
+                icon: FeedIcons.listView,
+                iconSize: 22,
                 selected: tab == _DiaryTab.card,
                 onTap: () => onSelectTab(_DiaryTab.card),
               ),
             ],
           ),
-          TextButton.icon(
-            onPressed: onCreate,
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            label: const Text('일기 쓰기'),
-          ),
+          _CreateDiaryButton(onTap: onCreate),
         ],
       ),
     );
   }
 }
 
+/// 뷰 토글 버튼 — 40×40 흰 박스·radius10·선택 시 MAIN. RN `ListTypeButtonBox` 버튼 대응.
 class _ToggleButton extends StatelessWidget {
-  const _ToggleButton({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _ToggleButton({required this.icon, required this.iconSize, required this.selected, required this.onTap});
 
   final IconData icon;
-  final String label;
+  final double iconSize;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: onTap,
-      icon: Icon(icon),
-      tooltip: label,
-      color: selected ? context.colors.primary : context.colors.outline,
+    return Material(
+      color: FeedPalette.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, size: iconSize, color: selected ? FeedPalette.main : FeedPalette.lightGray),
+        ),
+      ),
+    );
+  }
+}
+
+/// "일기 쓰러 가기" 알약 버튼 — 흰 배경·radius25·오른쪽 캐럿. RN `CreateDiaryButton` 대응.
+class _CreateDiaryButton extends StatelessWidget {
+  const _CreateDiaryButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: FeedPalette.white,
+      borderRadius: BorderRadius.circular(25),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(25),
+        child: Container(
+          height: 43,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          alignment: Alignment.center,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '일기 쓰러 가기',
+                style: TextStyle(
+                  fontFamily: FeedFonts.dovemayo,
+                  fontSize: 13,
+                  color: FeedPalette.lightBlack,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              SizedBox(width: 2),
+              RotatedBox(quarterTurns: 3, child: Icon(FeedIcons.caretDown, size: 20, color: FeedPalette.main)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

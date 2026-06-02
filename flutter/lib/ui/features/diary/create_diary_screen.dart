@@ -2,8 +2,14 @@
 import 'package:feeddiary/data/models/diary.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/routing/routes.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_button.dart';
+import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_text_field.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/diary/create_diary_controller.dart';
 import 'package:feeddiary/ui/features/diary/sticker_catalog.dart';
 import 'package:feeddiary/utils/date_format.dart';
@@ -41,7 +47,7 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
       }
     } on AppException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+        showFeedToast(context, e.displayMessage);
         setState(() => _submitting = false);
       }
     }
@@ -65,15 +71,11 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
     final form = ref.watch(_provider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? '일기 수정' : '일기 쓰기'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => _pickDate(form.date),
-            icon: const Icon(Icons.calendar_today_outlined, size: 16),
-            label: Text(formatYmd(form.date)),
-          ),
-        ],
+      backgroundColor: FeedPalette.white,
+      appBar: FeedHeader(
+        title: isEdit ? '일기 수정' : '일기 쓰기',
+        hasBackButton: true,
+        rightItem: _CalendarButton(date: form.date, onTap: () => _pickDate(form.date)),
       ),
       body: SafeArea(
         child: Column(
@@ -91,19 +93,14 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
                       onSelect: (name) => ref.read(_provider.notifier).setSticker(name),
                     ),
                     const SizedBox(height: 24),
-                    TextField(
+                    FeedTextField(
                       controller: _textController,
                       onChanged: (value) => ref.read(_provider.notifier).setText(value),
                       maxLines: 6,
-                      decoration: InputDecoration(
-                        hintText: '오늘 하루를 기록해보세요.',
-                        filled: true,
-                        fillColor: context.colors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+                      minLines: 6,
+                      font: FeedFieldFont.ownglyph,
+                      fontSize: 17,
+                      hintText: '오늘 하루를 기록해보세요.',
                     ),
                   ],
                 ),
@@ -111,19 +108,42 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(AppDimens.padding),
-              child: SizedBox(
-                width: double.infinity,
-                height: AppDimens.buttonHeight,
-                child: FilledButton(
-                  onPressed: (form.canSubmit && !_submitting) ? _submit : null,
-                  child: _submitting
-                      ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Text(isEdit ? '수정하기' : '일기 등록하기'),
-                ),
+              child: FeedButton(
+                title: isEdit ? '수정하기' : '일기 등록하기',
+                onPressed: _submit,
+                disabled: !form.canSubmit,
+                isLoading: _submitting,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 헤더 우측 날짜 선택 버튼 — 캘린더 아이콘 + 선택 날짜. RN `CalendarButton` 대응.
+class _CalendarButton extends StatelessWidget {
+  const _CalendarButton({required this.date, required this.onTap});
+
+  final DateTime date;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkResponse(
+      onTap: onTap,
+      radius: 24,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(FeedIcons.calendar, size: 14, color: FeedPalette.lightBlack),
+          const SizedBox(width: 4),
+          Text(
+            formatYmd(date),
+            style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.lightBlack),
+          ),
+        ],
       ),
     );
   }
@@ -144,16 +164,30 @@ class _StickerPicker extends StatelessWidget {
         for (final name in StickerCatalog.names)
           GestureDetector(
             onTap: () => onSelect(name),
-            child: Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: name == selected ? context.colors.primary.withValues(alpha: 0.18) : context.colors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: name == selected ? context.colors.primary : context.colors.outline),
-              ),
-              child: Image.asset(StickerCatalog.assetFor(name), width: 36, height: 36, fit: BoxFit.contain),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: FeedPalette.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: name == selected ? FeedPalette.main : FeedPalette.whiteGray,
+                      width: name == selected ? 2 : 1,
+                    ),
+                  ),
+                  child: Image.asset(StickerCatalog.assetFor(name), width: 36, height: 36, fit: BoxFit.contain),
+                ),
+                if (name == selected)
+                  const Positioned(
+                    top: -6,
+                    right: -6,
+                    child: Icon(FeedIcons.stickerCheck, size: 20, color: FeedPalette.main),
+                  ),
+              ],
             ),
           ),
       ],
