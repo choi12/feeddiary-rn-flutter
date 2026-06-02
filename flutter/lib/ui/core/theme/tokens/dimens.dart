@@ -16,4 +16,16 @@ abstract final class AppDimens {
 
   /// 안드로이드 하단 시스템 영역 보정값.
   static const double bottomInsetAndroid = 20;
+
+  /// 하단 탭바 상단(좌우) 모서리 반경. RN `borderTopLeft/RightRadius: 20`.
+  static const double tabBarTopRadius = 20;
+
+  /// 토스트 박스 모서리 반경. RN `borderRadius: 10`.
+  static const double toastRadius = 10;
+
+  /// 알림 다이얼로그 너비. RN `AlertModal width: 300`.
+  static const double dialogWidth = 300;
+
+  /// 설정 메뉴 한 줄 높이. RN `MenuButton height: 70`.
+  static const double menuRowHeight = 70;
 }

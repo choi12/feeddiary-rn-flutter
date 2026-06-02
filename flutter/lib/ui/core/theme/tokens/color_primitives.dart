@@ -39,4 +39,14 @@ abstract final class FeedPalette {
   static const Color olive = Color(0xFFB6CA4D);
   static const Color beige = Color(0xFFF0EDDF);
   static const Color lightBeige = Color(0xFFE7E2CC);
+
+  // Overlay / elevation — RN `TRANSPARENT.BLACK_*` · boxShadow 의 반투명 검정.
+  /// 모달 dim. RN `rgba(0,0,0,0.3)`.
+  static const Color scrim = Color(0x4D000000);
+
+  /// 이미지 모달 dim. RN `rgba(0,0,0,0.9)`.
+  static const Color scrimHeavy = Color(0xE6000000);
+
+  /// 탭바 등 옅은 그림자. RN `rgba(0,0,0,0.08)`.
+  static const Color shadowSoft = Color(0x14000000);
 }
