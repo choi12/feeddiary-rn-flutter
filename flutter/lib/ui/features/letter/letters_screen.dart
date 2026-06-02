@@ -1,6 +1,7 @@
 // 편지함 화면 — 나에게 쓴 편지 목록(2열·미세 흔들림) + 작성 진입 + 편집 모드 삭제 + 편지 펼침 모달. RN screens/home/letter/Letters 대응(셸 탭).
 import 'dart:async';
 
+import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/data/models/letter.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/routing/routes.dart';
@@ -98,43 +99,48 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
             ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppDimens.padding, 12, AppDimens.padding, 4),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: isTodayWritten ? null : () => context.push(Routes.letterWrite),
-                  icon: Icon(isTodayWritten ? Icons.check_circle_outline : Icons.edit_outlined),
-                  label: Text(isTodayWritten ? LetterStrings.writeDone : LetterStrings.writeCta),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(image: AssetImage(AppAssets.letterBoard), fit: BoxFit.cover),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppDimens.padding, 12, AppDimens.padding, 4),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: isTodayWritten ? null : () => context.push(Routes.letterWrite),
+                    icon: Icon(isTodayWritten ? Icons.check_circle_outline : Icons.edit_outlined),
+                    label: Text(isTodayWritten ? LetterStrings.writeDone : LetterStrings.writeCta),
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: state.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(letterListProvider)),
-                data: (paged) {
-                  if (paged.isEmpty) {
-                    return const DiaryEmptyView(message: LetterStrings.empty);
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () => ref.read(letterListProvider.notifier).refreshList(),
-                    child: _LetterBoard(
-                      controller: _controller,
-                      letters: paged.items,
-                      isEnd: paged.isEnd,
-                      editMode: editMode,
-                      onOpen: (letter, origin) => showLetterDetail(context, letter, origin),
-                      onDelete: _confirmDelete,
-                    ),
-                  );
-                },
+              Expanded(
+                child: state.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(letterListProvider)),
+                  data: (paged) {
+                    if (paged.isEmpty) {
+                      return const DiaryEmptyView(message: LetterStrings.empty);
+                    }
+                    return RefreshIndicator(
+                      onRefresh: () => ref.read(letterListProvider.notifier).refreshList(),
+                      child: _LetterBoard(
+                        controller: _controller,
+                        letters: paged.items,
+                        isEnd: paged.isEnd,
+                        editMode: editMode,
+                        onOpen: (letter, origin) => showLetterDetail(context, letter, origin),
+                        onDelete: _confirmDelete,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

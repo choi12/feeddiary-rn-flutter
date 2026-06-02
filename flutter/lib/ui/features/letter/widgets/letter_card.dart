@@ -1,7 +1,8 @@
 // 편지 카드 — 핀에 매달린 듯 미세하게 흔들리는 편지(탭→펼침·편집 모드→삭제). RN LetterCard + useLetterSwingAnimation 대응.
+import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/data/models/letter.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
-import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/letter/letter_strings.dart';
 import 'package:feeddiary/utils/date_format.dart';
 import 'package:flutter/material.dart';
@@ -72,32 +73,29 @@ class _LetterCardState extends State<LetterCard> with SingleTickerProviderStateM
           GestureDetector(
             onTapUp: widget.editMode ? null : (details) => widget.onOpen(widget.letter, details.globalPosition),
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 12),
-              decoration: BoxDecoration(
-                color: context.colors.surface,
-                borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-                border: Border.all(color: context.colors.outline),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+              decoration: const BoxDecoration(
+                image: DecorationImage(image: AssetImage(AppAssets.letterPaper), fit: BoxFit.fill),
+                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3))],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.mail_outline, size: 28, color: context.colors.primary),
-                  const SizedBox(height: 10),
                   Text(
                     '${formatRelativeDate(widget.letter.createdAt)}의',
                     style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
                   ),
-                  Text(LetterStrings.to, style: TextStyle(color: context.colors.textPrimary, fontSize: 15)),
+                  const SizedBox(height: 4),
+                  Text(
+                    LetterStrings.to,
+                    style: TextStyle(color: context.colors.textPrimary, fontSize: 20, fontFamily: FeedFonts.ownglyph),
+                  ),
                 ],
               ),
             ),
           ),
-          // 상단 핀(흔들림 회전축).
-          Positioned(
-            top: -6,
-            child: Transform.rotate(angle: 0.5, child: Icon(Icons.push_pin, size: 20, color: context.colors.primary)),
-          ),
+          // 상단 핀(흔들림 회전축) — RN pin.png.
+          Positioned(top: -10, child: Image.asset(AppAssets.letterPin, width: 26, height: 26)),
           if (widget.editMode)
             Positioned(top: -10, left: -6, child: _DeleteBadge(onTap: () => widget.onDelete(widget.letter))),
         ],

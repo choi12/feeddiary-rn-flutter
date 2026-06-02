@@ -57,7 +57,7 @@ class CommunityDiaryCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Text(StickerCatalog.emojiFor(diary.sticker), style: const TextStyle(fontSize: 30)),
+                  Image.asset(StickerCatalog.assetFor(diary.sticker), width: 40, height: 40, fit: BoxFit.contain),
                   const SizedBox(width: 10),
                   _Avatar(nickname: diary.nickname),
                   const SizedBox(width: 8),

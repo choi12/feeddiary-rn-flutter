@@ -46,7 +46,7 @@ class DiaryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(StickerCatalog.emojiFor(sticker), style: const TextStyle(fontSize: 30)),
+                  Image.asset(StickerCatalog.assetFor(sticker), width: 40, height: 40, fit: BoxFit.contain),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(formatYmd(date), style: TextStyle(color: context.colors.textSecondary, fontSize: 13)),

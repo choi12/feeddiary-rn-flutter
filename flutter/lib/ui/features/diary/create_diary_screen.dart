@@ -153,7 +153,7 @@ class _StickerPicker extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: name == selected ? context.colors.primary : context.colors.outline),
               ),
-              child: Text(StickerCatalog.emojiFor(name), style: const TextStyle(fontSize: 24)),
+              child: Image.asset(StickerCatalog.assetFor(name), width: 36, height: 36, fit: BoxFit.contain),
             ),
           ),
       ],

@@ -38,6 +38,7 @@ void main() {
 
     expect(find.text(LetterStrings.headerTitle), findsOneWidget);
     expect(find.text(LetterStrings.writeCta), findsOneWidget);
-    expect(find.byIcon(Icons.mail_outline), findsWidgets);
+    // 카드는 편지지 PNG 배경 + '나에게' 라벨(아이콘 제거, PR⑧). 라벨 존재로 카드 렌더 확인.
+    expect(find.text(LetterStrings.to), findsWidgets);
   });
 }

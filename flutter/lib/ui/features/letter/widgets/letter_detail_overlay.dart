@@ -1,6 +1,8 @@
 // 편지 펼침 모달 — 누른 위치에서 중앙으로 확대되며 등장하는 편지 상세. RN useAnimatedLetterModal(터치 위치→중앙 스프링) 대응(경량).
+import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/data/models/letter.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/utils/date_format.dart';
 import 'package:flutter/material.dart';
 
@@ -46,13 +48,12 @@ class _LetterDetailCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        width: 280,
-        constraints: const BoxConstraints(maxHeight: 380),
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 24, offset: Offset(0, 8))],
+        width: 300,
+        constraints: const BoxConstraints(maxHeight: 420),
+        padding: const EdgeInsets.fromLTRB(34, 40, 34, 38),
+        decoration: const BoxDecoration(
+          image: DecorationImage(image: AssetImage(AppAssets.letterPaper), fit: BoxFit.fill),
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 24, offset: Offset(0, 8))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -67,7 +68,12 @@ class _LetterDetailCard extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Text(
                   letter.text,
-                  style: TextStyle(color: context.colors.textPrimary, fontSize: 18, height: 1.5),
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
+                    fontSize: 19,
+                    height: 1.6,
+                    fontFamily: FeedFonts.ownglyph,
+                  ),
                 ),
               ),
             ),
