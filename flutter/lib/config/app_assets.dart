@@ -46,11 +46,12 @@ abstract final class AppAssets {
   static const String profileSuccess = '$_img/profile/success.png';
   static const String profileError = '$_img/profile/error.png';
 
-  // Lottie(물/사랑 피드백 + 화분 캔버스 앰비언트 새/풍선). RN assets/lottie.
+  // Lottie(물/사랑 피드백 + 화분 캔버스 앰비언트 새/풍선 + 일기 좋아요 하트). RN assets/lottie.
   static const String lottieRain = '$_lottie/rain.json';
   static const String lottieHeart = '$_lottie/heart.json';
   static const String lottieBirds = '$_lottie/birds.json';
   static const String lottieBaloon = '$_lottie/heart_baloon.json';
+  static const String lottieHeartGreen = '$_lottie/heart_green.json';
 
   // 로그인/계정(앱 버전 로고·설정 계정 박스 소셜 로고). RN assets/images/signIn.
   static const String logo = '$_img/signin/logo.png';
