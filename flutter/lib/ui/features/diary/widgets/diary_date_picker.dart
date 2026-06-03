@@ -155,16 +155,24 @@ class _DayCell extends StatelessWidget {
     return GestureDetector(
       onTap: isFuture ? null : () => onTap(date),
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: SizedBox(
         height: 40,
-        decoration: BoxDecoration(
-          color: isSelected ? FeedPalette.whiteGray : null,
-          borderRadius: BorderRadius.circular(12),
-        ),
         child: Center(
-          child: Text(
-            '${date.day}',
-            style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 14, color: color),
+          // 선택된 날짜 = 메인컬러 테두리 동그라미(채우기 없음).
+          child: Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: isSelected
+                ? BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: FeedPalette.main),
+                  )
+                : null,
+            child: Text(
+              '${date.day}',
+              style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 14, color: color),
+            ),
           ),
         ),
       ),
