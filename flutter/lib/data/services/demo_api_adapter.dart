@@ -23,8 +23,11 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 인메모리 일기 저장소(community superset 형태로 보관 — 목록은 잉여 키 무시, 상세는 전체 반환).
   late final List<Map<String, dynamic>> _diaries = _seedDiaries();
 
-  /// 인메모리 댓글 저장소(diaryIdx → 댓글 목록). RN mock commentsByDiary 대응.
+  /// 인메모리 댓글 저장소(diaryIdx → 댓글 목록). RN mock commentsByDiary 대응(시작 시 비어 있음 → fallback 노출).
   late final Map<int, List<Map<String, dynamic>>> _commentsByDiary = _seedComments();
+
+  /// 특정 일기 댓글이 없을 때 보여줄 fallback 6건. RN MOCK_COMMENTS — 모든 일기가 이 댓글로 fallback 한다.
+  late final List<Map<String, dynamic>> _fallbackComments = _seedFallbackComments();
 
   /// 인메모리 편지 저장소(나에게 쓰는 편지). 작성/삭제로 변형된다(격리 — 게임 루프 무관). RN mock letters stateful.
   late final List<Map<String, dynamic>> _letters = _seedLetters();
@@ -32,29 +35,26 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 신고로 차단된 작성자 user_idx 집합(community 목록에서 제외).
   final Set<int> _blockedUsers = {};
 
-  /// 새 일기에 부여할 다음 idx(시드 최대 idx 다음부터).
-  int _nextIdx = 1014;
+  /// 새 일기에 부여할 다음 idx. RN nextDiaryIdx(1100)+1 — 1100 이상이라 공개 시 community 피드에 노출된다.
+  int _nextIdx = 1101;
 
-  /// 새 댓글에 부여할 다음 idx(시드 최대 idx 다음부터).
+  /// 새 댓글에 부여할 다음 idx(fallback 댓글 idx 1~6 과 무충돌).
   int _nextCommentIdx = 5004;
 
-  /// 새 편지에 부여할 다음 idx(시드 최대 idx 다음부터).
-  int _nextLetterIdx = 7007;
+  /// 새 편지에 부여할 다음 idx(시드 idx 1~3 다음부터).
+  int _nextLetterIdx = 4;
 
-  /// 인메모리 화분 상태(레벨·경험치·물주기/사랑 충전). 물주기/사랑·미션 완료로 변형된다. RN mock flowerpot stateful.
+  /// 인메모리 화분 상태(레벨·경험치·물주기/사랑 충전). 물주기/사랑·미션 완료로 변형된다. RN MOCK_FLOWERPOT stateful.
   late final Map<String, dynamic> _flowerpot = {
     'level': 1,
-    'exp': 200,
-    'max_exp': FlowerpotConfig.defaultMaxExp,
-    'watering_count': 2,
-    'love_count': 1,
+    'exp': 20,
+    'max_exp': 100,
+    'watering_count': 5,
+    'love_count': 3,
   };
 
   /// 인메모리 미션 상태(진행중/완료). 일기/댓글/좋아요/공개 액션으로 진행되고 완료 시 이동한다. RN mock missions stateful.
   late final Map<String, List<Map<String, dynamic>>> _missions = _seedMissions();
-
-  /// 물/사랑 1회당 경험치 증가량(데모 게임 루프용).
-  static const int _expPerAction = 250;
 
   /// 인메모리 데모 사용자(회원가입/프로필 수정으로 갱신 — 세션 동안 유지). RN mock user stateful.
   late final Map<String, dynamic> _user = _demoUser();
@@ -112,7 +112,12 @@ class DemoApiAdapter implements HttpClientAdapter {
   ResponseBody? _handleAuth(RequestOptions options) {
     switch (options.path) {
       case '/auth/sign-in':
-        return _json(401, {'status': 'failed', 'message': '신규 사용자'});
+        // RN 데모와 동일 — 로그인 시 기존 사용자를 반환해 바로 메인(화분)으로 진입한다(가입 우회).
+        // RN mock: onPost('/auth/sign-in') → 200 userState. (실서버는 미가입 시 401 → CreateProfile.)
+        return _json(200, {
+          'status': 'success',
+          'resData': {..._user},
+        });
       case '/auth/sign-in-auto/v2':
         return _json(200, {
           'status': 'success',
@@ -145,10 +150,10 @@ class DemoApiAdapter implements HttpClientAdapter {
     return {
       'idx': 1,
       'account': 'demo@example.com',
-      'user_id': 'mock_user_id',
+      'user_id': 'demo_user_1',
       'nickname': '새싹이',
       'image': '',
-      'background': '',
+      'background': '#FFE4B5',
       'character': 'Chick',
       'type': 'google',
       'created_time': '2026-01-01T00:00:00.000Z',
@@ -235,7 +240,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     // 나의 일기 탭은 본인(user_idx==1) 일기만. 타작성자 시드는 community 피드 전용.
     final own = _diaries.where((d) => d['user_idx'] == 1).toList()
       ..sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
-    final page = own.skip(skip).take(ApiConfig.itemsPerPage).toList();
+    final page = own.skip(skip).take(ApiConfig.itemsPerPage).map(_withCommentCount).toList();
     return _json(200, {'status': 'success', 'resData': page});
   }
 
@@ -250,7 +255,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     if (found.isEmpty) {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
-    return _json(200, {'status': 'success', 'resData': found.first});
+    return _json(200, {'status': 'success', 'resData': _withCommentCount(found.first)});
   }
 
   ResponseBody _createDiary(Object? data) {
@@ -336,14 +341,19 @@ class DemoApiAdapter implements HttpClientAdapter {
   ResponseBody _communityList(RequestOptions options) {
     final skip = int.tryParse(options.uri.queryParameters['skip'] ?? '0') ?? 0;
     final sortType = options.uri.queryParameters['sort_type'] ?? 'latest';
-    // 공개(is_visible) + 신고로 차단되지 않은 작성자의 일기만 노출.
-    final visible = _diaries.where((d) => d['is_visible'] == 1 && !_blockedUsers.contains(d['user_idx'])).toList();
+    // RN community-list: 타작성자 일기는 공개 여부 무관 전부, 본인 일기는 공개+세션생성(idx>=1100)만. 신고 차단 작성자는 제외.
+    final visible = _diaries.where((d) {
+      final userIdx = d['user_idx'] as int;
+      if (_blockedUsers.contains(userIdx)) return false;
+      if (userIdx != 1) return true;
+      return d['is_visible'] == 1 && (d['idx'] as int) >= 1100;
+    }).toList();
     if (sortType == 'popular') {
       visible.sort((a, b) => (b['like_count'] as int).compareTo(a['like_count'] as int));
     } else {
       visible.sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
     }
-    final page = visible.skip(skip).take(ApiConfig.itemsPerPage).toList();
+    final page = visible.skip(skip).take(ApiConfig.itemsPerPage).map(_withCommentCount).toList();
     return _json(200, {'status': 'success', 'resData': page});
   }
 
@@ -378,8 +388,18 @@ class DemoApiAdapter implements HttpClientAdapter {
     return _json(404, {'status': 'failed', 'message': '알 수 없는 요청: ${options.path}'});
   }
 
+  /// 특정 일기의 댓글 목록 — 추가/삭제로 생긴 목록이 있으면 그것, 없으면 fallback 6건(RN getComments).
+  List<Map<String, dynamic>> _commentsFor(int diaryIdx) => _commentsByDiary[diaryIdx] ?? _fallbackComments;
+
+  /// 일기에 동적 댓글 수를 주입(RN withCommentCount) — 시드의 정적 commentCount 를 getComments 길이로 덮어 카드·상세·댓글화면이 일치한다.
+  Map<String, dynamic> _withCommentCount(Map<String, dynamic> diary) => {
+    ...diary,
+    'commentCount': _commentsFor(diary['idx'] as int).length,
+  };
+
   ResponseBody _getComments(int diaryIdx) {
-    return _json(200, {'status': 'success', 'resData': _commentsByDiary[diaryIdx] ?? <Map<String, dynamic>>[]});
+    // RN getComments: 특정 일기 댓글이 있으면 그것, 없으면 fallback 6건. 댓글 화면을 항상 채워 보여 준다.
+    return _json(200, {'status': 'success', 'resData': _commentsFor(diaryIdx)});
   }
 
   ResponseBody _createComment(Object? data) {
@@ -389,8 +409,9 @@ class DemoApiAdapter implements HttpClientAdapter {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
     final idx = _nextCommentIdx++;
-    // 새 댓글은 현재 로그인 사용자로 귀속한다(실서버 동작). 하드코딩 닉네임이면 내 댓글 삭제 버튼이 안 떠서 교정.
-    (_commentsByDiary[diaryIdx] ??= []).add(
+    // 새 댓글은 현재 로그인 사용자로 귀속한다(실서버 동작). fallback 6건을 보존한 뒤 새 댓글을 덧붙인다(RN [...getComments, new]).
+    _commentsByDiary[diaryIdx] = [
+      ..._commentsFor(diaryIdx),
       _comment(
         idx: idx,
         text: text,
@@ -398,30 +419,21 @@ class DemoApiAdapter implements HttpClientAdapter {
         nickname: _user['nickname'] as String,
         character: _user['character'] as String,
       ),
-    );
-    _bumpCommentCount(diaryIdx, 1);
+    ];
     _progressMission('comment');
     return _json(200, {'status': 'success', 'resData': '$idx'});
   }
 
   ResponseBody _deleteComment(int commentIdx) {
+    // 댓글 수는 getComments 길이로 동적 계산하므로 별도 카운트 보정 불필요(목록에서 제거만).
     for (final entry in _commentsByDiary.entries) {
       final before = entry.value.length;
       entry.value.removeWhere((c) => c['idx'] == commentIdx);
       if (entry.value.length != before) {
-        _bumpCommentCount(entry.key, -1);
         break;
       }
     }
     return _json(200, {'status': 'success', 'resData': 'ok'});
-  }
-
-  void _bumpCommentCount(int diaryIdx, int delta) {
-    final i = _diaries.indexWhere((d) => d['idx'] == diaryIdx);
-    if (i != -1) {
-      final next = ((_diaries[i]['commentCount'] as int) + delta).clamp(0, 1 << 30);
-      _diaries[i] = {..._diaries[i], 'commentCount': next};
-    }
   }
 
   // --- letter (PR⑦) ---
@@ -502,6 +514,7 @@ class DemoApiAdapter implements HttpClientAdapter {
   }
 
   /// 물주기/사랑주기 공통 — 충전 1 소비 + 경험치 증가 + 레벨업(최대 레벨 상한). RN watering/love(서버 계산).
+  /// 경험치 증가량은 RN 과 동일하게 물주기 +10 / 사랑 +5. 레벨업 1회당 max_exp 를 100 늘린다.
   ResponseBody _plantAction(String chargeKey) {
     final charges = _flowerpot[chargeKey] as int;
     var level = _flowerpot['level'] as int;
@@ -510,17 +523,20 @@ class DemoApiAdapter implements HttpClientAdapter {
       return _json(200, {'status': 'success', 'resData': 'ok'});
     }
     _flowerpot[chargeKey] = charges - 1;
-    final maxExp = _flowerpot['max_exp'] as int;
-    var exp = (_flowerpot['exp'] as int) + _expPerAction;
+    final expGain = chargeKey == 'watering_count' ? 10 : 5;
+    var maxExp = _flowerpot['max_exp'] as int;
+    var exp = (_flowerpot['exp'] as int) + expGain;
     while (exp >= maxExp && level < FlowerpotConfig.maxLevel) {
       exp -= maxExp;
       level += 1;
+      maxExp += 100;
     }
     if (level >= FlowerpotConfig.maxLevel) {
       exp = maxExp; // 최대 레벨이면 경험치를 가득 채워 더 자라지 않음을 표현.
     }
     _flowerpot['level'] = level;
     _flowerpot['exp'] = exp;
+    _flowerpot['max_exp'] = maxExp;
     return _json(200, {'status': 'success', 'resData': 'ok'});
   }
 
@@ -582,22 +598,21 @@ class DemoApiAdapter implements HttpClientAdapter {
     }
   }
 
-  /// 시드 미션 — 4종(진행중) + 완료 비움. visible 은 이미 달성(1/1)이라 즉시 완료 시연 가능.
+  /// 시드 미션 — RN MOCK_MISSIONS. diary 5/5 완료 + comment/visible/like 진행중.
   Map<String, List<Map<String, dynamic>>> _seedMissions() {
     return {
+      'completed': [_mission(idx: 1, type: 'diary', count: 5, maxCount: 5)],
       'inProgress': [
-        _mission(idx: 1, type: 'diary', count: 1, maxCount: 3),
-        _mission(idx: 2, type: 'comment', count: 0, maxCount: 2),
-        _mission(idx: 3, type: 'visible', count: 1, maxCount: 1),
-        _mission(idx: 4, type: 'like', count: 0, maxCount: 3),
+        _mission(idx: 2, type: 'comment', count: 1, maxCount: 3),
+        _mission(idx: 3, type: 'visible', count: 0, maxCount: 1),
+        _mission(idx: 4, type: 'like', count: 2, maxCount: 5),
       ],
-      'completed': <Map<String, dynamic>>[],
     };
   }
 
-  /// 미션 한 건(snake_case, 진행중 기본 is_completed 0).
+  /// 미션 한 건(snake_case). RN mkMission 처럼 count>=max 면 is_completed 1.
   Map<String, dynamic> _mission({required int idx, required String type, required int count, required int maxCount}) {
-    return {'idx': idx, 'type': type, 'count': count, 'max_count': maxCount, 'is_completed': 0};
+    return {'idx': idx, 'type': type, 'count': count, 'max_count': maxCount, 'is_completed': count >= maxCount ? 1 : 0};
   }
 
   // --- helpers ---
@@ -628,6 +643,10 @@ class DemoApiAdapter implements HttpClientAdapter {
     int userIdx = 1,
     String nickname = '새싹이',
     String character = 'Chick',
+    String userImage = '',
+    String background = '',
+    String image = '',
+    bool isLike = false,
   }) {
     return {
       'idx': idx,
@@ -635,16 +654,16 @@ class DemoApiAdapter implements HttpClientAdapter {
       'nickname': nickname,
       'sticker': sticker,
       'text': text,
-      'image': '',
+      'image': image,
       'created_time': created.toIso8601String(),
       'updated_time': null,
       'is_visible': visible ? 1 : 0,
       'like_count': likeCount,
       'commentCount': commentCount,
-      'user_image': '',
-      'background': '',
+      'user_image': userImage,
+      'background': background,
       'character': character,
-      'isLike': false,
+      'isLike': isLike,
     };
   }
 
@@ -655,125 +674,153 @@ class DemoApiAdapter implements HttpClientAdapter {
     required DateTime created,
     String nickname = '새싹이',
     String character = 'Chick',
+    String background = '',
+    String userImage = '',
   }) {
     return {
       'idx': idx,
       'nickname': nickname,
-      'background': '',
+      'background': background,
       'character': character,
       'text': text,
       'created_time': created.toIso8601String(),
-      'user_image': '',
+      'user_image': userImage,
     };
   }
 
-  /// 시드 일기(현재 달 위주 + 이전 달 분포). now 상대라 캘린더가 항상 마킹을 보여준다. idx 1001~1013.
+  // --- RN mock/data.ts 공통 시드 배열 (1:1 미러) ---
+
+  /// 일기 스티커 풀. RN STICKERS.
+  static const List<String> _stickers = ['CloudSun', 'Star', 'Snow', 'Sunny', 'Smile', 'Happiness'];
+
+  /// 일기 본문 풀. RN TEXTS.
+  static const List<String> _texts = [
+    '오늘은 정말 좋은 하루였다. 햇살이 따뜻하고 바람도 시원했다.',
+    '비가 종일 내렸지만 카페에서 책 읽기 좋았다.',
+    '친구들과 오랜만에 만나서 즐거운 시간을 보냈다.',
+    '작은 식물 하나를 들였다. 이름은 콩이.',
+  ];
+
+  /// 나의 일기 고정 날짜(최신순). RN MY_DIARY_DATES.
+  static const List<String> _myDiaryDates = [
+    '2026-05-25',
+    '2026-05-21',
+    '2026-05-16',
+    '2026-05-11',
+    '2026-05-05',
+    '2026-04-28',
+    '2026-04-22',
+    '2026-04-15',
+    '2026-04-08',
+    '2026-03-30',
+    '2026-03-22',
+    '2026-03-14',
+  ];
+
+  /// community 작성자 닉네임 풀. RN COMMUNITY_NICKNAMES.
+  static const List<String> _communityNicknames = [
+    '하늘이',
+    '구름이',
+    '바람이',
+    '햇살이',
+    '별빛이',
+    '달빛이',
+    '봄날이',
+    '꽃잎이',
+    '나무늘보',
+    '솜사탕',
+  ];
+
+  /// community 작성자 캐릭터 풀. RN COMMUNITY_CHARACTERS.
+  static const List<String> _communityCharacters = [
+    'Dog',
+    'Rabbit',
+    'Panda',
+    'Fox',
+    'Hamster',
+    'Frog',
+    'Chick',
+    'Hedgehog',
+  ];
+
+  /// community 작성자 배경색 풀. RN COMMUNITY_BACKGROUNDS.
+  static const List<String> _communityBackgrounds = [
+    '#FFD93D',
+    '#B5E4FF',
+    '#D5B5FF',
+    '#B5FFD5',
+    '#FFB5D5',
+    '#FFDEAD',
+    '#C5FFC5',
+  ];
+
+  /// community 작성자 아바타 풀(10종). RN COMMUNITY_USER_IMAGES.
+  static final List<String> _communityUserImages = List.generate(
+    10,
+    (i) => 'https://i.pravatar.cc/200?u=community-${i + 1}',
+  );
+
+  /// community 일기 본문 이미지(idx → URL). RN COMMUNITY_DIARY_IMAGES — idx 2 만 이미지.
+  static const Map<int, String> _communityDiaryImages = {
+    2: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=800&q=80',
+  };
+
+  /// 시드 일기 — RN MY_DIARIES(12, idx 1001~1012) + MOCK_COMMUNITY_DIARIES(30, idx 1~30).
   List<Map<String, dynamic>> _seedDiaries() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    DateTime daysAgo(int d) => today.subtract(Duration(days: d));
-    return [
-      _diary(
-        idx: 1013,
-        sticker: 'Coffee',
-        text: '오늘은 따뜻한 커피 한 잔으로 하루를 시작했다.',
-        created: daysAgo(0),
-        likeCount: 2,
-        commentCount: 1,
-      ),
-      _diary(
-        idx: 1012,
-        sticker: 'Sunny',
-        text: '날씨가 좋아 잠깐 산책을 다녀왔다. 기분이 한결 가벼워졌다.',
-        created: daysAgo(1),
-        visible: true,
-        likeCount: 5,
-      ),
-      _diary(idx: 1011, sticker: 'Smile', text: '친구와 오랜만에 통화했다. 목소리만 들어도 좋다.', created: daysAgo(3)),
-      _diary(
-        idx: 1010,
-        sticker: 'Flower',
-        text: '베란다 화분에 새 잎이 났다. 작은 변화가 반갑다.',
-        created: daysAgo(5),
-        visible: true,
-        likeCount: 3,
-      ),
-      _diary(idx: 1009, sticker: 'Thinking', text: '요즘 무엇을 배우면 좋을지 즐겁게 고민 중이다.', created: daysAgo(8)),
-      _diary(idx: 1008, sticker: 'Rain', text: '비 오는 날의 빗소리를 가만히 들었다.', created: daysAgo(11)),
-      _diary(idx: 1007, sticker: 'Sleep', text: '오랜만에 푹 잤다. 개운한 아침이다.', created: daysAgo(14)),
-      _diary(idx: 1006, sticker: 'Star', text: '밤하늘에 별이 유난히 많았다.', created: daysAgo(20)),
-      _diary(idx: 1005, sticker: 'Coffee', text: '동네에 새 카페를 발견했다. 분위기가 좋다.', created: daysAgo(33), likeCount: 1),
-      _diary(idx: 1004, sticker: 'Moon', text: '늦은 밤 일기를 쓰는 습관이 생겼다.', created: daysAgo(38)),
-      _diary(idx: 1003, sticker: 'Rainbow', text: '소나기 뒤에 무지개가 떴다.', created: daysAgo(45), visible: true, likeCount: 4),
-      _diary(idx: 1002, sticker: 'Snow', text: '첫눈처럼 설레는 일이 있었다.', created: daysAgo(60)),
-      _diary(
-        idx: 1001,
-        sticker: 'Happiness',
-        text: '새싹일기를 시작한 날. 꾸준히 써보자.',
-        created: daysAgo(70),
-        visible: true,
-        likeCount: 6,
-      ),
-      // --- community 피드 전용: 타작성자 공개 일기(좋아요·신고·인기정렬 시연용, My-Diary 에는 미노출) ---
-      _diary(
-        idx: 2001,
-        userIdx: 2,
-        nickname: '햇살이',
-        character: 'Bear',
-        sticker: 'Sunny',
-        text: '아침 산책길에 햇살이 좋아 한참을 걸었어요. 다들 좋은 하루 보내세요!',
-        created: daysAgo(0),
-        visible: true,
-        likeCount: 12,
-        commentCount: 2,
-      ),
-      _diary(
-        idx: 2002,
-        userIdx: 3,
-        nickname: '구름이',
-        character: 'Cat',
-        sticker: 'Coffee',
-        text: '카페에서 책 한 권을 다 읽었다. 작은 성취감.',
-        created: daysAgo(1),
-        visible: true,
-        likeCount: 7,
-      ),
-      _diary(
-        idx: 2003,
-        userIdx: 4,
-        nickname: '바다',
-        character: 'Whale',
-        sticker: 'Rain',
-        text: '비 오는 날엔 음악이 더 잘 들린다. 플레이리스트를 새로 만들었다.',
-        created: daysAgo(2),
-        visible: true,
-        likeCount: 3,
-      ),
-      _diary(
-        idx: 2004,
-        userIdx: 2,
-        nickname: '햇살이',
-        character: 'Bear',
-        sticker: 'Flower',
-        text: '베란다 꽃이 드디어 피었어요. 기다린 보람이 있네요.',
-        created: daysAgo(4),
-        visible: true,
-        likeCount: 9,
-      ),
+    final myDiaries = <Map<String, dynamic>>[
+      for (var i = 0; i < _myDiaryDates.length; i++)
+        _diary(
+          idx: 1001 + i,
+          sticker: _stickers[i % 6],
+          text: _texts[i % 4],
+          created: DateTime.parse(_myDiaryDates[i]),
+          visible: i % 3 != 0,
+          likeCount: (i * 3) % 17,
+          commentCount: (i * 2) % 11,
+        ),
     ];
+    final communityDiaries = <Map<String, dynamic>>[
+      for (var idx = 1; idx <= 30; idx++)
+        _diary(
+          idx: idx,
+          sticker: _stickers[idx % 6],
+          text: _texts[idx % 4],
+          created: DateTime(2026, 5, 27 - (idx % 30)),
+          visible: idx % 3 != 0,
+          likeCount: (idx * 3) % 17,
+          commentCount: (idx * 2) % 11,
+          userIdx: 100 + (idx % 10),
+          nickname: _communityNicknames[idx % 10],
+          character: _communityCharacters[idx % 8],
+          background: _communityBackgrounds[idx % 7],
+          userImage: idx % 3 == 0 ? '' : _communityUserImages[idx % 10],
+          image: _communityDiaryImages[idx] ?? '',
+          isLike: idx % 4 == 0,
+        ),
+    ];
+    return [...myDiaries, ...communityDiaries];
   }
 
-  /// 시드 댓글(일부 일기에 표시용). 작성자 본인 댓글은 인증 배지 시연용이다.
+  /// 시드 댓글 — RN commentsByDiary 처럼 시작 시 비어 있다(모든 일기가 fallback 6건으로 노출).
   Map<int, List<Map<String, dynamic>>> _seedComments() {
-    final now = DateTime.now();
-    DateTime hoursAgo(int h) => now.subtract(Duration(hours: h));
-    return {
-      2001: [
-        _comment(idx: 5001, nickname: '구름이', character: 'Cat', text: '사진 없이도 글이 참 따뜻하네요.', created: hoursAgo(5)),
-        _comment(idx: 5002, nickname: '햇살이', character: 'Bear', text: '감사해요! 자주 들러주세요.', created: hoursAgo(3)),
-      ],
-      1013: [_comment(idx: 5003, nickname: '구름이', character: 'Cat', text: '커피 한 잔의 여유 좋죠.', created: hoursAgo(8))],
-    };
+    return {};
+  }
+
+  /// fallback 댓글 6건. RN MOCK_COMMENTS.
+  List<Map<String, dynamic>> _seedFallbackComments() {
+    const texts = ['공감되네요', '오늘도 화이팅', '저도 그런 날 있어요', '응원합니다', '같이 힘내요', '글이 따뜻해요'];
+    return [
+      for (var i = 0; i < 6; i++)
+        _comment(
+          idx: i + 1,
+          text: texts[i],
+          created: DateTime(2026, 5, 27 - i),
+          nickname: _communityNicknames[i % 10],
+          character: _communityCharacters[i % 8],
+          background: _communityBackgrounds[i % 7],
+          userImage: i % 2 == 0 ? '' : _communityUserImages[i % 10],
+        ),
+    ];
   }
 
   /// 데모 편지 한 건(snake_case). deleted_time 은 미사용(RN 과 동일하게 무시).
@@ -781,19 +828,15 @@ class DemoApiAdapter implements HttpClientAdapter {
     return {'idx': idx, 'text': text, 'created_time': created.toIso8601String(), 'deleted_time': null};
   }
 
-  /// 시드 편지 — now 상대 ~6건. 최신=어제(daysAgo 1)라 시작 시 '오늘 작성 가능'(작성하면 오늘이 되어 하루 한 통 게이팅 시연).
-  /// 한 건은 작년으로 둬 formatRelativeDate 의 'YYYY년 …' 분기를 노출한다.
+  /// 시드 편지 — RN MOCK_LETTERS(3). idx 1~3, 최신순(2026-05-27 → 25).
   List<Map<String, dynamic>> _seedLetters() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    DateTime daysAgo(int d) => today.subtract(Duration(days: d));
     return [
-      _letterEntry(idx: 7006, text: '어제의 나에게. 오늘도 충분히 잘하고 있어, 너무 몰아붙이지 말자.', created: daysAgo(1)),
-      _letterEntry(idx: 7005, text: '조급해하지 말기. 천천히, 그러나 멈추지 않고 가자.', created: daysAgo(4)),
-      _letterEntry(idx: 7004, text: '작은 성취도 칭찬해 주기. 오늘 하루도 수고했어.', created: daysAgo(9)),
-      _letterEntry(idx: 7003, text: '힘든 날이 와도 나는 나를 믿어. 잘 지나갈 거야.', created: daysAgo(16)),
-      _letterEntry(idx: 7002, text: '읽고 싶던 책을 드디어 펼쳤다. 꾸준히 읽어 보자.', created: daysAgo(30)),
-      _letterEntry(idx: 7001, text: '일 년 전 오늘 적은 다짐, 여전히 유효하다.', created: daysAgo(370)),
+      for (var i = 0; i < 3; i++)
+        _letterEntry(
+          idx: i + 1,
+          text: '오늘 나에게 보내는 작은 편지 ${i + 1}: 잘하고 있어, 천천히 가도 괜찮아.',
+          created: DateTime(2026, 5, 27 - i),
+        ),
     ];
   }
 
