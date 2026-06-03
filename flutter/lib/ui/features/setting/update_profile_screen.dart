@@ -126,11 +126,8 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
               ),
             ],
           ),
-          // 검증 안내는 라벨 폭(55)에 맞춰 들여쓴다. RN NotiBox(marginTop10·marginLeft55).
-          Padding(
-            padding: const EdgeInsets.only(top: 10, left: 55),
-            child: NicknameNoti(status: state.nicknameStatus),
-          ),
+          // 검증 안내는 라벨 폭(55)에 맞춰 들여쓴다. RN NotiBox(marginTop10·marginLeft55, 검증 전엔 미렌더).
+          NicknameNoti(status: state.nicknameStatus, indent: 55),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 30),
             child: Divider(height: 1, thickness: 1, color: FeedPalette.whiteGray),
