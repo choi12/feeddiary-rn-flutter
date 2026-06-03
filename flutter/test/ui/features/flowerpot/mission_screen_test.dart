@@ -36,8 +36,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('오늘의 미션'), findsOneWidget);
-    expect(find.text('일기 쓰기'), findsOneWidget);
-    expect(find.text('일기 공개하기'), findsOneWidget);
+    // 미션 제목은 제목+[진행도]를 한 Text.rich 로 합쳐 그리므로 textContaining 으로 찾는다.
+    expect(find.textContaining('일기 쓰기'), findsOneWidget);
+    expect(find.textContaining('일기 공개하기'), findsOneWidget);
     expect(find.text('보상 받기'), findsWidgets);
   });
 }

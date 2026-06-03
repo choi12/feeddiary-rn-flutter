@@ -1,129 +1,126 @@
-// 공유 일기 카드 — 작성자·스티커·본문 + 좋아요(글로벌 동기화)·댓글 수. RN Community/CommunityDiaryCard 대응.
+// 공유 일기 카드 — 날짜열·작성자(님의 일기)·본문·좋아요/댓글 수(표시 전용). RN Community/CommunityDiaryCard 대응.
 import 'package:feeddiary/data/models/community_diary.dart';
-import 'package:feeddiary/domain/exceptions/app_exception.dart';
-import 'package:feeddiary/routing/auth_state.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/community/diary_likes.dart';
 import 'package:feeddiary/ui/features/diary/sticker_catalog.dart';
-import 'package:feeddiary/utils/date_format.dart';
+import 'package:feeddiary/ui/features/diary/widgets/diary_card.dart';
+import 'package:feeddiary/ui/features/setting/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 공유 일기 한 장. 좋아요는 [DiaryLikes] 글로벌 provider 를 구독해 상세와 동기화하고, 카드 탭은 상세로 이동한다.
+/// 공유 일기 한 장. RN 처럼 목록 카드의 하트는 표시 전용(회색 장식)이고 좋아요 토글은 상세에서만 한다.
+/// 단 좋아요 수는 [DiaryLikes] 글로벌 override 를 구독해 상세→목록을 스크롤 리셋 없이 동기화한다. 탭은 상세로 이동.
 class CommunityDiaryCard extends ConsumerWidget {
   const CommunityDiaryCard({required this.diary, this.onTap, super.key});
 
   final CommunityDiary diary;
   final VoidCallback? onTap;
 
-  Future<void> _like(BuildContext context, WidgetRef ref, {required bool isMine, required LikeState like}) async {
-    if (isMine) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('내 일기에는 좋아요를 누를 수 없어요.')));
-      return;
-    }
-    try {
-      await ref
-          .read(diaryLikesProvider.notifier)
-          .toggle(idx: diary.idx, baseIsLike: like.isLike, baseLikeCount: like.likeCount);
-    } on AppException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final myNickname = ref.watch(authControllerProvider).user?.nickname;
-    final isMine = diary.nickname == myNickname;
     final override = ref.watch(diaryLikesProvider.select((likes) => likes[diary.idx]));
-    final like = override ?? (isLike: diary.isLike, likeCount: diary.likeCount);
+    final likeCount = override?.likeCount ?? diary.likeCount;
 
-    return Material(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-            border: Border.all(color: context.colors.outline),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Image.asset(StickerCatalog.assetFor(diary.sticker), width: 40, height: 40, fit: BoxFit.contain),
-                  const SizedBox(width: 10),
-                  _Avatar(nickname: diary.nickname),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(diary.nickname, style: TextStyle(color: context.colors.textPrimary, fontSize: 14)),
-                        Text(
-                          formatYmd(diary.createdAt),
-                          style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
-                        ),
-                      ],
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: FeedPalette.white,
+          borderRadius: BorderRadius.circular(AppDimens.cardRadius),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppDimens.cardRadius),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DayBox(date: diary.createdAt, isLarge: true),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Image.asset(
+                                StickerCatalog.assetFor(diary.sticker),
+                                width: 38,
+                                height: 38,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    ProfileAvatar(
+                                      size: 25,
+                                      userImage: diary.userImage,
+                                      character: diary.character,
+                                      background: diary.background,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text.rich(
+                                        TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: diary.nickname,
+                                              style: const TextStyle(
+                                                fontFamily: FeedFonts.dovemayo,
+                                                fontSize: 13,
+                                                color: FeedPalette.black,
+                                                letterSpacing: -0.5,
+                                              ),
+                                            ),
+                                            const TextSpan(
+                                              text: ' 님의 일기',
+                                              style: TextStyle(
+                                                fontFamily: FeedFonts.dovemayo,
+                                                fontSize: 11,
+                                                color: FeedPalette.lightBlack,
+                                                letterSpacing: -0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // RN DiaryCard Content(large) — 본문 텍스트(marginV5) + 첨부 이미지(100%×150). 데모는 이미지가 비어 미렌더.
+                          CardBody(text: diary.text, image: diary.image, isLarge: true),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              DiaryCountChip(icon: FeedIcons.like, count: likeCount),
+                              const SizedBox(width: 15),
+                              DiaryCountChip(icon: FeedIcons.comment, count: diary.commentCount),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                diary.text,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: context.colors.textPrimary, height: 1.5),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => _like(context, ref, isMine: isMine, like: like),
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(
-                      like.isLike ? Icons.favorite : Icons.favorite_border,
-                      size: 20,
-                      color: like.isLike ? context.colors.error : context.colors.textSecondary,
-                    ),
-                  ),
-                  Text('${like.likeCount}', style: TextStyle(color: context.colors.textSecondary, fontSize: 13)),
-                  const SizedBox(width: 16),
-                  Icon(Icons.chat_bubble_outline, size: 18, color: context.colors.textSecondary),
-                  const SizedBox(width: 6),
-                  Text('${diary.commentCount}', style: TextStyle(color: context.colors.textSecondary, fontSize: 13)),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// 작성자 아바타 placeholder(닉네임 첫 글자). 실제 프로필/캐릭터 이미지는 polish PR⑧.
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.nickname});
-
-  final String nickname;
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 16,
-      backgroundColor: context.colors.background,
-      child: Text(
-        nickname.isNotEmpty ? nickname.substring(0, 1) : '?',
-        style: TextStyle(color: context.colors.primary, fontSize: 14),
-      ),
+        const CardSeedling(isLarge: true),
+      ],
     );
   }
 }

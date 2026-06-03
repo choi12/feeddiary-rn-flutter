@@ -14,6 +14,9 @@ abstract final class AppDimens {
   /// 카드·버튼 등 공통 모서리 반경.
   static const double borderRadius = 14;
 
+  /// 일기/댓글 카드 모서리 반경. RN DiaryCard·CommentCard `borderRadius: 10`(공통 14와 별개).
+  static const double cardRadius = 10;
+
   /// 안드로이드 하단 시스템 영역 보정값.
   static const double bottomInsetAndroid = 20;
 

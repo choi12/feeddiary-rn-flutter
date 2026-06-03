@@ -27,44 +27,54 @@ class _RewardBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 55,
-              height: 55,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: FeedPalette.whiteGray, width: 2),
-              ),
-              child: Icon(reward.item.icon, size: 29, color: FeedPalette.main),
+    final imageSize = reward.item.rewardModalImageSize;
+    final imageMargin = reward.item.rewardModalImageVerticalMargin;
+    // RN modalImageBox: row·alignItems flex-end·marginBottom 13(보상박스 자체 하단 여백).
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 13),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // RN itemBox 55×55 안에 이미지 + 이름을 중앙 스택(이름이 박스 내부).
+          Container(
+            width: 55,
+            height: 55,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(color: FeedPalette.whiteGray, width: 2),
             ),
-            const SizedBox(height: 4),
-            Text(
-              reward.item.label,
-              style: const TextStyle(
-                fontFamily: FeedFonts.dovemayo,
-                fontSize: 10,
-                color: FeedPalette.black,
-                letterSpacing: -0.5,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: imageMargin),
+                  child: Image.asset(reward.item.asset, width: imageSize, height: imageSize, fit: BoxFit.contain),
+                ),
+                Text(
+                  reward.item.label,
+                  style: const TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
+                    fontSize: 10,
+                    color: FeedPalette.black,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(width: 3),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 3),
-          child: Text(
-            '×${reward.count}',
-            style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 14, color: FeedPalette.main),
           ),
-        ),
-      ],
+          // RN amountText margin 3(4방향).
+          Padding(
+            padding: const EdgeInsets.all(3),
+            child: Text(
+              '×${reward.count}',
+              style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 14, color: FeedPalette.main),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

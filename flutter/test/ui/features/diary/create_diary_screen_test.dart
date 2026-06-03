@@ -14,7 +14,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('오늘의 스티커'), findsOneWidget);
+    expect(find.text('오늘 하루 어땠나요? :D'), findsOneWidget);
     expect(find.text('일기 등록하기'), findsOneWidget);
   });
 }

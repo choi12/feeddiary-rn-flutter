@@ -27,21 +27,21 @@ class AppVersionScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(AppAssets.logo, height: 56),
-              const SizedBox(height: 32),
+              Image.asset(AppAssets.logo, height: 25),
+              const SizedBox(height: 25),
               latest.when(
                 data: (version) => _VersionNoti(latestVersion: version),
                 loading: () =>
                     const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator()),
                 error: (_, _) => Text(
                   SettingStrings.currentVersion(AppInfo.version),
-                  style: TextStyle(color: context.colors.textSecondary),
+                  style: const TextStyle(color: FeedPalette.lightBlack),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Text(
                 SettingStrings.currentVersion(AppInfo.version),
-                style: TextStyle(fontSize: 13, color: context.colors.textSecondary),
+                style: const TextStyle(fontSize: 13, color: FeedPalette.lightBlack),
               ),
             ],
           ),
@@ -65,9 +65,9 @@ class _VersionNoti extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(FeedIcons.alert, size: 16, color: color),
-        const SizedBox(width: 6),
-        Text(text, style: TextStyle(color: color)),
+        Icon(FeedIcons.alert, size: 13, color: color),
+        const SizedBox(width: 5),
+        Text(text, style: TextStyle(fontSize: 14, color: color)),
       ],
     );
   }

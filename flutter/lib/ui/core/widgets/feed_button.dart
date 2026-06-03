@@ -2,6 +2,7 @@
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_pressable.dart';
 import 'package:flutter/material.dart';
 
 /// 화면 주 버튼. 가득 찬 너비·54px·MAIN(#B8D698) 배경·흰 17px 라벨.
@@ -23,28 +24,27 @@ class FeedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inactive = disabled || isLoading;
-    return SizedBox(
-      width: double.infinity,
-      height: AppDimens.buttonHeight,
-      child: Material(
-        color: inactive ? FeedPalette.input : FeedPalette.main,
-        borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-        child: InkWell(
-          onTap: inactive ? null : onPressed,
+    // RN CustomButton 은 AnimatedPressable(scale 0.99·opacity 0.9)로 감쌀 뿐 잉크 리플이 없다 → FeedPressable.
+    return FeedPressable(
+      onTap: inactive ? null : onPressed,
+      child: Container(
+        width: double.infinity,
+        height: AppDimens.buttonHeight,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: inactive ? FeedPalette.input : FeedPalette.main,
           borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: FeedPalette.white),
-                  )
-                : Text(
-                    title,
-                    style: const TextStyle(color: FeedPalette.white, fontSize: 17, fontFamily: FeedFonts.dovemayo),
-                  ),
-          ),
         ),
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: FeedPalette.white),
+              )
+            : Text(
+                title,
+                style: const TextStyle(color: FeedPalette.white, fontSize: 17, fontFamily: FeedFonts.dovemayo),
+              ),
       ),
     );
   }

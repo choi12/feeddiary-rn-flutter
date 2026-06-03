@@ -2,6 +2,7 @@
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
 import 'package:feeddiary/ui/core/widgets/feed_button.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
@@ -47,11 +48,11 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
     try {
       await _controller.submit();
       if (!mounted) return;
-      showFeedToast(context, SettingStrings.profileUpdated);
+      showFeedToast(context, SettingStrings.profileUpdated, offset: FeedToastOffset.home);
       context.pop();
     } on AppException catch (e) {
       if (!mounted) return;
-      showFeedToast(context, e.displayMessage);
+      showFeedToast(context, e.displayMessage, offset: FeedToastOffset.button);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -72,7 +73,7 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
       await _controller.deleteAccount();
     } on AppException catch (e) {
       if (!mounted) return;
-      showFeedToast(context, e.displayMessage);
+      showFeedToast(context, e.displayMessage, offset: FeedToastOffset.button);
     }
   }
 
@@ -84,14 +85,53 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
       appBar: FeedHeader(
         title: SettingStrings.updateProfileTitle,
         hasBackButton: true,
-        rightItem: TextButton(
-          onPressed: _confirmDeleteAccount,
-          child: const Text(SettingStrings.deleteAccount, style: TextStyle(color: FeedPalette.orange)),
+        rightItem: GestureDetector(
+          onTap: _confirmDeleteAccount,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 15),
+            child: Text(
+              SettingStrings.deleteAccount,
+              style: TextStyle(
+                fontFamily: FeedFonts.dovemayo,
+                fontSize: 14,
+                color: FeedPalette.orange,
+                decoration: TextDecoration.underline,
+                decorationColor: FeedPalette.orange,
+              ),
+            ),
+          ),
         ),
       ),
+      // 화면 순서 = 닉네임 → Line(30) → 프로필 이미지. RN UpdateProfile/index.tsx.
       body: ListView(
         padding: const EdgeInsets.all(AppDimens.padding),
         children: [
+          // 닉네임 가로 배치(라벨 폭 55 + 입력 flex). RN NicknameSection.
+          Row(
+            children: [
+              const SizedBox(
+                width: 55,
+                child: Text(
+                  SettingStrings.nicknameLabel,
+                  style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 15, color: FeedPalette.black),
+                ),
+              ),
+              Expanded(
+                child: FeedTextField(
+                  controller: _nicknameController,
+                  maxLength: 8,
+                  onChanged: _controller.setNickname,
+                  hintText: SettingStrings.nicknamePlaceholder,
+                ),
+              ),
+            ],
+          ),
+          // 검증 안내는 라벨 폭(55)에 맞춰 들여쓴다. RN NotiBox(marginTop10·marginLeft55, 검증 전엔 미렌더).
+          NicknameNoti(status: state.nicknameStatus, indent: 55),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 30),
+            child: Divider(height: 1, thickness: 1, color: FeedPalette.whiteGray),
+          ),
           ProfileImageEditor(
             imageType: state.imageType,
             character: state.character,
@@ -99,23 +139,19 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
             imageBytes: state.imageBytes,
             onPhotoPicked: _controller.pickPhoto,
             onCharacterSelected: _controller.selectCharacter,
+            onCharacterMode: _controller.useCharacterMode,
             onBackgroundSelected: _controller.setBackground,
           ),
-          const SizedBox(height: 24),
-          const Text(SettingStrings.nicknameLabel, style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          FeedTextField(
-            controller: _nicknameController,
-            maxLength: 8,
-            onChanged: _controller.setNickname,
-            hintText: '닉네임을 입력해 주세요',
-          ),
-          NicknameNoti(status: state.nicknameStatus),
         ],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(AppDimens.padding),
-        child: FeedButton(title: SettingStrings.save, onPressed: _save, disabled: !state.canSubmit, isLoading: _saving),
+        child: FeedButton(
+          title: SettingStrings.updateSubmit,
+          onPressed: _save,
+          disabled: !state.canSubmit,
+          isLoading: _saving,
+        ),
       ),
     );
   }

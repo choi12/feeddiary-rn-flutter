@@ -35,7 +35,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       }
       // 성공(null)이면 인증 상태 전환으로 redirect 가 home 으로 이동.
     } on AppException catch (e) {
-      if (mounted) showFeedToast(context, e.displayMessage);
+      if (mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.inner);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -48,17 +48,25 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final order = isIOS ? const [SignInType.apple, SignInType.google] : const [SignInType.google, SignInType.apple];
 
     return Scaffold(
+      // RN SafeAreaContainer 배경 fieldGreen — 하단 안전영역에만 노출(언덕과 블렌딩).
       backgroundColor: FeedPalette.fieldGreen,
       body: SafeArea(
         top: false,
-        child: Column(
-          children: [
-            const Expanded(flex: 14, child: _CharacterCanvas()),
-            Expanded(
-              flex: 10,
-              child: _ButtonBox(order: order, onSignIn: _loading ? null : _signIn),
-            ),
-          ],
+        // RN Container 기본 흰 배경 — 콘텐츠(캐릭터 캔버스)는 흰색이고, 하단 언덕(field.png)만 녹색이다.
+        child: ColoredBox(
+          color: FeedPalette.white,
+          // RN 은 CharacterCanvas 에 zIndex 1 을 줘 레모니(bottom −20)가 ButtonBox 언덕 위에 얹힌다.
+          // Column 기본 순서는 ButtonBox 를 나중에(위에) 그려 레모니를 가리므로, verticalDirection.up + 순서를 뒤집어 CharacterCanvas 를 위에 그린다.
+          child: Column(
+            verticalDirection: VerticalDirection.up,
+            children: [
+              Expanded(
+                flex: 10,
+                child: _ButtonBox(order: order, onSignIn: _loading ? null : _signIn),
+              ),
+              const Expanded(flex: 14, child: _CharacterCanvas()),
+            ],
+          ),
         ),
       ),
     );
@@ -71,11 +79,13 @@ class _CharacterCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // RN CharacterCanvas — 절대 px(logo bottom290·sun left20 bottom130·watering right15 bottom140·lemony bottom−20) 그대로 전사.
+    // 폰 프레임 전제라 캔버스 높이 비율 환산을 쓰지 않는다(RN 1:1).
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Positioned(
-          top: 40,
+          bottom: 290,
           left: 0,
           right: 0,
           child: Center(child: Image.asset(AppAssets.logo, height: 50, fit: BoxFit.contain)),
@@ -109,6 +119,7 @@ class _ButtonBox extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // RN ButtonBox.fieldImage — contentFit:'fill'(=BoxFit.fill). box(100%×100%)에 늘려 채운다(crop 없음).
         Positioned.fill(child: Image.asset(AppAssets.signInField, fit: BoxFit.fill)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),

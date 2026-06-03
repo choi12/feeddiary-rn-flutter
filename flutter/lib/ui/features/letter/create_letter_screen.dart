@@ -7,7 +7,6 @@ import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_button.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
-import 'package:feeddiary/ui/core/widgets/feed_text_field.dart';
 import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/letter/letter_list_controller.dart';
 import 'package:feeddiary/ui/features/letter/letter_strings.dart';
@@ -56,11 +55,11 @@ class _CreateLetterScreenState extends ConsumerState<CreateLetterScreen> {
         return;
       }
       // 토스트는 루트 Overlay 라 pop 후에도 남는다(먼저 띄우고 편지함으로 돌아간다).
-      showFeedToast(context, LetterStrings.sentToast);
+      showFeedToast(context, LetterStrings.sentToast, offset: FeedToastOffset.home);
       context.pop();
     } on AppException catch (e) {
       if (mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.home);
         setState(() => _sending = false);
       }
     }
@@ -69,61 +68,133 @@ class _CreateLetterScreenState extends ConsumerState<CreateLetterScreen> {
   @override
   Widget build(BuildContext context) {
     final canSend = _controller.text.trim().isNotEmpty;
+    // RN: 헤더 투명·letterBoard 가 전면 배경. FeedHeader 를 body 의 letterBoard 위 첫 자식으로 둔다.
     return Scaffold(
       backgroundColor: FeedPalette.background,
-      appBar: const FeedHeader(title: LetterStrings.writeTitle, font: FeedHeaderFont.ownglyph, hasCloseButton: true),
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(image: AssetImage(AppAssets.letterBoard), fit: BoxFit.cover),
         ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FeedTextField(
-                  controller: _controller,
-                  autofocus: true,
-                  minLines: 3,
-                  maxLines: 6,
-                  maxLength: LetterStrings.maxLength,
-                  font: FeedFieldFont.ownglyph,
-                  fontSize: 17,
-                  hintText: LetterStrings.placeholder,
-                ),
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    LetterStrings.counter(_controller.text.characters.length),
-                    style: const TextStyle(fontFamily: FeedFonts.ownglyph, fontSize: 13, color: FeedPalette.gray),
+        child: Column(
+          children: [
+            const FeedHeader(
+              title: LetterStrings.writeTitle,
+              font: FeedHeaderFont.ownglyph,
+              hasCloseButton: true,
+              backgroundColor: Colors.transparent,
+            ),
+            Expanded(
+              child: SafeArea(
+                top: false,
+                // RN Container hasPadding(24) + LetterInput marginTop -24 → 입력박스는 헤더에 붙는다(상단 0).
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(AppDimens.padding, 0, AppDimens.padding, AppDimens.padding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _LetterInputBox(controller: _controller),
+                      const SizedBox(height: 15),
+                      const _InfoText(),
+                      const SizedBox(height: 10),
+                      FeedButton(
+                        title: LetterStrings.sendButton,
+                        onPressed: _submit,
+                        disabled: !canSend,
+                        isLoading: _sending,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Row(
-                  children: [
-                    Icon(FeedIcons.alert, size: 14, color: FeedPalette.main),
-                    SizedBox(width: 4),
-                    Text(
-                      LetterStrings.info,
-                      style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.main),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                FeedButton(
-                  title: LetterStrings.sendButton,
-                  onPressed: _submit,
-                  disabled: !canSend,
-                  isLoading: _sending,
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+/// 편지 입력칸 — 고정 120·옅은 보더(#F3F3F3)·반투명 흰 배경·카운터 박스 내부 하단. RN CreateLetter/LetterInput.
+class _LetterInputBox extends StatelessWidget {
+  const _LetterInputBox({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 120,
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      decoration: BoxDecoration(
+        color: FeedPalette.white90,
+        borderRadius: BorderRadius.circular(AppDimens.borderRadius),
+        border: Border.all(color: FeedPalette.whiteGray),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              autofocus: true,
+              maxLines: null,
+              expands: true,
+              maxLength: LetterStrings.maxLength,
+              textAlignVertical: TextAlignVertical.top,
+              cursorColor: FeedPalette.main,
+              style: const TextStyle(
+                fontFamily: FeedFonts.ownglyph,
+                fontSize: 17,
+                height: 22 / 17,
+                color: FeedPalette.lightBlack,
+              ),
+              decoration: const InputDecoration(
+                isCollapsed: true,
+                border: InputBorder.none,
+                counterText: '',
+                hintText: LetterStrings.placeholder,
+                hintStyle: TextStyle(
+                  fontFamily: FeedFonts.ownglyph,
+                  fontSize: 17,
+                  height: 22 / 17,
+                  color: FeedPalette.lightGray,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                LetterStrings.counter(controller.text.characters.length),
+                style: const TextStyle(fontFamily: FeedFonts.ownglyph, fontSize: 13, color: FeedPalette.gray),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 작성 안내문 — 하루 한 통 제한. RN InfoTextBox(Feather alert-circle 13 SKYBLUE + SKYBLUE 13).
+class _InfoText extends StatelessWidget {
+  const _InfoText();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Icon(FeedIcons.alert, size: 13, color: FeedPalette.skyblue),
+        SizedBox(width: 3),
+        Expanded(
+          child: Text(
+            LetterStrings.info,
+            style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.skyblue),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 // 숫자 키패드 — 3×4(마지막 행 [빈칸, 0, 삭제]). RN components/lock/DigitKeypad + LOCK_SCREEN_DIGITS.
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
 
@@ -27,14 +28,15 @@ class DigitKeypad extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final row in _rows) Row(children: [for (final cell in row) Expanded(child: _cell(context, cell))]),
+        for (final row in _rows) Row(children: [for (final cell in row) Expanded(child: _cell(cell))]),
       ],
     );
   }
 
-  Widget _cell(BuildContext context, String? cell) {
+  Widget _cell(String? cell) {
+    // RN numberButtonBox: height 95. 숫자 LIGHT_BLACK 20 Dovemayo · 삭제 Feather delete 25 LIGHT_BLACK.
     if (cell == null) {
-      return const SizedBox(height: 72);
+      return const SizedBox(height: 95);
     }
     if (cell == 'delete') {
       return Semantics(
@@ -42,7 +44,10 @@ class DigitKeypad extends StatelessWidget {
         label: SettingStrings.keypadDeleteLabel,
         child: InkResponse(
           onTap: onDelete,
-          child: SizedBox(height: 72, child: Icon(FeedIcons.keypadDelete, color: context.colors.textSecondary)),
+          child: const SizedBox(
+            height: 95,
+            child: Icon(FeedIcons.keypadDelete, size: 25, color: FeedPalette.lightBlack),
+          ),
         ),
       );
     }
@@ -52,9 +57,12 @@ class DigitKeypad extends StatelessWidget {
       child: InkResponse(
         onTap: () => onDigit(cell),
         child: SizedBox(
-          height: 72,
+          height: 95,
           child: Center(
-            child: Text(cell, style: TextStyle(fontSize: 26, color: context.colors.textPrimary)),
+            child: Text(
+              cell,
+              style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 20, color: FeedPalette.lightBlack),
+            ),
           ),
         ),
       ),

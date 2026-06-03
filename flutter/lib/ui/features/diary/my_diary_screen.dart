@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:feeddiary/routing/routes.dart';
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/diary/diary_list_controller.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_calendar.dart';
@@ -57,7 +58,8 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      // RN createDiaryButtonBox: paddingTop 10 · paddingHorizontal 12 · paddingBottom 없음.
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
       decoration: const BoxDecoration(
         color: FeedPalette.background,
         border: Border(bottom: BorderSide(color: FeedPalette.whiteGray)),
@@ -130,20 +132,24 @@ class _CreateDiaryButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(25),
+        // RN CreateDiaryButton: 폭 120(내용이 더 넓으면 늘어남) · height 43 · gap 2 · 텍스트 marginLeft 3.
         child: Container(
           height: 43,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          constraints: const BoxConstraints(minWidth: 120),
           alignment: Alignment.center,
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                '일기 쓰러 가기',
-                style: TextStyle(
-                  fontFamily: FeedFonts.dovemayo,
-                  fontSize: 13,
-                  color: FeedPalette.lightBlack,
-                  letterSpacing: -0.5,
+              Padding(
+                padding: EdgeInsets.only(left: 3),
+                child: Text(
+                  '일기 쓰러 가기',
+                  style: TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
+                    fontSize: 13,
+                    color: FeedPalette.lightBlack,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
               SizedBox(width: 2),
@@ -196,15 +202,17 @@ class _CardViewState extends ConsumerState<_CardView> {
       error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(diaryListProvider)),
       data: (paged) {
         if (paged.isEmpty) {
-          return const DiaryEmptyView(message: '아직 작성한 일기가 없어요.');
+          return const DiaryEmptyView(message: '나의 첫 일기를 작성해 보세요 :D');
         }
         return RefreshIndicator(
           onRefresh: () => ref.read(diaryListProvider.notifier).refreshList(),
+          // RN CardList: gap 40 · padding 12 · paddingTop 40 · paddingBottom 75(탭바 여백).
+          // 하단 inset·탭바 클리어는 셸의 belowTabBar(Container isMain 등가)가 이미 처리하므로 여기선 75만.
           child: ListView.separated(
             controller: _controller,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(12, 40, 12, AppDimens.bottomTabHeight),
             itemCount: paged.items.length + (paged.isEnd ? 0 : 1),
-            separatorBuilder: (_, _) => const SizedBox(height: 16),
+            separatorBuilder: (_, _) => const SizedBox(height: 40),
             itemBuilder: (context, index) {
               if (index >= paged.items.length) {
                 return const Padding(
@@ -218,6 +226,7 @@ class _CardViewState extends ConsumerState<_CardView> {
                 text: diary.text,
                 date: diary.createdAt,
                 isVisible: diary.isVisible,
+                image: diary.image,
                 likeCount: diary.likeCount,
                 commentCount: diary.commentCount,
                 onTap: () => context.push(Routes.diaryDetailPath(diary.idx)),

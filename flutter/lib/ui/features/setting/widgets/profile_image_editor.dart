@@ -1,18 +1,20 @@
-// 프로필 이미지 편집기(공유) — 사진/캐릭터 토글·캐릭터 그리드·배경 스와치·image_picker. RN components/profile/ProfileImageSection 1:1, 가입/수정 공용.
+// 프로필 이미지 편집기(공유) — 사진(갤러리 직행)/캐릭터 토글·배경 ColorPicker 모달·캐릭터 토글 그리드. RN components/profile/ProfileImageSection + ProfileAvatarEditor 1:1, 가입/수정 공용.
 import 'dart:typed_data';
 
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
-import 'package:feeddiary/ui/core/widgets/feed_bottom_sheet.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/setting/character_catalog.dart';
+import 'package:feeddiary/ui/features/setting/color_picker_palette.dart';
 import 'package:feeddiary/ui/features/setting/profile_image_type.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// 프로필 이미지 입력 영역. 사진(갤러리/카메라 업로드)과 캐릭터(36 프리셋 + 배경색)를 토글로 전환한다.
-/// 상태는 부모(컨트롤러)가 들고, 이 위젯은 표시 + 선택 콜백만 담당한다. RN `ProfileImageSection`(가입/수정 공유) 대응.
-class ProfileImageEditor extends StatelessWidget {
+/// 프로필 이미지 입력 영역. 사진(갤러리 업로드)과 캐릭터(36 프리셋 + 배경색)를 타입 모달로 전환한다.
+/// 상태는 부모(컨트롤러)가 들고, 캐릭터 펼침 토글만 로컬 상태다. RN `ProfileImageSection`(가입/수정 공유) 대응.
+class ProfileImageEditor extends StatefulWidget {
   const ProfileImageEditor({
     required this.imageType,
     required this.character,
@@ -20,6 +22,7 @@ class ProfileImageEditor extends StatelessWidget {
     required this.imageBytes,
     required this.onPhotoPicked,
     required this.onCharacterSelected,
+    required this.onCharacterMode,
     required this.onBackgroundSelected,
     super.key,
   });
@@ -30,90 +33,206 @@ class ProfileImageEditor extends StatelessWidget {
   final Uint8List? imageBytes;
   final ValueChanged<Uint8List> onPhotoPicked;
   final ValueChanged<String> onCharacterSelected;
+
+  /// "캐릭터 만들기" 선택 — 캐릭터를 고르지 않고 캐릭터 모드로만 전환한다(RN onClearProfileImage). 기존 캐릭터는 유지.
+  final VoidCallback onCharacterMode;
   final ValueChanged<String> onBackgroundSelected;
-
-  /// 배경색 프리셋(스와치). RN `PICKER_COLORS`의 축약본.
-  static const List<String> _backgroundSwatches = [
-    '#F8BBD0',
-    '#F48FB1',
-    '#CE93D8',
-    '#B39DDB',
-    '#9FA8DA',
-    '#90CAF9',
-    '#81D4FA',
-    '#80DEEA',
-    '#A5D6A7',
-    '#C5E1A5',
-    '#FFE082',
-    '#FFCC80',
-    '#FFAB91',
-    '#BCAAA4',
-    '#B0BEC5',
-    '#E0E0E0',
-  ];
-
-  bool get _usePhoto => imageType == ProfileImageType.photo;
 
   static Color hexColor(String hex) {
     final value = int.parse('FF${hex.replaceFirst('#', '')}', radix: 16);
     return Color(value);
   }
 
-  void _pickPhoto(BuildContext context) {
-    showFeedSheet(
+  @override
+  State<ProfileImageEditor> createState() => _ProfileImageEditorState();
+}
+
+class _ProfileImageEditorState extends State<ProfileImageEditor> {
+  /// 캐릭터 그리드 펼침 여부. RN `useVisibility().toggle`(인라인 펼침). 캐릭터 선택 시 자동으로 접힌다.
+  bool _characterExpanded = false;
+
+  bool get _usePhoto => widget.imageType == ProfileImageType.photo;
+
+  /// RN ProfileImageSection: "사진 선택하기"는 소스 시트 없이 갤러리로 직행한다.
+  Future<void> _pickPhoto() async {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    widget.onPhotoPicked(bytes);
+  }
+
+  /// 아바타 탭 → 타입 선택 모달(사진/캐릭터). RN ProfileImageSection 의 Pressable→ProfileImageTypeModal.
+  void _openTypeModal() {
+    showDialog<void>(
       context: context,
-      items: [
-        FeedSheetItem(title: '갤러리에서 선택', onPressed: () => _pickFrom(ImageSource.gallery)),
-        FeedSheetItem(title: '카메라로 촬영', onPressed: () => _pickFrom(ImageSource.camera)),
-      ],
+      barrierColor: FeedPalette.scrim,
+      builder: (dialogContext) => _ProfileTypeModal(
+        onPhoto: () {
+          Navigator.of(dialogContext).pop();
+          _pickPhoto();
+        },
+        onCharacter: () {
+          Navigator.of(dialogContext).pop();
+          // RN: 캐릭터 모드로만 전환(자동 선택 없음) → 캐릭터 행에서 직접 고른다.
+          widget.onCharacterMode();
+        },
+      ),
     );
   }
 
-  Future<void> _pickFrom(ImageSource source) async {
-    final file = await ImagePicker().pickImage(source: source, imageQuality: 70);
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    onPhotoPicked(bytes);
+  /// 배경 행 탭 → 110색 ColorPicker 모달. 색 선택 시 모달을 닫고 콜백을 전달한다. RN ProfileAvatarEditor 의 BaseModal.
+  void _openColorPicker() {
+    showDialog<void>(
+      context: context,
+      barrierColor: FeedPalette.scrim,
+      builder: (dialogContext) => _ColorPickerModal(
+        onSelected: (hex) {
+          Navigator.of(dialogContext).pop();
+          widget.onBackgroundSelected(hex);
+        },
+      ),
+    );
+  }
+
+  void _onCharacterSelected(String name) {
+    widget.onCharacterSelected(name);
+    setState(() => _characterExpanded = false);
+  }
+
+  void _toggleCharacterExpanded() {
+    final willExpand = !_characterExpanded;
+    setState(() => _characterExpanded = willExpand);
+    if (!willExpand) return;
+    // RN CharacterSelector: 펼친 뒤 하단으로 스크롤해 그리드가 보이게 한다(delay→scrollToEnd).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final position = Scrollable.maybeOf(context)?.position;
+      if (position == null) return;
+      position.animateTo(position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isCharacter = widget.imageType == ProfileImageType.character;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: _Avatar(usePhoto: _usePhoto, character: character, background: background, imageBytes: imageBytes),
+        // 프로필 이미지 섹션(좌측 정렬 타이틀 + 중앙 아바타). RN ProfileImageSection container(gap10·mb25).
+        Padding(
+          padding: const EdgeInsets.only(bottom: 25),
+          child: Column(
+            children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  SettingStrings.profileImageLabel,
+                  style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 15, color: FeedPalette.black),
+                ),
+              ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: _openTypeModal,
+                child: _Avatar(
+                  usePhoto: _usePhoto,
+                  character: widget.character,
+                  background: widget.background,
+                  imageBytes: widget.imageBytes,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 24),
-        SegmentedButton<ProfileImageType>(
-          segments: const [
-            ButtonSegment(value: ProfileImageType.photo, label: Text(SettingStrings.pickPhoto)),
-            ButtonSegment(value: ProfileImageType.character, label: Text(SettingStrings.pickCharacter)),
-          ],
-          selected: {imageType ?? ProfileImageType.character},
-          onSelectionChanged: (selection) {
-            if (selection.first == ProfileImageType.photo) {
-              _pickPhoto(context);
-            } else {
-              onCharacterSelected(character.isEmpty ? CharacterCatalog.defaultName : character);
-            }
-          },
-        ),
-        const SizedBox(height: 16),
-        if (_usePhoto)
-          OutlinedButton.icon(
-            onPressed: () => _pickPhoto(context),
-            icon: const Icon(FeedIcons.addPhoto),
-            label: const Text(SettingStrings.pickPhoto),
-          )
-        else ...[
-          _CharacterGrid(selected: character, onSelect: onCharacterSelected),
-          const SizedBox(height: 20),
-          const Text(SettingStrings.backgroundLabel, style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          _BackgroundSwatches(swatches: _backgroundSwatches, selected: background, onSelect: onBackgroundSelected),
+        // 캐릭터 모드: 배경 행(→모달) + 캐릭터 행(→인라인 토글) + (펼침 시) 캐릭터 그리드. RN ProfileAvatarEditor.
+        if (isCharacter) ...[
+          _BackgroundSelector(background: widget.background, onTap: _openColorPicker),
+          _CharacterSelector(
+            character: widget.character,
+            expanded: _characterExpanded,
+            onToggle: _toggleCharacterExpanded,
+          ),
+          if (_characterExpanded) _CharacterBox(selected: widget.character, onSelect: _onCharacterSelected),
         ],
       ],
+    );
+  }
+}
+
+/// 프로필 이미지 타입 선택 모달 — [사진 선택하기 | 캐릭터 만들기] 2분할. RN ProfileImageTypeModal(300·60h).
+class _ProfileTypeModal extends StatelessWidget {
+  const _ProfileTypeModal({required this.onPhoto, required this.onCharacter});
+
+  final VoidCallback onPhoto;
+  final VoidCallback onCharacter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: FeedPalette.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.borderRadius)),
+      child: SizedBox(
+        width: AppDimens.dialogWidth,
+        height: 60,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _TypeCell(
+                icon: FeedIcons.addPhoto,
+                iconSize: 18,
+                color: FeedPalette.lightBlack,
+                label: SettingStrings.pickPhoto,
+                onTap: onPhoto,
+              ),
+            ),
+            const ColoredBox(color: FeedPalette.lightGray, child: SizedBox(width: 1)),
+            Expanded(
+              child: _TypeCell(
+                icon: FeedIcons.profileUser,
+                iconSize: 15,
+                color: FeedPalette.main,
+                label: SettingStrings.pickCharacter,
+                onTap: onCharacter,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeCell extends StatelessWidget {
+  const _TypeCell({
+    required this.icon,
+    required this.iconSize,
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final double iconSize;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: iconSize, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 14, color: color),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -129,99 +248,262 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double size = 96;
+    const double size = 160;
     final bytes = imageBytes;
+    final bg = background.isNotEmpty ? ProfileImageEditor.hexColor(background) : FeedPalette.whiteGray;
+    final Widget content;
     if (usePhoto && bytes != null) {
-      return ClipOval(
-        child: Image.memory(bytes, width: size, height: size, fit: BoxFit.cover),
-      );
-    }
-    final bg = background.isNotEmpty ? ProfileImageEditor.hexColor(background) : context.colors.background;
-    if (character.isNotEmpty) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-        padding: const EdgeInsets.all(12),
-        child: Image.asset(CharacterCatalog.assetFor(character)),
-      );
+      content = Image.memory(bytes, width: size, height: size, fit: BoxFit.cover);
+    } else if (character.isNotEmpty) {
+      content = Padding(padding: const EdgeInsets.all(24), child: Image.asset(CharacterCatalog.assetFor(character)));
+    } else {
+      content = const Icon(FeedIcons.question, size: 40, color: FeedPalette.white);
     }
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Icon(FeedIcons.question, color: context.colors.textSecondary),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: bg,
+        shape: BoxShape.circle,
+        border: Border.all(color: FeedPalette.whiteGray),
+      ),
+      child: Center(child: content),
     );
   }
 }
 
-/// 캐릭터 그리드(36 프리셋). 선택된 캐릭터는 테두리로 강조. RN CharacterSelector/CharacterBox.
-class _CharacterGrid extends StatelessWidget {
-  const _CharacterGrid({required this.selected, required this.onSelect});
+/// 배경 선택 행 — 좌측 라벨 + 우측 색 버튼(탭 시 ColorPicker 모달). RN BackgroundSelector(rowBox·height57).
+class _BackgroundSelector extends StatelessWidget {
+  const _BackgroundSelector({required this.background, required this.onTap});
+
+  final String background;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasColor = background.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          const _SelectorTitle(icon: FeedIcons.backgroundFill, iconSize: 15, label: SettingStrings.backgroundLabel),
+          Expanded(
+            child: GestureDetector(
+              onTap: onTap,
+              child: Container(
+                height: AppDimens.inputHeight,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: hasColor ? ProfileImageEditor.hexColor(background) : FeedPalette.white,
+                  borderRadius: BorderRadius.circular(AppDimens.borderRadius),
+                  border: Border.all(color: FeedPalette.input),
+                ),
+                child: hasColor ? null : const Icon(FeedIcons.colorize, size: 15, color: FeedPalette.lightBlack),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 캐릭터 선택 행 — 좌측 라벨 + 우측 토글 버튼(선택 요약 + 펼침 chevron). RN CharacterSelector(rowBox·height57·paddingH25).
+class _CharacterSelector extends StatelessWidget {
+  const _CharacterSelector({required this.character, required this.expanded, required this.onToggle});
+
+  final String character;
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCharacter = character.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          const _SelectorTitle(icon: FeedIcons.profileUser, iconSize: 12, label: SettingStrings.characterLabel),
+          Expanded(
+            child: GestureDetector(
+              onTap: onToggle,
+              child: Container(
+                height: AppDimens.inputHeight,
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppDimens.borderRadius),
+                  border: Border.all(color: FeedPalette.input),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (hasCharacter)
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Image.asset(CharacterCatalog.assetFor(character), width: 35, height: 35),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                'Lovely $character',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontFamily: FeedFonts.dovemayo,
+                                  fontSize: 13,
+                                  color: FeedPalette.lightBlack,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const Text(
+                        SettingStrings.characterPlaceholder,
+                        style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.lightBlack),
+                      ),
+                    Icon(expanded ? FeedIcons.expandUp : FeedIcons.expandDown, size: 18, color: FeedPalette.darkGray),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 선택 행 좌측 라벨(아이콘 + 텍스트, 폭 65 고정). RN BackgroundSelector/CharacterSelector titleBox(width65·ml5).
+class _SelectorTitle extends StatelessWidget {
+  const _SelectorTitle({required this.icon, required this.iconSize, required this.label});
+
+  final IconData icon;
+  final double iconSize;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 65,
+      child: Row(
+        children: [
+          Icon(icon, size: iconSize, color: FeedPalette.lightBlack),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.lightBlack),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 캐릭터 그리드(인라인 펼침·6×6 사각 셀). 선택 셀만 테두리 강조. RN CharacterBox(셀 사각 r10·padding5·border2).
+class _CharacterBox extends StatelessWidget {
+  const _CharacterBox({required this.selected, required this.onSelect});
 
   final String selected;
   final ValueChanged<String> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 6,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      children: [
-        for (final name in CharacterCatalog.names)
-          GestureDetector(
-            onTap: () => onSelect(name),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: name == selected ? context.colors.primary : context.colors.outline,
-                  width: name == selected ? 2 : 1,
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: FeedPalette.white,
+        borderRadius: BorderRadius.circular(AppDimens.borderRadius),
+        border: Border.all(color: FeedPalette.whiteGray),
+      ),
+      child: GridView.count(
+        crossAxisCount: 6,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 5,
+        crossAxisSpacing: 5,
+        children: [
+          for (final name in CharacterCatalog.names)
+            GestureDetector(
+              onTap: () => onSelect(name),
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(width: 2, color: name == selected ? FeedPalette.whiteGray : Colors.transparent),
                 ),
+                child: Image.asset(CharacterCatalog.assetFor(name)),
               ),
-              padding: const EdgeInsets.all(4),
-              child: Image.asset(CharacterCatalog.assetFor(name)),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-/// 배경색 스와치. 선택된 색은 테두리로 강조. RN BackgroundSelector/ColorPicker.
-class _BackgroundSwatches extends StatelessWidget {
-  const _BackgroundSwatches({required this.swatches, required this.selected, required this.onSelect});
+/// 배경색 선택 모달 — 11×10 머티리얼 110색 그리드(가운데·90%w·radius5). RN ColorPicker(BaseModal).
+class _ColorPickerModal extends StatelessWidget {
+  const _ColorPickerModal({required this.onSelected});
 
-  final List<String> swatches;
-  final String selected;
-  final ValueChanged<String> onSelect;
+  final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        for (final hex in swatches)
-          GestureDetector(
-            onTap: () => onSelect(hex),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: ProfileImageEditor.hexColor(hex),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: hex == selected ? context.colors.primary : context.colors.outline,
-                  width: hex == selected ? 3 : 1,
+    // 화면 가운데 90% 폭 박스. 바깥 영역은 showDialog 의 barrier(barrierDismissible 기본 true)라 탭하면 닫힌다.
+    final width = MediaQuery.sizeOf(context).width * 0.9;
+    return Center(
+      child: Material(
+        type: MaterialType.transparency,
+        child: Container(
+          width: width,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: FeedPalette.white,
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(color: FeedPalette.whiteGray),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 7),
+                child: Row(
+                  children: [
+                    Icon(FeedIcons.colorize, size: 15, color: FeedPalette.lightBlack),
+                    SizedBox(width: 3),
+                    Text(
+                      SettingStrings.colorPickerTitle,
+                      style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.lightBlack),
+                    ),
+                  ],
                 ),
               ),
-            ),
+              for (final row in ColorPickerPalette.rows)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < row.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 5),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => onSelected(row[i]),
+                            child: AspectRatio(
+                              aspectRatio: 1,
+                              child: ColoredBox(color: ProfileImageEditor.hexColor(row[i])),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:feeddiary/data/services/lock_storage.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
 import 'package:feeddiary/ui/features/setting/lockdown_settings_screen.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +38,6 @@ void main() {
 
     expect(find.text(SettingStrings.lockUseSwitch), findsOneWidget);
     expect(find.text(SettingStrings.lockResetPassword), findsOneWidget);
-    expect(find.byType(Switch), findsOneWidget);
+    expect(find.byType(CupertinoSwitch), findsOneWidget);
   });
 }

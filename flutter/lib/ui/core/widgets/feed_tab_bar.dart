@@ -5,13 +5,17 @@ import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/theme/tokens/shadows.dart';
 import 'package:flutter/material.dart';
 
-/// 탭 1개 정의(아이콘·라벨·아이콘 크기). RN `BOTTOM_TAB_ICON`(+ Letters size 23) 대응.
+/// 탭 1개 정의(아이콘·라벨·아이콘 크기·아이콘 미세 보정). RN `BOTTOM_TAB_ICON`(+ Letters size 23) 대응.
 class FeedTabItem {
-  const FeedTabItem({required this.icon, required this.label, this.iconSize = 21});
+  const FeedTabItem({required this.icon, required this.label, this.iconSize = 21, this.iconOffset = Offset.zero});
 
   final IconData icon;
   final String label;
   final double iconSize;
+
+  /// 아이콘 잉크 중앙 보정. FA5 `user-friends`(공유)는 글리프 잉크가 advance 박스보다 우측으로 치우쳐
+  /// Flutter 텍스트 엔진에서 라벨 중앙선보다 ~2px 오른쪽으로 보인다 → 좌측으로 당겨 라벨과 시각 중앙을 맞춘다.
+  final Offset iconOffset;
 }
 
 /// 메인 하단 탭바. 75px(+하단 안전영역)·흰 배경·상단 좌우 radius 20·옅은 그림자.
@@ -69,7 +73,10 @@ class _TabCell extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(item.icon, size: item.iconSize, color: color),
+          Transform.translate(
+            offset: item.iconOffset,
+            child: Icon(item.icon, size: item.iconSize, color: color),
+          ),
           const SizedBox(height: 4),
           Text(
             item.label,

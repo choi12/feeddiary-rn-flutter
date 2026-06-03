@@ -37,7 +37,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
       // 성공 시 authenticated 전환 → redirect 가 home 으로 이동.
     } on AppException catch (e) {
       if (mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.button);
         setState(() => _submitting = false);
       }
     }
@@ -75,6 +75,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
               imageBytes: form.imageBytes,
               onPhotoPicked: controller.pickPhoto,
               onCharacterSelected: controller.selectCharacter,
+              onCharacterMode: controller.useCharacterMode,
               onBackgroundSelected: controller.setBackground,
             ),
           ],

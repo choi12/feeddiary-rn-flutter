@@ -19,6 +19,11 @@ ThemeData buildAppTheme() {
     colorScheme: colorScheme,
     scaffoldBackgroundColor: colors.background,
     fontFamily: FeedFonts.dovemayo,
+    // RN 은 잉크 리플/하이라이트가 없다(AnimatedPressable=scale·opacity / Pressable=무피드백) → 전역 제거.
+    // 주 버튼의 누름 축소·투명 모션은 FeedPressable 이 따로 담당한다.
+    splashFactory: NoSplash.splashFactory,
+    splashColor: Colors.transparent,
+    highlightColor: Colors.transparent,
     extensions: <ThemeExtension<dynamic>>[colors],
   );
 }

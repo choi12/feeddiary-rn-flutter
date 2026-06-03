@@ -1,6 +1,9 @@
 // 일기 캘린더 — 월 선택 + 6주 x 7일 격자(일기 있는 날 마킹) + 선택일 일기 리스트. RN MyDiary CalendarList 대응.
+import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/routing/routes.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/diary/calendar_grid.dart';
 import 'package:feeddiary/ui/features/diary/monthly_diaries_provider.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_card.dart';
@@ -53,54 +56,155 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
     });
     final marked = monthly.value == null ? <DateTime>{} : markedDays(monthly.value!);
 
-    return Column(
-      children: [
-        _MonthSelector(
-          month: _month,
-          canGoNext: _canGoNext,
-          onPrev: () => _changeMonth(-1),
-          onNext: () => _changeMonth(1),
-        ),
-        const _WeekdayHeader(),
-        _CalendarGrid(
-          month: _month,
-          selected: _selected,
-          marked: marked,
-          onSelect: (day) => setState(() => _selected = day),
-        ),
-        const Divider(height: 24),
-        Expanded(
-          child: monthly.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(monthlyDiariesProvider(key))),
-            data: (diaries) {
-              final daily = diariesOn(diaries, _selected);
-              if (daily.isEmpty) {
-                return const DiaryEmptyView(message: '이 날의 일기가 없어요.');
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: daily.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final diary = daily[index];
-                  return DiaryCard(
-                    sticker: diary.sticker,
-                    text: diary.text,
-                    date: diary.createdAt,
-                    isVisible: diary.isVisible,
-                    onTap: () => context.push(Routes.diaryDetailPath(diary.idx)),
-                  );
-                },
-              );
-            },
+    // RN CalendarList: marginTop 15 · paddingHorizontal 12 · gap 10.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 15, 12, 0),
+      child: Column(
+        children: [
+          _CalendarCard(
+            month: _month,
+            selected: _selected,
+            marked: marked,
+            canGoNext: _canGoNext,
+            onPrev: () => _changeMonth(-1),
+            onNext: () => _changeMonth(1),
+            onSelect: (day) => setState(() => _selected = day),
           ),
-        ),
-      ],
+          const SizedBox(height: 10),
+          Expanded(
+            child: monthly.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(monthlyDiariesProvider(key))),
+              data: (diaries) {
+                final daily = diariesOn(diaries, _selected);
+                if (daily.isEmpty) {
+                  return const DiaryEmptyView(message: '이 날의 일기가 없어요.');
+                }
+                // RN DailyDiaryList: paddingTop 25 · gap 25 · 하단 탭바 여백(75, inset 은 셸 belowTabBar). 일별 카드는 small.
+                // 선택일 키로 리스트를 교체해 날짜 전환 시 카드가 FadeIn 한다(RN Animated.View entering FadeIn).
+                return ListView.separated(
+                  key: ValueKey(_selected),
+                  padding: const EdgeInsets.only(top: 25, bottom: 75),
+                  itemCount: daily.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 25),
+                  itemBuilder: (context, index) {
+                    final diary = daily[index];
+                    return TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 250),
+                      builder: (_, value, child) => Opacity(opacity: value, child: child),
+                      child: DiaryCard(
+                        sticker: diary.sticker,
+                        text: diary.text,
+                        date: diary.createdAt,
+                        isVisible: diary.isVisible,
+                        image: diary.image,
+                        size: DiaryCardSize.small,
+                        onTap: () => context.push(Routes.diaryDetailPath(diary.idx)),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
+/// 달력 카드 — 흰 배경·우/하단 입체 보더·뒤 워터마크 + 점 장식 + 월 선택 + 요일 + 격자. RN Calendar.
+class _CalendarCard extends StatelessWidget {
+  const _CalendarCard({
+    required this.month,
+    required this.selected,
+    required this.marked,
+    required this.canGoNext,
+    required this.onPrev,
+    required this.onNext,
+    required this.onSelect,
+  });
+
+  final DateTime month;
+  final DateTime selected;
+  final Set<DateTime> marked;
+  final bool canGoNext;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final ValueChanged<DateTime> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 13, 20, 15),
+      decoration: const BoxDecoration(
+        color: FeedPalette.white,
+        border: Border(
+          right: BorderSide(color: FeedPalette.calendarBorder, width: 2),
+          bottom: BorderSide(color: FeedPalette.calendarBorder, width: 3),
+        ),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 뒤 워터마크 — 회색조 레모니(높이 80%·opacity 0.15). RN BackgroundImage.
+          Positioned.fill(
+            child: FractionallySizedBox(
+              heightFactor: 0.8,
+              child: Opacity(opacity: 0.15, child: Image.asset(AppAssets.lemonyGrayscale, fit: BoxFit.contain)),
+            ),
+          ),
+          Column(
+            children: [
+              const _CircleStrip(),
+              _MonthSelector(month: month, canGoNext: canGoNext, onPrev: onPrev, onNext: onNext),
+              const _WeekdayHeader(),
+              // 월 키로 격자를 교체해 월 전환 시 마커(연필)가 ZoomIn 한다(RN DayButton entering ZoomIn).
+              _CalendarGrid(
+                key: ValueKey(monthKey(month)),
+                month: month,
+                selected: selected,
+                marked: marked,
+                onSelect: onSelect,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 상단 점 장식 10개. RN CircleBox.
+class _CircleStrip extends StatelessWidget {
+  const _CircleStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    // RN CircleBox: row · gap 20 고정(가용폭 분배 아님) · 점 12×12. 부모 Column 이 중앙 정렬.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < 10; i++) ...[
+            if (i > 0) const SizedBox(width: 20),
+            const SizedBox(
+              width: 12,
+              height: 12,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: FeedPalette.whiteGray, shape: BoxShape.circle),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 월 이동 — 좌우 캐럿 + 연/월(월 35·main). RN MonthSelector.
 class _MonthSelector extends StatelessWidget {
   const _MonthSelector({required this.month, required this.canGoNext, required this.onPrev, required this.onNext});
 
@@ -111,33 +215,53 @@ class _MonthSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: onPrev,
-            icon: const Icon(Icons.chevron_left),
-            color: context.colors.primary,
-            tooltip: '이전 달',
-          ),
-          Column(
-            children: [
-              Text('${month.year}', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
-              Text(
-                '${month.month}',
-                style: TextStyle(fontSize: 28, color: context.colors.primary, fontWeight: FontWeight.bold),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _NavButton(icon: FeedIcons.monthPrev, color: FeedPalette.main, onTap: onPrev),
+        Column(
+          children: [
+            // RN yearText marginHorizontal 20 — 연도 좌우 여백이 캐럿을 연/월 블록에서 벌린다.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                '${month.year}',
+                style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 12, color: FeedPalette.gray),
               ),
-            ],
-          ),
-          IconButton(
-            onPressed: canGoNext ? onNext : null,
-            icon: const Icon(Icons.chevron_right),
-            color: context.colors.primary,
-            tooltip: '다음 달',
-          ),
-        ],
+            ),
+            Transform.translate(
+              offset: const Offset(0, -7),
+              child: Text(
+                '${month.month}',
+                style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 35, color: FeedPalette.main),
+              ),
+            ),
+          ],
+        ),
+        _NavButton(
+          icon: FeedIcons.monthNext,
+          color: canGoNext ? FeedPalette.main : FeedPalette.lightGray,
+          onTap: canGoNext ? onNext : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _NavButton extends StatelessWidget {
+  const _NavButton({required this.icon, required this.color, required this.onTap});
+
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkResponse(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+        child: Icon(icon, size: 16, color: color),
       ),
     );
   }
@@ -149,7 +273,7 @@ class _WeekdayHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.only(bottom: 5),
       child: Row(
         children: [
           for (var i = 0; i < 7; i++)
@@ -158,8 +282,9 @@ class _WeekdayHeader extends StatelessWidget {
                 child: Text(
                   _weekdayLabels[i],
                   style: TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
                     fontSize: 12,
-                    color: (i == 0 || i == 6) ? context.colors.primary : context.colors.textSecondary,
+                    color: (i == 0 || i == 6) ? FeedPalette.main : FeedPalette.darkGray,
                   ),
                 ),
               ),
@@ -171,7 +296,13 @@ class _WeekdayHeader extends StatelessWidget {
 }
 
 class _CalendarGrid extends StatelessWidget {
-  const _CalendarGrid({required this.month, required this.selected, required this.marked, required this.onSelect});
+  const _CalendarGrid({
+    required this.month,
+    required this.selected,
+    required this.marked,
+    required this.onSelect,
+    super.key,
+  });
 
   final DateTime month;
   final DateTime selected;
@@ -181,32 +312,29 @@ class _CalendarGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final grid = buildCalendarGrid(month);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        children: [
-          for (final week in grid)
-            Row(
-              children: [
-                for (var i = 0; i < 7; i++)
-                  Expanded(
-                    child: _DayCell(
-                      day: week[i],
-                      weekdayIndex: i,
-                      hasDiary:
-                          week[i] != null && marked.contains(DateTime(week[i]!.year, week[i]!.month, week[i]!.day)),
-                      isSelected: week[i] != null && isSameDay(week[i]!, selected),
-                      onTap: onSelect,
-                    ),
+    return Column(
+      children: [
+        for (final week in grid)
+          Row(
+            children: [
+              for (var i = 0; i < 7; i++)
+                Expanded(
+                  child: _DayCell(
+                    day: week[i],
+                    weekdayIndex: i,
+                    hasDiary: week[i] != null && marked.contains(DateTime(week[i]!.year, week[i]!.month, week[i]!.day)),
+                    isSelected: week[i] != null && isSameDay(week[i]!, selected),
+                    onTap: onSelect,
                   ),
-              ],
-            ),
-        ],
-      ),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }
 
+/// 날짜 셀 — 40·radius 12·선택 시 회색 배경. 일기 있는 날은 연필 마커, 없으면 날짜(평일 gray·주말 main). RN DayButton.
 class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.day,
@@ -226,27 +354,33 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final date = day;
     if (date == null) {
-      return const SizedBox(height: 48);
+      return const SizedBox(height: 40);
     }
     final isWeekend = weekdayIndex == 0 || weekdayIndex == 6;
     return GestureDetector(
       onTap: hasDiary ? () => onTap(date) : null,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 44,
-        margin: const EdgeInsets.all(2),
+        height: 40,
         decoration: BoxDecoration(
-          color: isSelected ? context.colors.background : null,
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? FeedPalette.whiteGray : null,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: hasDiary
-              ? Icon(Icons.edit, size: 18, color: context.colors.primary)
+              ? TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOut,
+                  builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
+                  child: Image.asset(AppAssets.calendarPencil, width: 20, height: 20, fit: BoxFit.contain),
+                )
               : Text(
                   '${date.day}',
                   style: TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
                     fontSize: 13,
-                    color: isWeekend ? context.colors.primary : context.colors.textSecondary,
+                    color: isWeekend ? FeedPalette.main : FeedPalette.gray,
                   ),
                 ),
         ),

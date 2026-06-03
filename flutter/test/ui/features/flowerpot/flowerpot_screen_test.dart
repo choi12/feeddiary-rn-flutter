@@ -27,7 +27,9 @@ void main() {
         child: MaterialApp(theme: buildAppTheme(), home: const FlowerpotScreen()),
       ),
     );
-    await tester.pumpAndSettle();
+    // 배경 새/풍선 Lottie 가 무한 애니메이션이라 pumpAndSettle 대신 pump 로 비동기 로드만 처리한다.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Lv.2'), findsOneWidget);
     expect(find.text('물 주기'), findsOneWidget);

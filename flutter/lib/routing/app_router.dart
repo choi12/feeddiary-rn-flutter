@@ -6,12 +6,14 @@ import 'package:feeddiary/ui/features/auth/create_profile_screen.dart';
 import 'package:feeddiary/ui/features/auth/sign_in_screen.dart';
 import 'package:feeddiary/ui/features/auth/splash_screen.dart';
 import 'package:feeddiary/ui/features/community/comments_screen.dart';
+import 'package:feeddiary/ui/features/community/report_screen.dart';
 import 'package:feeddiary/ui/features/diary/create_diary_screen.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_screen.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_screen.dart';
 import 'package:feeddiary/ui/features/home/main_shell.dart';
 import 'package:feeddiary/ui/features/letter/create_letter_screen.dart';
 import 'package:feeddiary/ui/features/setting/app_version_screen.dart';
+import 'package:feeddiary/ui/features/setting/license_screen.dart';
 import 'package:feeddiary/ui/features/setting/lock_password_screen.dart';
 import 'package:feeddiary/ui/features/setting/lockdown_settings_screen.dart';
 import 'package:feeddiary/ui/features/setting/update_profile_screen.dart';
@@ -74,9 +76,14 @@ GoRouter appRouter(Ref ref) {
         builder: (_, state) =>
             CommentsScreen(diaryIdx: int.parse(state.pathParameters['idx']!), author: state.extra as String?),
       ),
+      GoRoute(
+        path: Routes.report,
+        builder: (_, state) => ReportScreen(diaryIdx: int.parse(state.pathParameters['idx']!)),
+      ),
       GoRoute(path: Routes.mission, builder: (_, _) => const MissionScreen()),
       GoRoute(path: Routes.letterWrite, builder: (_, _) => const CreateLetterScreen()),
       GoRoute(path: Routes.settingProfile, builder: (_, _) => const UpdateProfileScreen()),
+      GoRoute(path: Routes.settingLicense, builder: (_, _) => const LicenseScreen()),
       GoRoute(path: Routes.settingAppVersion, builder: (_, _) => const AppVersionScreen()),
       GoRoute(path: Routes.settingLockdown, builder: (_, _) => const LockdownSettingsScreen()),
       GoRoute(path: Routes.settingLockPassword, builder: (_, _) => const LockPasswordScreen()),

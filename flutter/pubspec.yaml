@@ -79,6 +79,8 @@ flutter:
     - assets/images/home/
     - assets/images/character/
     - assets/images/signin/
+    - assets/images/profile/
+    - assets/images/diary/
     - assets/lottie/
 
   # 폰트 — RN assets/fonts 이식. Dovemayo_gothic=본문/UI 기본(단일 weight), Ownglyph=손글씨 강조.

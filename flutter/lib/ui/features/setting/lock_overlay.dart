@@ -1,6 +1,5 @@
 // 잠금 해제 화면 — 비밀번호 입력→검증→해제. RN screens/home/LockScreen. 라우터 위 Stack 오버레이(라우트 아님).
 import 'package:feeddiary/data/services/lock_storage.dart';
-import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
@@ -69,8 +68,6 @@ class _LockOverlayState extends ConsumerState<LockOverlay> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(FeedIcons.settingLock, size: 48, color: context.colors.primary),
-                const SizedBox(height: 24),
                 const Text(SettingStrings.unlockTitle, style: TextStyle(fontSize: 18)),
                 const SizedBox(height: 28),
                 PasswordDots(filled: _input.length),

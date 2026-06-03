@@ -51,6 +51,7 @@ void main() {
     // 정렬 드롭다운은 현재 정렬 라벨만 보인다(나머지는 시트를 열어야 — RN SortButton).
     expect(find.text('최신글'), findsOneWidget);
     expect(find.text('공유 일기 본문입니다.'), findsOneWidget);
-    expect(find.text('햇살이'), findsOneWidget);
+    // 작성자는 "{닉네임} 님의 일기"를 한 Text.rich 로 그리므로 textContaining 으로 찾는다.
+    expect(find.textContaining('햇살이'), findsOneWidget);
   });
 }

@@ -33,10 +33,12 @@ class CommentsScreen extends ConsumerWidget {
               error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(commentsControllerProvider(diaryIdx))),
               data: (list) {
                 if (list.isEmpty) {
-                  return const DiaryEmptyView(message: '첫 댓글을 남겨보세요.');
+                  return const DiaryEmptyView(message: '첫 댓글을 작성해 주세요 :D');
                 }
+                // RN CommentList: paddingHorizontal/Bottom = LAYOUT.PADDING(24) · gap 10 · 상단 0.
+                // 카드 좌우 여백을 헤더 거터(24)와 맞춰 닫기 X 와 카드 우측이 정렬되게 한다.
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   itemCount: list.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) =>
@@ -98,7 +100,7 @@ class _CommentInputState extends ConsumerState<_CommentInput> {
       await ref.read(commentsControllerProvider(widget.diaryIdx).notifier).create(text);
       _controller.clear();
     } on AppException catch (e) {
-      if (mounted) showFeedToast(context, e.displayMessage);
+      if (mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.comment);
     } finally {
       if (mounted) {
         setState(() => _sending = false);
@@ -126,7 +128,7 @@ class _CommentInputState extends ConsumerState<_CommentInput> {
                 maxLines: 3,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _submit(),
-                hintText: '댓글을 입력해 주세요.',
+                hintText: '댓글 추가...',
               ),
             ),
             const SizedBox(width: 8),

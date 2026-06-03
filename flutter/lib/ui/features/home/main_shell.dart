@@ -1,5 +1,6 @@
 // 메인 하단 탭 셸 — 5탭(화분/일기/공유/편지/설정) FeedTabBar + IndexedStack. RN BottomTabNavigation 대응.
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/widgets/feed_tab_bar.dart';
 import 'package:feeddiary/ui/features/community/community_screen.dart';
 import 'package:feeddiary/ui/features/diary/my_diary_screen.dart';
@@ -26,17 +27,36 @@ class _MainShellState extends ConsumerState<MainShell> {
   static const List<FeedTabItem> _tabs = [
     FeedTabItem(icon: FeedIcons.tabFlowerpot, label: '나의 화분'),
     FeedTabItem(icon: FeedIcons.tabDiary, label: '나의 일기'),
-    FeedTabItem(icon: FeedIcons.tabCommunity, label: '공유 일기'),
+    // FA5 user-friends 글리프가 우측으로 치우쳐(advance 박스 기준) 라벨 중앙선보다 오른쪽으로 보여 좌측 보정.
+    FeedTabItem(icon: FeedIcons.tabCommunity, label: '공유 일기', iconOffset: Offset(-2, 0)),
     FeedTabItem(icon: FeedIcons.tabLetters, label: '나의 편지', iconSize: 23),
     FeedTabItem(icon: FeedIcons.tabSetting, label: '설정'),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    // RN 탭바는 absolute 오버레이라 화면이 탭바 뒤까지 풀블리드로 깔린다(화분 풀 캔버스가 대표) → extendBody 로 동일하게.
+    // 화분 외 탭은 RN `Container isMain`(paddingBottom 75)처럼 탭바+안전영역만큼 하단을 비워 콘텐츠가 가리지 않게 한다.
+    Widget belowTabBar(Widget child) => MediaQuery.removePadding(
+      context: context,
+      removeBottom: true,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: AppDimens.bottomTabHeight + bottomInset),
+        child: child,
+      ),
+    );
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _index,
-        children: const [FlowerpotScreen(), MyDiaryScreen(), CommunityScreen(), LettersScreen(), SettingScreen()],
+        children: [
+          const FlowerpotScreen(),
+          belowTabBar(const MyDiaryScreen()),
+          belowTabBar(const CommunityScreen()),
+          belowTabBar(const LettersScreen()),
+          belowTabBar(const SettingScreen()),
+        ],
       ),
       bottomNavigationBar: FeedTabBar(
         currentIndex: _index,
