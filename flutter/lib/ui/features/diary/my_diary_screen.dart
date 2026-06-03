@@ -196,7 +196,7 @@ class _CardViewState extends ConsumerState<_CardView> {
       error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(diaryListProvider)),
       data: (paged) {
         if (paged.isEmpty) {
-          return const DiaryEmptyView(message: '아직 작성한 일기가 없어요.');
+          return const DiaryEmptyView(message: '나의 첫 일기를 작성해 보세요 :D');
         }
         return RefreshIndicator(
           onRefresh: () => ref.read(diaryListProvider.notifier).refreshList(),
