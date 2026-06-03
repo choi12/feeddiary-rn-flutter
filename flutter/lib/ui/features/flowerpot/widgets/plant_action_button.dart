@@ -104,39 +104,44 @@ class _SideButtonShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // RN ActionButton/MissionButton: 이미지 + 라벨이 65×65 버튼 안에 세로로 들어간다(중앙 정렬). 배지는 버튼 모서리 절대 배치.
     return Opacity(
       opacity: enabled ? 1 : 0.7,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Material(
-                color: FeedPalette.white.withValues(alpha: 0.3),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: FeedPalette.white.withValues(alpha: 0.7), width: 2),
-                ),
-                child: InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(width: 65, height: 65, child: Center(child: image)),
+          Material(
+            color: FeedPalette.white.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: FeedPalette.white.withValues(alpha: 0.7), width: 2),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 65,
+                height: 65,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    image,
+                    const SizedBox(height: 2),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontFamily: FeedFonts.dovemayo,
+                        fontSize: 11,
+                        color: FeedPalette.black,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              ?badge,
-            ],
-          ),
-          const SizedBox(height: 1),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: FeedFonts.dovemayo,
-              fontSize: 11,
-              color: FeedPalette.black,
-              letterSpacing: -0.5,
             ),
           ),
+          ?badge,
         ],
       ),
     );

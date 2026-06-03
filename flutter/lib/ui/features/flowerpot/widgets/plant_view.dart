@@ -1,4 +1,5 @@
 // 화분 식물 뷰 — 레벨별 캐릭터(1=화분+씨앗·2=새싹·3=열매+하트) + 물/사랑 Lottie 피드백. RN LemonyBox/LottieBox 대응.
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:feeddiary/config/app_assets.dart';
@@ -22,9 +23,9 @@ class PlantView extends StatefulWidget {
 }
 
 class _PlantViewState extends State<PlantView> with TickerProviderStateMixin {
-  // 물/사랑 Lottie 재생 컨트롤러. 기본 2s, 컴포지션 로드 시 실제 길이로 교체한다(첫 forward null-duration 방지).
-  // RN 식물은 액션 시 scale 바운스를 하지 않는다 — 피드백 Lottie(비/하트)만 재생한다.
-  late final AnimationController _feedback;
+  // 물/사랑 피드백 Lottie 가시 여부. RN usePlantInteraction: 액션 시 2500ms 동안 표시(LottieView autoPlay+loop = 1× 속도로 반복).
+  bool _feedbackVisible = false;
+  Timer? _feedbackTimer;
 
   // 1레벨 씨앗 흔들림(상시 2트랙). RN useLemonySeedAnimation: 회전 ±2°(500ms ease) + 좌우 ±30px(5s linear), 둘 다 무한 reverse.
   late final AnimationController _seedRot;
@@ -33,8 +34,7 @@ class _PlantViewState extends State<PlantView> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    // 모두 initState 에서 즉시 생성한다(레벨/액션에 따라 build 에서 미참조될 수 있어 late 지연 초기화가 dispose 중 발동하는 버그 회피).
-    _feedback = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    // 씨앗 컨트롤러는 initState 에서 즉시 생성한다(late 지연 초기화가 dispose 중 발동하는 버그 회피).
     _seedRot = AnimationController(vsync: this, duration: const Duration(milliseconds: 500))..repeat(reverse: true);
     _seedX = AnimationController(vsync: this, duration: const Duration(milliseconds: 5000))..repeat(reverse: true);
   }
@@ -43,13 +43,18 @@ class _PlantViewState extends State<PlantView> with TickerProviderStateMixin {
   void didUpdateWidget(PlantView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.actionTick != oldWidget.actionTick) {
-      _feedback.forward(from: 0);
+      // RN ANIMATION_DURATION 2500ms 동안 피드백 Lottie 를 표시한다(그 사이 자동 반복 재생).
+      _feedbackTimer?.cancel();
+      setState(() => _feedbackVisible = true);
+      _feedbackTimer = Timer(const Duration(milliseconds: 2500), () {
+        if (mounted) setState(() => _feedbackVisible = false);
+      });
     }
   }
 
   @override
   void dispose() {
-    _feedback.dispose();
+    _feedbackTimer?.cancel();
     _seedRot.dispose();
     _seedX.dispose();
     super.dispose();
@@ -73,24 +78,19 @@ class _PlantViewState extends State<PlantView> with TickerProviderStateMixin {
             ),
             child: KeyedSubtree(key: ValueKey(widget.level), child: _levelArt(widget.level)),
           ),
-          // 물/사랑 피드백 Lottie — 액션 시 1회 재생(재생 중에만 표시). RN LottieBox: 컨테이너 top0+가로중앙(=상단 중앙) + translate(5,10).
-          if (widget.lastAction != null)
+          // 물/사랑 피드백 Lottie — RN: 액션 시 2500ms 동안 자동 반복 재생(autoPlay+loop, 1× 속도). 상단 중앙 + translate(5,10).
+          if (widget.lastAction != null && _feedbackVisible)
             Align(
               alignment: Alignment.topCenter,
-              child: AnimatedBuilder(
-                animation: _feedback,
-                builder: (context, child) => _feedback.isAnimating ? child! : const SizedBox.shrink(),
-                child: Transform.translate(
-                  offset: const Offset(5, 10),
-                  child: IgnorePointer(
-                    child: Lottie.asset(
-                      widget.lastAction == PlantAction.watering ? AppAssets.lottieRain : AppAssets.lottieHeart,
-                      controller: _feedback,
-                      onLoaded: (composition) => _feedback.duration = composition.duration,
-                      width: 150,
-                      height: 150,
-                      fit: BoxFit.contain,
-                    ),
+              child: Transform.translate(
+                offset: const Offset(5, 10),
+                child: IgnorePointer(
+                  child: Lottie.asset(
+                    widget.lastAction == PlantAction.watering ? AppAssets.lottieRain : AppAssets.lottieHeart,
+                    repeat: true,
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
