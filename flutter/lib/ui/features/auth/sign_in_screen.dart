@@ -71,28 +71,34 @@ class _CharacterCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          top: 40,
-          left: 0,
-          right: 0,
-          child: Center(child: Image.asset(AppAssets.logo, height: 50, fit: BoxFit.contain)),
-        ),
-        Positioned(left: 20, bottom: 130, child: Image.asset(AppAssets.signInSun, width: 70, height: 70)),
-        Positioned(
-          right: 15,
-          bottom: 140,
-          child: Image.asset(AppAssets.signInWatering, height: 120, fit: BoxFit.contain),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: -20,
-          child: Center(child: Image.asset(AppAssets.signInLemony, height: 180, fit: BoxFit.contain)),
-        ),
-      ],
+    // RN 은 폰 절대 px(bottom 290/130/140 등)을 쓰지만 웹/큰 화면에선 안 맞아 캔버스 높이 비율로 환산한다.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final h = constraints.maxHeight;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              bottom: h * 0.61,
+              left: 0,
+              right: 0,
+              child: Center(child: Image.asset(AppAssets.logo, height: 50, fit: BoxFit.contain)),
+            ),
+            Positioned(left: 20, bottom: h * 0.275, child: Image.asset(AppAssets.signInSun, width: 70, height: 70)),
+            Positioned(
+              right: 15,
+              bottom: h * 0.3,
+              child: Image.asset(AppAssets.signInWatering, height: 120, fit: BoxFit.contain),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: -20,
+              child: Center(child: Image.asset(AppAssets.signInLemony, height: 180, fit: BoxFit.contain)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -109,7 +115,10 @@ class _ButtonBox extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Positioned.fill(child: Image.asset(AppAssets.signInField, fit: BoxFit.fill)),
+        // RN contentFit:fill 은 웹 비율에서 잔디가 늘어나 cover + 하단 정렬로 보정(구조는 RN 충실).
+        Positioned.fill(
+          child: Image.asset(AppAssets.signInField, fit: BoxFit.cover, alignment: Alignment.bottomCenter),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Center(

@@ -3,6 +3,9 @@ import 'dart:typed_data';
 
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_bottom_sheet.dart';
 import 'package:feeddiary/ui/features/setting/character_catalog.dart';
 import 'package:feeddiary/ui/features/setting/profile_image_type.dart';
@@ -76,37 +79,38 @@ class ProfileImageEditor extends StatelessWidget {
     onPhotoPicked(bytes);
   }
 
+  /// 아바타 탭 → 타입 선택 모달(사진/캐릭터). RN ProfileImageSection 의 Pressable→ProfileImageTypeModal.
+  void _openTypeModal(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierColor: FeedPalette.scrim,
+      builder: (dialogContext) => _ProfileTypeModal(
+        onPhoto: () {
+          Navigator.of(dialogContext).pop();
+          _pickPhoto(context);
+        },
+        onCharacter: () {
+          Navigator.of(dialogContext).pop();
+          onCharacterSelected(character.isEmpty ? CharacterCatalog.defaultName : character);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Center(
-          child: _Avatar(usePhoto: _usePhoto, character: character, background: background, imageBytes: imageBytes),
+          child: GestureDetector(
+            onTap: () => _openTypeModal(context),
+            child: _Avatar(usePhoto: _usePhoto, character: character, background: background, imageBytes: imageBytes),
+          ),
         ),
-        const SizedBox(height: 24),
-        SegmentedButton<ProfileImageType>(
-          segments: const [
-            ButtonSegment(value: ProfileImageType.photo, label: Text(SettingStrings.pickPhoto)),
-            ButtonSegment(value: ProfileImageType.character, label: Text(SettingStrings.pickCharacter)),
-          ],
-          selected: {imageType ?? ProfileImageType.character},
-          onSelectionChanged: (selection) {
-            if (selection.first == ProfileImageType.photo) {
-              _pickPhoto(context);
-            } else {
-              onCharacterSelected(character.isEmpty ? CharacterCatalog.defaultName : character);
-            }
-          },
-        ),
-        const SizedBox(height: 16),
-        if (_usePhoto)
-          OutlinedButton.icon(
-            onPressed: () => _pickPhoto(context),
-            icon: const Icon(FeedIcons.addPhoto),
-            label: const Text(SettingStrings.pickPhoto),
-          )
-        else ...[
+        // 캐릭터 모드일 때만 캐릭터 그리드 + 배경색 편집기 노출(사진 모드는 아바타 탭으로 재선택). RN ProfileAvatarEditor.
+        if (imageType == ProfileImageType.character) ...[
+          const SizedBox(height: 24),
           _CharacterGrid(selected: character, onSelect: onCharacterSelected),
           const SizedBox(height: 20),
           const Text(SettingStrings.backgroundLabel, style: TextStyle(fontWeight: FontWeight.bold)),
@@ -114,6 +118,85 @@ class ProfileImageEditor extends StatelessWidget {
           _BackgroundSwatches(swatches: _backgroundSwatches, selected: background, onSelect: onBackgroundSelected),
         ],
       ],
+    );
+  }
+}
+
+/// 프로필 이미지 타입 선택 모달 — [사진 선택하기 | 캐릭터 만들기] 2분할. RN ProfileImageTypeModal(300·60h).
+class _ProfileTypeModal extends StatelessWidget {
+  const _ProfileTypeModal({required this.onPhoto, required this.onCharacter});
+
+  final VoidCallback onPhoto;
+  final VoidCallback onCharacter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: FeedPalette.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.borderRadius)),
+      child: SizedBox(
+        width: AppDimens.dialogWidth,
+        height: 60,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _TypeCell(
+                icon: FeedIcons.addPhoto,
+                iconSize: 18,
+                color: FeedPalette.lightBlack,
+                label: SettingStrings.pickPhoto,
+                onTap: onPhoto,
+              ),
+            ),
+            const ColoredBox(color: FeedPalette.lightGray, child: SizedBox(width: 1)),
+            Expanded(
+              child: _TypeCell(
+                icon: FeedIcons.profileUser,
+                iconSize: 15,
+                color: FeedPalette.main,
+                label: SettingStrings.pickCharacter,
+                onTap: onCharacter,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeCell extends StatelessWidget {
+  const _TypeCell({
+    required this.icon,
+    required this.iconSize,
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final double iconSize;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: iconSize, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 14, color: color),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -129,28 +212,27 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double size = 96;
+    const double size = 160;
     final bytes = imageBytes;
+    final bg = background.isNotEmpty ? ProfileImageEditor.hexColor(background) : FeedPalette.whiteGray;
+    final Widget content;
     if (usePhoto && bytes != null) {
-      return ClipOval(
-        child: Image.memory(bytes, width: size, height: size, fit: BoxFit.cover),
-      );
-    }
-    final bg = background.isNotEmpty ? ProfileImageEditor.hexColor(background) : context.colors.background;
-    if (character.isNotEmpty) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-        padding: const EdgeInsets.all(12),
-        child: Image.asset(CharacterCatalog.assetFor(character)),
-      );
+      content = Image.memory(bytes, width: size, height: size, fit: BoxFit.cover);
+    } else if (character.isNotEmpty) {
+      content = Padding(padding: const EdgeInsets.all(24), child: Image.asset(CharacterCatalog.assetFor(character)));
+    } else {
+      content = const Icon(FeedIcons.question, size: 40, color: FeedPalette.white);
     }
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Icon(FeedIcons.question, color: context.colors.textSecondary),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: bg,
+        shape: BoxShape.circle,
+        border: Border.all(color: FeedPalette.whiteGray),
+      ),
+      child: Center(child: content),
     );
   }
 }
