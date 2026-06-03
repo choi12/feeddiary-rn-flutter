@@ -18,6 +18,7 @@ class DiaryCard extends StatelessWidget {
     required this.text,
     required this.date,
     required this.isVisible,
+    this.image,
     this.likeCount,
     this.commentCount,
     this.size = DiaryCardSize.large,
@@ -29,6 +30,9 @@ class DiaryCard extends StatelessWidget {
   final String text;
   final DateTime date;
   final bool isVisible;
+
+  /// 본문 첨부 이미지 URL. 비어 있으면 렌더하지 않는다(데모는 이미지 호스팅이 없어 항상 비어 있음). RN Content `diary.image`.
+  final String? image;
   final int? likeCount;
   final int? commentCount;
   final DiaryCardSize size;
@@ -74,17 +78,7 @@ class DiaryCard extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            text,
-                            maxLines: _isLarge ? 2 : 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: FeedFonts.dovemayo,
-                              color: FeedPalette.lightBlack,
-                              fontSize: 13,
-                              height: 20 / 13,
-                            ),
-                          ),
+                          CardBody(text: text, image: image, isLarge: _isLarge),
                           if (showCounts) ...[
                             const SizedBox(height: 20),
                             Row(
@@ -109,6 +103,79 @@ class DiaryCard extends StatelessWidget {
         ),
         // 카드 상단을 살짝 뚫고 나오는 새싹 포인트. RN PointImage(FontAwesome5 seedling·absolute).
         CardSeedling(isLarge: _isLarge),
+      ],
+    );
+  }
+}
+
+/// 본문 — 텍스트 + 첨부 이미지. 大는 세로(이미지 100%×150)·小는 가로(이미지 45×45). RN DiaryCard Content(size별).
+class CardBody extends StatelessWidget {
+  const CardBody({required this.text, required this.image, required this.isLarge, super.key});
+
+  final String text;
+  final String? image;
+  final bool isLarge;
+
+  bool get _hasImage => image != null && image!.isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    // RN text: marginVertical 大5/小10 · LIGHT_BLACK · 13 · lineHeight 20 · alignSelf flex-start.
+    final body = Text(
+      text,
+      maxLines: isLarge ? 2 : 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontFamily: FeedFonts.dovemayo,
+        color: FeedPalette.lightBlack,
+        fontSize: 13,
+        height: 20 / 13,
+      ),
+    );
+
+    if (isLarge) {
+      // 大: 세로 배치. 이미지 width 100%·height 150·radius 7·marginTop 5.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(padding: const EdgeInsets.symmetric(vertical: 5), child: body),
+          if (_hasImage)
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: Image.network(
+                  image!,
+                  width: double.infinity,
+                  height: 150,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    // 小: 가로 배치(gap 10). 텍스트 flex·이미지 45×45·radius 5.
+    return Row(
+      children: [
+        Expanded(
+          child: Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: body),
+        ),
+        if (_hasImage) ...[
+          const SizedBox(width: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: Image.network(
+              image!,
+              width: 45,
+              height: 45,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -146,8 +213,10 @@ class DayBox extends StatelessWidget {
       decoration: const BoxDecoration(
         border: Border(right: BorderSide(color: FeedPalette.whiteGray)),
       ),
+      // RN DayBox = View(기본 column·justifyContent flex-start·alignItems stretch) → 상단·좌측 정렬. 카드 stretch 라 풀하이트 중 위에 붙는다.
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             pad2(date.day),

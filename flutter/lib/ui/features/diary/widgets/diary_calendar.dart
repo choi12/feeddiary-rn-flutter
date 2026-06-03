@@ -80,20 +80,28 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
                 if (daily.isEmpty) {
                   return const DiaryEmptyView(message: '이 날의 일기가 없어요.');
                 }
-                // RN DailyDiaryList: paddingTop 25 · gap 25 · 하단 탭바 여백. 일별 카드는 small.
+                // RN DailyDiaryList: paddingTop 25 · gap 25 · 하단 탭바 여백(75, inset 은 셸 belowTabBar). 일별 카드는 small.
+                // 선택일 키로 리스트를 교체해 날짜 전환 시 카드가 FadeIn 한다(RN Animated.View entering FadeIn).
                 return ListView.separated(
-                  padding: const EdgeInsets.only(top: 25, bottom: 90),
+                  key: ValueKey(_selected),
+                  padding: const EdgeInsets.only(top: 25, bottom: 75),
                   itemCount: daily.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 25),
                   itemBuilder: (context, index) {
                     final diary = daily[index];
-                    return DiaryCard(
-                      sticker: diary.sticker,
-                      text: diary.text,
-                      date: diary.createdAt,
-                      isVisible: diary.isVisible,
-                      size: DiaryCardSize.small,
-                      onTap: () => context.push(Routes.diaryDetailPath(diary.idx)),
+                    return TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 250),
+                      builder: (_, value, child) => Opacity(opacity: value, child: child),
+                      child: DiaryCard(
+                        sticker: diary.sticker,
+                        text: diary.text,
+                        date: diary.createdAt,
+                        isVisible: diary.isVisible,
+                        image: diary.image,
+                        size: DiaryCardSize.small,
+                        onTap: () => context.push(Routes.diaryDetailPath(diary.idx)),
+                      ),
                     );
                   },
                 );
@@ -152,7 +160,14 @@ class _CalendarCard extends StatelessWidget {
               const _CircleStrip(),
               _MonthSelector(month: month, canGoNext: canGoNext, onPrev: onPrev, onNext: onNext),
               const _WeekdayHeader(),
-              _CalendarGrid(month: month, selected: selected, marked: marked, onSelect: onSelect),
+              // 월 키로 격자를 교체해 월 전환 시 마커(연필)가 ZoomIn 한다(RN DayButton entering ZoomIn).
+              _CalendarGrid(
+                key: ValueKey(monthKey(month)),
+                month: month,
+                selected: selected,
+                marked: marked,
+                onSelect: onSelect,
+              ),
             ],
           ),
         ],
@@ -167,12 +182,14 @@ class _CircleStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // RN CircleBox: row · gap 20 고정(가용폭 분배 아님) · 점 12×12. 부모 Column 이 중앙 정렬.
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          for (var i = 0; i < 10; i++)
+          for (var i = 0; i < 10; i++) ...[
+            if (i > 0) const SizedBox(width: 20),
             const SizedBox(
               width: 12,
               height: 12,
@@ -180,6 +197,7 @@ class _CircleStrip extends StatelessWidget {
                 decoration: BoxDecoration(color: FeedPalette.whiteGray, shape: BoxShape.circle),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -203,9 +221,13 @@ class _MonthSelector extends StatelessWidget {
         _NavButton(icon: FeedIcons.monthPrev, color: FeedPalette.main, onTap: onPrev),
         Column(
           children: [
-            Text(
-              '${month.year}',
-              style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 12, color: FeedPalette.gray),
+            // RN yearText marginHorizontal 20 — 연도 좌우 여백이 캐럿을 연/월 블록에서 벌린다.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                '${month.year}',
+                style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 12, color: FeedPalette.gray),
+              ),
             ),
             Transform.translate(
               offset: const Offset(0, -7),
@@ -274,7 +296,13 @@ class _WeekdayHeader extends StatelessWidget {
 }
 
 class _CalendarGrid extends StatelessWidget {
-  const _CalendarGrid({required this.month, required this.selected, required this.marked, required this.onSelect});
+  const _CalendarGrid({
+    required this.month,
+    required this.selected,
+    required this.marked,
+    required this.onSelect,
+    super.key,
+  });
 
   final DateTime month;
   final DateTime selected;
@@ -340,7 +368,13 @@ class _DayCell extends StatelessWidget {
         ),
         child: Center(
           child: hasDiary
-              ? Image.asset(AppAssets.calendarPencil, width: 20, height: 20, fit: BoxFit.contain)
+              ? TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOut,
+                  builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
+                  child: Image.asset(AppAssets.calendarPencil, width: 20, height: 20, fit: BoxFit.contain),
+                )
               : Text(
                   '${date.day}',
                   style: TextStyle(
