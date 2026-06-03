@@ -19,6 +19,7 @@ import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
 import 'package:feeddiary/ui/features/diary/sticker_catalog.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_card.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
+import 'package:feeddiary/ui/features/setting/widgets/profile_avatar.dart';
 import 'package:feeddiary/utils/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,7 +42,9 @@ class DiaryDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: FeedPalette.white,
       appBar: FeedHeader(
-        title: diary == null ? '일기' : (isMine ? '나의 일기' : diary.nickname),
+        // RN DiaryDetailsHeader: 로딩 중(diary==null) 빈 제목·내 일기 '나의 일기'·타인 일기 NicknameBox(large).
+        title: isMine ? '나의 일기' : '',
+        titleWidget: (diary != null && !isMine) ? _DetailNicknameTitle(diary: diary) : null,
         hasBackButton: true,
         rightItem: isMine
             ? InkResponse(
@@ -91,10 +94,14 @@ class DiaryDetailScreen extends ConsumerWidget {
         await ref.read(diaryDetailControllerProvider(diary.idx).notifier).toggleVisibility();
         if (context.mounted) {
           // 토글 후 새 상태 기준 안내. RN MESSAGE.DIARY.PUBLISHED/UNPUBLISHED.
-          showFeedToast(context, diary.isVisible ? '일기가 비공개로 설정되었어요.' : '일기가 공개되었어요.');
+          showFeedToast(
+            context,
+            diary.isVisible ? '일기가 비공개로 설정되었어요.' : '일기가 공개되었어요.',
+            offset: FeedToastOffset.diaryDetails,
+          );
         }
       } on AppException catch (e) {
-        if (context.mounted) showFeedToast(context, e.displayMessage);
+        if (context.mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.diaryDetails);
       }
     }();
   }
@@ -114,12 +121,50 @@ class DiaryDetailScreen extends ConsumerWidget {
         await ref.read(diaryDetailControllerProvider(idx).notifier).delete();
         if (context.mounted) {
           context.pop();
-          showFeedToast(context, '일기가 삭제되었어요.');
+          // 삭제 후 목록으로 돌아간 뒤 표시되므로 홈 오프셋(탭바 위). RN TOAST_BOTTOM_OFFSET.HOME_SCREEN.
+          showFeedToast(context, '일기가 삭제되었어요.', offset: FeedToastOffset.home);
         }
       } on AppException catch (e) {
-        if (context.mounted) showFeedToast(context, e.displayMessage);
+        if (context.mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.diaryDetails);
       }
     }();
+  }
+}
+
+/// 타인 일기 상세 헤더 제목 — 작성자 아바타(37) + "{닉네임} 님의 일기". RN `NicknameBox size="large"`(diary/NicknameBox).
+class _DetailNicknameTitle extends StatelessWidget {
+  const _DetailNicknameTitle({required this.diary});
+
+  final CommunityDiary diary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ProfileAvatar(size: 37, userImage: diary.userImage, character: diary.character, background: diary.background),
+        // RN nicknameText marginLeft 5.
+        const SizedBox(width: 5),
+        Text.rich(
+          TextSpan(
+            style: const TextStyle(
+              fontFamily: FeedFonts.dovemayo,
+              fontSize: 14,
+              color: FeedPalette.lightBlack,
+              letterSpacing: -0.5,
+            ),
+            children: [
+              TextSpan(
+                text: '${diary.nickname} ',
+                style: const TextStyle(fontSize: 17, color: FeedPalette.black),
+              ),
+              const TextSpan(text: '님의 일기'),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -292,7 +337,7 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
 
   Future<void> _toggle(LikeState like) async {
     if (widget.isMine) {
-      showFeedToast(context, '다른 사람의 일기에만 좋아요를 할 수 있어요.');
+      showFeedToast(context, '다른 사람의 일기에만 좋아요를 할 수 있어요.', offset: FeedToastOffset.diaryDetails);
       return;
     }
     try {
@@ -309,7 +354,7 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
         });
       }
     } on AppException catch (e) {
-      if (mounted) showFeedToast(context, e.displayMessage);
+      if (mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.diaryDetails);
     }
   }
 
