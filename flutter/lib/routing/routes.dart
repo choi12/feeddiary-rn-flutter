@@ -31,6 +31,9 @@ abstract final class Routes {
   /// 프로필 수정(설정에서 push). 파라미터 없음.
   static const String settingProfile = '/settings/profile';
 
+  /// 오픈소스 라이선스(설정에서 push). 파라미터 없음.
+  static const String settingLicense = '/settings/license';
+
   /// 앱 버전 정보(설정에서 push). 파라미터 없음.
   static const String settingAppVersion = '/settings/app-version';
 

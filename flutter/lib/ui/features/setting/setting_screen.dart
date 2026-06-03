@@ -12,6 +12,7 @@ import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
 import 'package:feeddiary/ui/core/widgets/feed_menu_row.dart';
@@ -62,50 +63,54 @@ class SettingScreen extends ConsumerWidget {
     }
   }
 
-  void _showLicenses(BuildContext context) {
-    showLicensePage(
-      context: context,
-      applicationName: '새싹일기',
-      applicationVersion: AppInfo.version,
-      applicationIcon: Padding(padding: const EdgeInsets.all(8), child: Image.asset(AppAssets.logo, height: 40)),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user;
+    // RN Setting: 프로필 박스(흰) → 8px 회색 띠 → 메뉴 영역(회색 배경, flex:1)에 흰 메뉴행 + 로그아웃.
     return Scaffold(
       backgroundColor: FeedPalette.white,
       appBar: const FeedHeader(title: SettingStrings.title),
-      body: ListView(
-        padding: EdgeInsets.zero,
+      body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding, vertical: 12),
-            child: _ProfileBox(user: user, onTap: () => context.push(Routes.settingProfile)),
-          ),
-          const SizedBox(height: 8),
-          FeedMenuRow(
-            icon: FeedIcons.settingLock,
-            iconSize: 19,
-            label: SettingStrings.menuLock,
-            onTap: () => context.push(Routes.settingLockdown),
-          ),
-          FeedMenuRow(
-            icon: FeedIcons.settingSupport,
-            iconSize: 17,
-            label: SettingStrings.menuSupport,
-            onTap: () => _sendSupportEmail(context, user),
-          ),
-          FeedMenuRow(label: SettingStrings.menuLicense, onTap: () => _showLicenses(context)),
-          FeedMenuRow(label: SettingStrings.menuAppVersion, onTap: () => context.push(Routes.settingAppVersion)),
-          const SizedBox(height: 28),
-          Center(
-            child: TextButton(
-              onPressed: () => _signOut(context, ref),
-              child: const Text(
-                SettingStrings.signOut,
-                style: TextStyle(color: FeedPalette.orange, decoration: TextDecoration.underline),
+          _ProfileBox(user: user, onTap: () => context.push(Routes.settingProfile)),
+          Container(height: 8, color: FeedPalette.whiteGray),
+          Expanded(
+            child: ColoredBox(
+              color: FeedPalette.whiteGray,
+              child: Column(
+                children: [
+                  FeedMenuRow(
+                    icon: FeedIcons.settingLock,
+                    iconSize: 19,
+                    label: SettingStrings.menuLock,
+                    onTap: () => context.push(Routes.settingLockdown),
+                  ),
+                  FeedMenuRow(
+                    icon: FeedIcons.settingSupport,
+                    iconSize: 17,
+                    label: SettingStrings.menuSupport,
+                    onTap: () => _sendSupportEmail(context, user),
+                  ),
+                  FeedMenuRow(label: SettingStrings.menuLicense, onTap: () => context.push(Routes.settingLicense)),
+                  FeedMenuRow(
+                    label: SettingStrings.menuAppVersion,
+                    onTap: () => context.push(Routes.settingAppVersion),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => _signOut(context, ref),
+                      child: const Text(
+                        SettingStrings.signOut,
+                        style: TextStyle(
+                          color: FeedPalette.orange,
+                          decoration: TextDecoration.underline,
+                          decorationColor: FeedPalette.orange,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -125,47 +130,66 @@ class _ProfileBox extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final avatar = ref.watch(localAvatarProvider);
+    final isApple = user?.type.name == 'apple';
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding, vertical: 30),
         child: Row(
           children: [
             _Avatar(user: user, localBytes: avatar),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 닉네임 + 연두 "내 정보 수정"(같은 baseline). RN NicknameBox.
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
                       Flexible(
                         child: Text(
                           user?.nickname ?? '',
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontFamily: FeedFonts.dovemayo,
+                            fontSize: 17,
+                            color: FeedPalette.black,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
+                      const SizedBox(width: 4),
+                      const Text(
                         SettingStrings.editProfile,
-                        style: TextStyle(fontSize: 13, color: context.colors.textSecondary),
+                        style: TextStyle(
+                          fontFamily: FeedFonts.dovemayo,
+                          fontSize: 12,
+                          color: FeedPalette.main,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
+                  // 소셜 로고(apple 은 검정 tint) + 계정 이메일. RN AccountBox.
                   Row(
                     children: [
                       Image.asset(
-                        user?.type.name == 'apple' ? AppAssets.appleIcon : AppAssets.googleIcon,
+                        isApple ? AppAssets.appleIcon : AppAssets.googleIcon,
                         width: 14,
                         height: 14,
+                        color: isApple ? FeedPalette.black : null,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       Flexible(
                         child: Text(
                           user?.account ?? '',
-                          style: TextStyle(fontSize: 13, color: context.colors.textSecondary),
+                          style: const TextStyle(
+                            fontFamily: FeedFonts.dovemayo,
+                            fontSize: 12,
+                            color: FeedPalette.darkGray,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -174,7 +198,7 @@ class _ProfileBox extends ConsumerWidget {
                 ],
               ),
             ),
-            const Icon(FeedIcons.menuChevron, size: 20, color: FeedPalette.lightGray),
+            const Icon(FeedIcons.menuChevron, size: 25, color: FeedPalette.lightGray),
           ],
         ),
       ),
@@ -218,7 +242,7 @@ class _Avatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(color: context.colors.background, shape: BoxShape.circle),
-      child: Icon(FeedIcons.question, size: 22, color: context.colors.textSecondary),
+      child: const Icon(FeedIcons.question, size: 40, color: FeedPalette.white),
     );
   }
 }
