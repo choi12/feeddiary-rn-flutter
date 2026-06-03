@@ -52,15 +52,23 @@ class _FeedAlertDialog extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(15),
+              // RN AlertModalContentBox topBox: alignItems center(콘텐츠 중앙) + titleBox alignSelf flex-start(로고만 좌측).
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(AppAssets.logo, height: 14, fit: BoxFit.contain),
-                  if (image != null) Padding(padding: const EdgeInsets.only(top: 15), child: image),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Image.asset(AppAssets.logo, height: 14, fit: BoxFit.contain),
+                  ),
+                  // 이미지(보상 박스)는 자체 marginBottom 13 을 가져 로고와의 간격이 0 이다.
+                  ?image,
                   if (message != null)
                     Padding(
-                      padding: EdgeInsets.only(top: image != null ? 10 : 20, bottom: image != null ? 0 : 20),
+                      // 이미지 동반 시 아래 10(RN contentTextWithImage marginBottom)·단독 메시지는 상하 20(marginVertical 20).
+                      padding: image != null
+                          ? const EdgeInsets.only(bottom: 10)
+                          : const EdgeInsets.symmetric(vertical: 20),
                       child: Text(
                         message!,
                         style: const TextStyle(

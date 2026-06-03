@@ -55,4 +55,16 @@ extension PlantActionPresentation on PlantAction {
     PlantAction.watering => 33,
     PlantAction.love => 26,
   };
+
+  /// RN RewardImageBox modalImage size — 기본 29·love 24(보상 모달 전용, ActionButton 크기와 다름).
+  double get rewardModalImageSize => switch (this) {
+    PlantAction.watering => 29,
+    PlantAction.love => 24,
+  };
+
+  /// RN RewardImageBox rewardLoveImage marginVertical — love 만 2.
+  double get rewardModalImageVerticalMargin => switch (this) {
+    PlantAction.watering => 0,
+    PlantAction.love => 2,
+  };
 }
