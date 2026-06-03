@@ -35,7 +35,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       }
       // 성공(null)이면 인증 상태 전환으로 redirect 가 home 으로 이동.
     } on AppException catch (e) {
-      if (mounted) showFeedToast(context, e.displayMessage);
+      if (mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.inner);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

@@ -42,7 +42,7 @@ class SettingScreen extends ConsumerWidget {
     try {
       await ref.read(authControllerProvider.notifier).signOut();
     } on AppException catch (e) {
-      if (context.mounted) showFeedToast(context, e.displayMessage);
+      if (context.mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.home);
     }
   }
 
@@ -59,7 +59,7 @@ class SettingScreen extends ConsumerWidget {
     );
     final launched = await launchUrl(uri);
     if (!launched && context.mounted) {
-      showFeedToast(context, SettingStrings.supportUnavailable);
+      showFeedToast(context, SettingStrings.supportUnavailable, offset: FeedToastOffset.home);
     }
   }
 

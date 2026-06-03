@@ -81,7 +81,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         ..pop();
     } on AppException catch (e) {
       if (mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.inner);
         setState(() => _submitting = false);
       }
     }

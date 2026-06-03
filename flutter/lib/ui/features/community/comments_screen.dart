@@ -100,7 +100,7 @@ class _CommentInputState extends ConsumerState<_CommentInput> {
       await ref.read(commentsControllerProvider(widget.diaryIdx).notifier).create(text);
       _controller.clear();
     } on AppException catch (e) {
-      if (mounted) showFeedToast(context, e.displayMessage);
+      if (mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.comment);
     } finally {
       if (mounted) {
         setState(() => _sending = false);

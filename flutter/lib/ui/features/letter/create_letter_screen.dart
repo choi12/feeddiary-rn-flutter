@@ -55,11 +55,11 @@ class _CreateLetterScreenState extends ConsumerState<CreateLetterScreen> {
         return;
       }
       // 토스트는 루트 Overlay 라 pop 후에도 남는다(먼저 띄우고 편지함으로 돌아간다).
-      showFeedToast(context, LetterStrings.sentToast);
+      showFeedToast(context, LetterStrings.sentToast, offset: FeedToastOffset.home);
       context.pop();
     } on AppException catch (e) {
       if (mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.home);
         setState(() => _sending = false);
       }
     }

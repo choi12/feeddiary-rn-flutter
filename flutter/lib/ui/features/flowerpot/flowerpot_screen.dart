@@ -43,7 +43,7 @@ class _FlowerpotScreenState extends ConsumerState<FlowerpotScreen> {
       }
     } on AppException catch (e) {
       if (mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.home);
       }
     }
   }

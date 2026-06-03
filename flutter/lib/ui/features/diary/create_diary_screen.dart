@@ -54,7 +54,7 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
       }
     } on AppException catch (e) {
       if (mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.button);
         setState(() => _submitting = false);
       }
     }

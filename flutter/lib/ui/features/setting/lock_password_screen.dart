@@ -57,7 +57,7 @@ class _LockPasswordScreenState extends ConsumerState<LockPasswordScreen> {
 
   Future<void> _validate() async {
     if (_first != _confirm) {
-      showFeedToast(context, SettingStrings.passwordMismatch);
+      showFeedToast(context, SettingStrings.passwordMismatch, offset: FeedToastOffset.inner);
       setState(() => _confirm = '');
       return;
     }
@@ -65,7 +65,7 @@ class _LockPasswordScreenState extends ConsumerState<LockPasswordScreen> {
     await lock.setPassword(_first);
     await lock.enableLock();
     if (!mounted) return;
-    showFeedToast(context, SettingStrings.passwordSet);
+    showFeedToast(context, SettingStrings.passwordSet, offset: FeedToastOffset.inner);
     context.pop();
   }
 

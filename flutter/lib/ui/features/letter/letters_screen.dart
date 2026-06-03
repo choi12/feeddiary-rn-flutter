@@ -73,9 +73,9 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
     }
     try {
       await ref.read(letterListProvider.notifier).delete(letter.idx);
-      if (mounted) showFeedToast(context, LetterStrings.deletedToast);
+      if (mounted) showFeedToast(context, LetterStrings.deletedToast, offset: FeedToastOffset.home);
     } on AppException catch (e) {
-      if (mounted) showFeedToast(context, e.displayMessage);
+      if (mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.home);
     }
   }
 

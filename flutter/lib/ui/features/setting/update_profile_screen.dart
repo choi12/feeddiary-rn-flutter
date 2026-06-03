@@ -48,11 +48,11 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
     try {
       await _controller.submit();
       if (!mounted) return;
-      showFeedToast(context, SettingStrings.profileUpdated);
+      showFeedToast(context, SettingStrings.profileUpdated, offset: FeedToastOffset.home);
       context.pop();
     } on AppException catch (e) {
       if (!mounted) return;
-      showFeedToast(context, e.displayMessage);
+      showFeedToast(context, e.displayMessage, offset: FeedToastOffset.button);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -73,7 +73,7 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
       await _controller.deleteAccount();
     } on AppException catch (e) {
       if (!mounted) return;
-      showFeedToast(context, e.displayMessage);
+      showFeedToast(context, e.displayMessage, offset: FeedToastOffset.button);
     }
   }
 

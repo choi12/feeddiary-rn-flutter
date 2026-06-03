@@ -38,7 +38,7 @@ class CommentCard extends ConsumerWidget {
       await ref.read(commentsControllerProvider(diaryIdx).notifier).delete(comment.idx);
     } on AppException catch (e) {
       if (context.mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.comment);
       }
     }
   }

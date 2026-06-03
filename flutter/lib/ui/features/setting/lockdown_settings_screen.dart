@@ -39,7 +39,8 @@ class _LockdownSettingsScreenState extends ConsumerState<LockdownSettingsScreen>
   }
 
   void _toast(String message) {
-    showFeedToast(context, message);
+    // 잠금 설정 토스트는 모두 내부 화면 오프셋. RN useLockdownSettings TOAST_BOTTOM_OFFSET.INNER_SCREEN.
+    showFeedToast(context, message, offset: FeedToastOffset.inner);
   }
 
   Future<void> _toggle(bool value) async {
