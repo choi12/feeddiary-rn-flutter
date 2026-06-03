@@ -2,6 +2,7 @@
 import 'package:feeddiary/data/models/mission.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_pressable.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_presentation.dart';
 import 'package:flutter/material.dart';
 
@@ -79,19 +80,14 @@ class MissionCard extends StatelessWidget {
       if (!mission.isAchieved) {
         return const SizedBox.shrink();
       }
+      // RN: 완료 처리 중(isPending)엔 "보상 받기" 텍스트를 유지하고 탭만 막는다(스피너 없음).
       return _MissionChip(
         color: FeedPalette.main,
         onTap: completing ? null : onComplete,
-        child: completing
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2, color: FeedPalette.white),
-              )
-            : const Text(
-                '보상 받기',
-                style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.white),
-              ),
+        child: const Text(
+          '보상 받기',
+          style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.white),
+        ),
       );
     }
     // 완료 탭: 정적 회색 "완료" 칩.
@@ -105,7 +101,7 @@ class MissionCard extends StatelessWidget {
   }
 }
 
-/// 미션 우측 칩 — 75×38·radius 10. RN MissionButton.
+/// 미션 우측 칩 — 75×38·radius 10. RN MissionButton(AnimatedPressable pressedScale 0.98·잔물결 없음).
 class _MissionChip extends StatelessWidget {
   const _MissionChip({required this.color, required this.child, this.onTap});
 
@@ -115,13 +111,15 @@ class _MissionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: SizedBox(width: 75, height: 38, child: Center(child: child)),
+    return FeedPressable(
+      onTap: onTap,
+      pressedScale: 0.98,
+      child: Container(
+        width: 75,
+        height: 38,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+        child: child,
       ),
     );
   }

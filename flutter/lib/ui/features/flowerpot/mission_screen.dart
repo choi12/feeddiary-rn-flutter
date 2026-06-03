@@ -48,7 +48,7 @@ class _MissionScreenState extends ConsumerState<MissionScreen> {
       }
     } on AppException catch (e) {
       if (mounted) {
-        showFeedToast(context, e.displayMessage);
+        showFeedToast(context, e.displayMessage, offset: FeedToastOffset.inner);
       }
     } finally {
       if (mounted) {
@@ -81,12 +81,16 @@ class _MissionScreenState extends ConsumerState<MissionScreen> {
               Expanded(
                 child: list.isEmpty
                     ? DiaryEmptyView(message: tab == _MissionTab.inProgress ? '진행 중인 미션이 없어요.' : '완료한 미션이 없어요.')
+                    // RN MissionList: ListHeaderComponent(초기화 안내) + contentContainer marginTop 20·gap 10.
                     : ListView.separated(
-                        padding: const EdgeInsets.all(AppDimens.padding),
-                        itemCount: list.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        padding: const EdgeInsets.fromLTRB(AppDimens.padding, 20, AppDimens.padding, AppDimens.padding),
+                        itemCount: list.length + 1,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
-                          final mission = list[index];
+                          if (index == 0) {
+                            return const _MissionResetNote();
+                          }
+                          final mission = list[index - 1];
                           return MissionCard(
                             mission: mission,
                             completing: _completingIdx == mission.idx,
@@ -120,7 +124,8 @@ class _TabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppDimens.padding, 10, AppDimens.padding, 12),
+      // RN: Container paddingTop 10·탭 아래 여백은 MissionList marginTop 20 이 담당(탭 자체 하단 여백 0).
+      padding: const EdgeInsets.fromLTRB(AppDimens.padding, 10, AppDimens.padding, 0),
       child: Row(
         children: [
           Expanded(
@@ -158,38 +163,68 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final disabled = count < 1;
-    return Material(
-      color: active ? FeedPalette.slateGray : FeedPalette.silverGray,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: disabled ? null : onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: SizedBox(
-          height: 42,
-          child: Center(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$label ',
-                    style: TextStyle(
-                      fontFamily: FeedFonts.dovemayo,
-                      fontSize: 15,
-                      color: active ? FeedPalette.white : FeedPalette.mediumGray,
-                    ),
+    // RN TabButton 은 Pressable(누름 피드백·잔물결 없음) → GestureDetector 로 잉크 리플 제거.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: disabled ? null : onTap,
+      child: Container(
+        height: 42,
+        decoration: BoxDecoration(
+          color: active ? FeedPalette.slateGray : FeedPalette.silverGray,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label ',
+                  style: TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
+                    fontSize: 15,
+                    color: active ? FeedPalette.white : FeedPalette.mediumGray,
                   ),
-                  TextSpan(
-                    text: '$count',
-                    style: TextStyle(
-                      fontFamily: FeedFonts.dovemayo,
-                      fontSize: 16,
-                      color: disabled ? FeedPalette.lightGray : FeedPalette.main,
-                    ),
+                ),
+                TextSpan(
+                  text: '$count',
+                  style: TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
+                    fontSize: 16,
+                    color: disabled ? FeedPalette.lightGray : FeedPalette.main,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 미션 리스트 상단 안내 — "* 매일 오전 5시(노란 밑줄)에 미션이 초기화돼요." RN `MissionListHeaderText`(gray 13·marginBottom 3).
+class _MissionResetNote extends StatelessWidget {
+  const _MissionResetNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(bottom: 3),
+      child: Text.rich(
+        TextSpan(
+          style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.gray),
+          children: [
+            TextSpan(text: '* 매일 '),
+            TextSpan(
+              text: '오전 5시',
+              style: TextStyle(
+                color: FeedPalette.yellow,
+                decoration: TextDecoration.underline,
+                decorationColor: FeedPalette.yellow,
+              ),
+            ),
+            TextSpan(text: '에 미션이 초기화돼요.'),
+          ],
         ),
       ),
     );
