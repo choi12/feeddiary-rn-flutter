@@ -52,4 +52,7 @@ abstract final class FeedPalette {
 
   /// 캘린더 카드 우/하단 보더(은은한 입체감). RN `TRANSPARENT.GRAY_87` rgba(236,236,236,0.875).
   static const Color calendarBorder = Color(0xDFECECEC);
+
+  /// 편지 작성 입력칸 배경(편지보드가 살짝 비치는 반투명 흰). RN `TRANSPARENT.WHITE_90` rgba(255,255,255,0.898).
+  static const Color white90 = Color(0xE5FFFFFF);
 }

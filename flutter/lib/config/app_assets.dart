@@ -8,6 +8,7 @@ abstract final class AppAssets {
   static const String letterPaper = '$_img/letter/letter_paper.png';
   static const String letterPin = '$_img/letter/pin.png';
   static const String letterBoard = '$_img/letter/letter_board.png';
+  static const String letterIcon = '$_img/letter/letter.png';
 
   // 화분 캐릭터(레벨 1~3). RN assets/images/home.
   static const List<String> _lemonyLevels = [

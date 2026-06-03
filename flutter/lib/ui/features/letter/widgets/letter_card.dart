@@ -45,11 +45,13 @@ class _LetterCardState extends State<LetterCard> with SingleTickerProviderStateM
       duration: Duration(milliseconds: isEven ? 2000 : 2500),
     )..repeat(reverse: true);
     // RN useLetterSwingAnimation: 짝=0→+5°, 홀=0→−5° (5° = 5π/180 rad).
+    // RN easing = Easing.ease = cubic-bezier(0.42,0,1,1) = ease-in. yoyo(reverse) 의 복귀 구간은 ease-out 으로
+    // 미러링되므로(reanimated 가 같은 easing 으로 0↔target 재생) curve=easeIn·reverseCurve=easeOut 가 1:1.
     final direction = isEven ? 1.0 : -1.0;
     _angle = Tween<double>(
       begin: 0,
       end: direction * 5 * pi / 180,
-    ).animate(CurvedAnimation(parent: _swing, curve: Curves.easeInOut));
+    ).animate(CurvedAnimation(parent: _swing, curve: Curves.easeIn, reverseCurve: Curves.easeOut));
   }
 
   @override
@@ -60,33 +62,40 @@ class _LetterCardState extends State<LetterCard> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _angle,
-      // 핀(상단)을 회전축으로 매달린 듯 흔들린다. RN translateY(-50)·rotate·translateY(50) = 상단 회전축.
-      builder: (context, child) => Transform.rotate(angle: _angle.value, alignment: Alignment.topCenter, child: child),
-      child: _content(context),
+    // RN: 카드는 entering={FadeIn} 으로 등장한다(편지 탭 진입·새 카드 추가 시 페이드 인).
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 300),
+      builder: (context, opacity, child) => Opacity(opacity: opacity, child: child),
+      child: AnimatedBuilder(
+        animation: _angle,
+        // 핀(상단)을 회전축으로 매달린 듯 흔들린다. RN translateY(-50)·rotate·translateY(50) = 상단 회전축.
+        builder: (context, child) =>
+            Transform.rotate(angle: _angle.value, alignment: Alignment.topCenter, child: child),
+        child: _content(context),
+      ),
     );
   }
 
   Widget _content(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
-        children: [
-          GestureDetector(
-            onTapUp: widget.editMode ? null : (details) => widget.onOpen(widget.letter, details.globalPosition),
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: const BoxDecoration(
-                image: DecorationImage(image: AssetImage(AppAssets.letterPaper), fit: BoxFit.contain),
-              ),
-              child: Center(
-                child: FractionallySizedBox(
-                  widthFactor: 0.8,
-                  // 손글씨 텍스트는 카드보다 길 수 있어(예: 다른 해 날짜) 폭에 맞춰 축소한다.
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        GestureDetector(
+          onTapUp: widget.editMode ? null : (details) => widget.onOpen(widget.letter, details.globalPosition),
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(
+              image: DecorationImage(image: AssetImage(AppAssets.letterPaper), fit: BoxFit.contain),
+            ),
+            child: Center(
+              child: FractionallySizedBox(
+                widthFactor: 0.8,
+                // RN letterTextBox paddingRight 5(우측 비대칭) + 손글씨가 카드보다 길면 폭에 맞춰 축소한다.
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 5),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Column(
@@ -127,18 +136,15 @@ class _LetterCardState extends State<LetterCard> with SingleTickerProviderStateM
               ),
             ),
           ),
-          // 상단 핀(흔들림 회전축) — RN pin.png 25×25·40° 기울임.
-          Positioned(
-            top: -3,
-            child: Transform.rotate(
-              angle: 40 * pi / 180,
-              child: Image.asset(AppAssets.letterPin, width: 25, height: 25),
-            ),
-          ),
-          if (widget.editMode)
-            Positioned(top: -8, left: -2, child: _DeleteBadge(onTap: () => widget.onDelete(widget.letter))),
-        ],
-      ),
+        ),
+        // 상단 핀(흔들림 회전축) — RN pin.png 25×25·40° 기울임.
+        Positioned(
+          top: -3,
+          child: Transform.rotate(angle: 40 * pi / 180, child: Image.asset(AppAssets.letterPin, width: 25, height: 25)),
+        ),
+        if (widget.editMode)
+          Positioned(top: -8, left: -2, child: _DeleteBadge(onTap: () => widget.onDelete(widget.letter))),
+      ],
     );
   }
 }
