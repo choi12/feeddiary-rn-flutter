@@ -7,6 +7,7 @@ import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_layout.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_stats.dart';
 import 'package:feeddiary/ui/features/flowerpot/widgets/exp_progress.dart';
 import 'package:feeddiary/ui/features/flowerpot/widgets/plant_action_button.dart';
@@ -52,58 +53,72 @@ class _FlowerpotScreenState extends ConsumerState<FlowerpotScreen> {
     final async = ref.watch(flowerpotControllerProvider);
     return Scaffold(
       backgroundColor: FeedPalette.skyblue,
+      // 로딩 중엔 파란 Scaffold 대신 배경(하늘/책상)을 먼저 깔아 장면이 준비된 듯 보이게 하고, 데이터가 오면 식물·버튼·exp 가 얹힌다.
       body: async.when(
         skipLoadingOnReload: true,
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const _CanvasBackground(),
         error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(flowerpotControllerProvider)),
         data: (flowerpot) {
           final stats = FlowerpotStats.from(flowerpot);
-          final width = MediaQuery.sizeOf(context).width;
           final topInset = MediaQuery.paddingOf(context).top;
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              const _CanvasBackground(),
-              // 식물 — 중앙에서 살짝 위(RN LemonyBox translateY).
-              Align(
-                alignment: const Alignment(0, -0.2),
-                child: PlantView(level: stats.level, actionTick: _actionTick, lastAction: _lastAction),
-              ),
-              // 왼쪽 버튼 스택 — 미션 / 물주기 / 사랑주기(RN SidePanel).
-              Align(
-                alignment: const Alignment(-1, -0.35),
-                child: Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      MissionEntryButton(showBadge: stats.showBadge, onTap: () => context.push(Routes.mission)),
-                      const SizedBox(height: 10),
-                      PlantActionButton(
-                        action: PlantAction.watering,
-                        count: stats.wateringCount,
-                        enabled: stats.canWater,
-                        onPressed: () => _act(PlantAction.watering),
-                      ),
-                      const SizedBox(height: 10),
-                      PlantActionButton(
-                        action: PlantAction.love,
-                        count: stats.loveCount,
-                        enabled: stats.canLove,
-                        onPressed: () => _act(PlantAction.love),
-                      ),
-                    ],
+          // 탭바가 화분 캔버스 높이를 줄이므로(전체 화면 높이가 아님) 실제 가용 높이(LayoutBuilder)로 verticalCenter 를
+          // 계산해야 식물이 배경 책상선(하늘:땅 13:10 경계)에 정확히 얹힌다. RN 은 풀스크린 오버레이 탭바라 동치.
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              // 가용 높이가 이미 하단 영역을 제외하므로 bottomInset 은 0 으로 전사(RN calculateVerticalCenter).
+              final verticalCenter = FlowerpotLayout.verticalCenter(constraints.maxHeight, 0);
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  const _CanvasBackground(),
+                  // 식물 — RN LemonyBox: top=verticalCenter, left=W/2, translate(-90,-180).
+                  Positioned(
+                    top: verticalCenter,
+                    left: width / 2,
+                    child: Transform.translate(
+                      offset: const Offset(FlowerpotLayout.plantTranslateX, FlowerpotLayout.plantTranslateY),
+                      child: PlantView(level: stats.level, actionTick: _actionTick, lastAction: _lastAction),
+                    ),
                   ),
-                ),
-              ),
-              // 경험치 바 — 상단 중앙 75%(RN ExpBox top=45+safeTop).
-              Positioned(
-                top: topInset + 45,
-                left: width * 0.125,
-                right: width * 0.125,
-                child: ExpProgress(stats: stats),
-              ),
-            ],
+                  // 왼쪽 버튼 스택 — RN SidePanel: top=verticalCenter−260, left 0, padding 15, gap 10(미션/물/사랑).
+                  Positioned(
+                    top: verticalCenter - FlowerpotLayout.sidePanelOffset,
+                    left: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(15),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MissionEntryButton(showBadge: stats.showBadge, onTap: () => context.push(Routes.mission)),
+                          const SizedBox(height: 10),
+                          PlantActionButton(
+                            action: PlantAction.watering,
+                            count: stats.wateringCount,
+                            enabled: stats.canWater,
+                            onPressed: () => _act(PlantAction.watering),
+                          ),
+                          const SizedBox(height: 10),
+                          PlantActionButton(
+                            action: PlantAction.love,
+                            count: stats.loveCount,
+                            enabled: stats.canLove,
+                            onPressed: () => _act(PlantAction.love),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 경험치 바 — RN ExpBox: top=45+safeTop, 가로 중앙 75%.
+                  Positioned(
+                    top: topInset + FlowerpotLayout.expTopOffset,
+                    left: width * 0.125,
+                    right: width * 0.125,
+                    child: ExpProgress(stats: stats),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -124,13 +139,19 @@ class _CanvasBackground extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(AppAssets.flowerpotBgTop, fit: BoxFit.cover),
+              Image.asset(AppAssets.flowerpotBgTop, fit: BoxFit.fill),
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 10,
                 height: 300,
-                child: Opacity(opacity: 0.8, child: Lottie.asset(AppAssets.lottieBirds, fit: BoxFit.contain)),
+                // RN birds: 마운트 후 FadeIn 500ms 로 opacity 0.8 까지 한 번 페이드.
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 0.8),
+                  duration: const Duration(milliseconds: 500),
+                  builder: (context, opacity, child) => Opacity(opacity: opacity, child: child),
+                  child: Lottie.asset(AppAssets.lottieBirds, fit: BoxFit.contain),
+                ),
               ),
             ],
           ),
@@ -141,7 +162,7 @@ class _CanvasBackground extends StatelessWidget {
             fit: StackFit.expand,
             clipBehavior: Clip.none,
             children: [
-              Image.asset(AppAssets.flowerpotBgBottom, fit: BoxFit.cover),
+              Image.asset(AppAssets.flowerpotBgBottom, fit: BoxFit.fill),
               Positioned(
                 top: -75,
                 right: 50,

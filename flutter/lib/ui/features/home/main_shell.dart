@@ -1,5 +1,6 @@
 // 메인 하단 탭 셸 — 5탭(화분/일기/공유/편지/설정) FeedTabBar + IndexedStack. RN BottomTabNavigation 대응.
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/widgets/feed_tab_bar.dart';
 import 'package:feeddiary/ui/features/community/community_screen.dart';
 import 'package:feeddiary/ui/features/diary/my_diary_screen.dart';
@@ -33,10 +34,28 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    // RN 탭바는 absolute 오버레이라 화면이 탭바 뒤까지 풀블리드로 깔린다(화분 풀 캔버스가 대표) → extendBody 로 동일하게.
+    // 화분 외 탭은 RN `Container isMain`(paddingBottom 75)처럼 탭바+안전영역만큼 하단을 비워 콘텐츠가 가리지 않게 한다.
+    Widget belowTabBar(Widget child) => MediaQuery.removePadding(
+      context: context,
+      removeBottom: true,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: AppDimens.bottomTabHeight + bottomInset),
+        child: child,
+      ),
+    );
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _index,
-        children: const [FlowerpotScreen(), MyDiaryScreen(), CommunityScreen(), LettersScreen(), SettingScreen()],
+        children: [
+          const FlowerpotScreen(),
+          belowTabBar(const MyDiaryScreen()),
+          belowTabBar(const CommunityScreen()),
+          belowTabBar(const LettersScreen()),
+          belowTabBar(const SettingScreen()),
+        ],
       ),
       bottomNavigationBar: FeedTabBar(
         currentIndex: _index,
