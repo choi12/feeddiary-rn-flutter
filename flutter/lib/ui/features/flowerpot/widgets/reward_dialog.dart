@@ -42,7 +42,7 @@ class _RewardBox extends StatelessWidget {
                 borderRadius: BorderRadius.circular(7),
                 border: Border.all(color: FeedPalette.whiteGray, width: 2),
               ),
-              child: Icon(reward.item.icon, size: 29, color: FeedPalette.main),
+              child: Image.asset(reward.item.asset, width: 30, height: 30, fit: BoxFit.contain),
             ),
             const SizedBox(height: 4),
             Text(

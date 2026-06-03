@@ -1,4 +1,5 @@
-// 미션/보상 표시 매핑 — 미션 종류별 제목·설명·아이콘, 보상 아이템별 라벨·아이콘. RN Mission/data(MISSION_PRESET·REWARD_PRESET) 대응.
+// 미션/보상 표시 매핑 — 미션 종류별 제목·설명·아이콘, 보상 아이템별 라벨·이미지. RN Mission/data(MISSION_PRESET·REWARD_PRESET) 대응.
+import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/domain/models/mission_type.dart';
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:flutter/material.dart';
@@ -26,17 +27,32 @@ extension MissionTypePresentation on MissionType {
     MissionType.comment => FeedIcons.comment,
     MissionType.like => FeedIcons.like,
   };
+
+  /// RN MissionIcon size — diary/visible 20·comment 21·like 22.
+  double get iconSize => switch (this) {
+    MissionType.diary => 20,
+    MissionType.visible => 20,
+    MissionType.comment => 21,
+    MissionType.like => 22,
+  };
 }
 
-/// 보상 아이템(물주기/사랑주기) 표시 정보. RN `REWARD_PRESET`(TEXT.REWARD).
+/// 보상 아이템(물주기/사랑주기) 표시 정보. RN `REWARD_PRESET`(TEXT.REWARD) — 아이콘이 아닌 PNG 이미지.
 extension PlantActionPresentation on PlantAction {
   String get label => switch (this) {
     PlantAction.watering => '물 주기',
     PlantAction.love => '사랑 주기',
   };
 
-  IconData get icon => switch (this) {
-    PlantAction.watering => Icons.water_drop,
-    PlantAction.love => Icons.favorite,
+  /// RN FastImage(watering.png/love.png).
+  String get asset => switch (this) {
+    PlantAction.watering => AppAssets.wateringPlant,
+    PlantAction.love => AppAssets.lovePlant,
+  };
+
+  /// RN ActionButton image size — 물 33·사랑 26.
+  double get buttonImageSize => switch (this) {
+    PlantAction.watering => 33,
+    PlantAction.love => 26,
   };
 }
