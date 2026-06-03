@@ -27,7 +27,8 @@ class _MainShellState extends ConsumerState<MainShell> {
   static const List<FeedTabItem> _tabs = [
     FeedTabItem(icon: FeedIcons.tabFlowerpot, label: '나의 화분'),
     FeedTabItem(icon: FeedIcons.tabDiary, label: '나의 일기'),
-    FeedTabItem(icon: FeedIcons.tabCommunity, label: '공유 일기'),
+    // FA5 user-friends 글리프가 우측으로 치우쳐(advance 박스 기준) 라벨 중앙선보다 오른쪽으로 보여 좌측 보정.
+    FeedTabItem(icon: FeedIcons.tabCommunity, label: '공유 일기', iconOffset: Offset(-2, 0)),
     FeedTabItem(icon: FeedIcons.tabLetters, label: '나의 편지', iconSize: 23),
     FeedTabItem(icon: FeedIcons.tabSetting, label: '설정'),
   ];
