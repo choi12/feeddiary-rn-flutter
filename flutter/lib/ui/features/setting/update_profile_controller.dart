@@ -121,6 +121,11 @@ class UpdateProfileController extends _$UpdateProfileController {
     state = state.copyWith(imageType: ProfileImageType.character, character: name, imageBytes: null);
   }
 
+  /// 캐릭터 모드로만 전환(캐릭터 미선택·사진 해제·기존 캐릭터 유지). RN "캐릭터 만들기"→onClearProfileImage.
+  void useCharacterMode() {
+    state = state.copyWith(imageType: ProfileImageType.character, imageBytes: null);
+  }
+
   /// 배경색 선택(캐릭터 모드). RN BackgroundSelector.
   void setBackground(String hex) {
     state = state.copyWith(imageType: ProfileImageType.character, background: hex);

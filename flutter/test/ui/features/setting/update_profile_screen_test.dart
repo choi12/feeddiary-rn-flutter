@@ -43,10 +43,10 @@ void main() {
     );
     await tester.pump();
 
-    // 프로필 이미지 편집기(아바타 탭→타입 모달)·탈퇴(헤더 rightItem)·저장(bottomNav)을 확인한다.
-    // 닉네임 TextField 는 36개 캐릭터 그리드 아래라 lazy ListView 에서 뷰포트 밖 → 폼 로직은 컨트롤러 테스트가 커버.
+    // 프로필 이미지 편집기(아바타 탭→타입 모달)·탈퇴(헤더 rightItem)·수정(bottomNav)을 확인한다.
+    // 캐릭터 그리드는 캐릭터 행 토글 시에만 펼쳐지므로 기본 화면엔 없다 → 폼 로직은 컨트롤러 테스트가 커버.
     expect(find.byType(ProfileImageEditor), findsOneWidget);
-    expect(find.text(SettingStrings.save), findsOneWidget);
+    expect(find.text(SettingStrings.updateSubmit), findsOneWidget);
     expect(find.text(SettingStrings.deleteAccount), findsOneWidget);
 
     // 변경 전이라 저장 버튼 비활성(canSubmit=false).

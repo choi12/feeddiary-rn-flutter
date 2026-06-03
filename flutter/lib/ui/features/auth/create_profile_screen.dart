@@ -75,6 +75,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
               imageBytes: form.imageBytes,
               onPhotoPicked: controller.pickPhoto,
               onCharacterSelected: controller.selectCharacter,
+              onCharacterMode: controller.useCharacterMode,
               onBackgroundSelected: controller.setBackground,
             ),
           ],

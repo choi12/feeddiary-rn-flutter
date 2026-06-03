@@ -34,11 +34,15 @@ abstract final class SettingStrings {
   // 프로필 수정(RN UpdateProfile + NicknameSection + ProfileImageSection + DeleteAccount)
   static const String updateProfileTitle = '프로필 수정';
   static const String nicknameLabel = '닉네임';
+  static const String nicknamePlaceholder = '한글, 영어, 숫자 2~8자';
   static const String profileImageLabel = '프로필 이미지';
   static const String pickPhoto = '사진 선택하기';
   static const String pickCharacter = '캐릭터 만들기';
   static const String backgroundLabel = '배경';
-  static const String save = '저장하기';
+  static const String characterLabel = '캐릭터';
+  static const String characterPlaceholder = '캐릭터를 선택해 주세요.';
+  static const String colorPickerTitle = '배경색을 선택해 주세요.';
+  static const String updateSubmit = '수정하기';
   static const String profileUpdated = '프로필이 수정되었어요.';
   static const String nicknameSuccess = '사용 가능한 닉네임이에요.';
   static const String nicknameDuplicate = '이미 사용 중인 닉네임이에요.';

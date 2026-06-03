@@ -67,6 +67,11 @@ class CreateProfileController extends _$CreateProfileController {
     state = state.copyWith(imageType: ProfileImageType.character, character: name, imageBytes: null);
   }
 
+  /// 캐릭터 모드로만 전환(캐릭터 미선택·사진 해제). RN "캐릭터 만들기"→onClearProfileImage. 캐릭터는 행에서 직접 고른다.
+  void useCharacterMode() {
+    state = state.copyWith(imageType: ProfileImageType.character, imageBytes: null);
+  }
+
   /// 배경색 선택(캐릭터 모드). RN BackgroundSelector.
   void setBackground(String hex) {
     state = state.copyWith(imageType: ProfileImageType.character, background: hex);
