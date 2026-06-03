@@ -35,8 +35,10 @@ class CommentsScreen extends ConsumerWidget {
                 if (list.isEmpty) {
                   return const DiaryEmptyView(message: '첫 댓글을 남겨보세요.');
                 }
+                // RN CommentList: paddingHorizontal/Bottom = LAYOUT.PADDING(24) · gap 10 · 상단 0.
+                // 카드 좌우 여백을 헤더 거터(24)와 맞춰 닫기 X 와 카드 우측이 정렬되게 한다.
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   itemCount: list.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) =>

@@ -389,7 +389,16 @@ class DemoApiAdapter implements HttpClientAdapter {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
     final idx = _nextCommentIdx++;
-    (_commentsByDiary[diaryIdx] ??= []).add(_comment(idx: idx, text: text, created: DateTime.now()));
+    // 새 댓글은 현재 로그인 사용자로 귀속한다(실서버 동작). 하드코딩 닉네임이면 내 댓글 삭제 버튼이 안 떠서 교정.
+    (_commentsByDiary[diaryIdx] ??= []).add(
+      _comment(
+        idx: idx,
+        text: text,
+        created: DateTime.now(),
+        nickname: _user['nickname'] as String,
+        character: _user['character'] as String,
+      ),
+    );
     _bumpCommentCount(diaryIdx, 1);
     _progressMission('comment');
     return _json(200, {'status': 'success', 'resData': '$idx'});
