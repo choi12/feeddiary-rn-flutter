@@ -99,17 +99,8 @@ class CommunityDiaryCard extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            diary.text,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: FeedFonts.dovemayo,
-                              color: FeedPalette.lightBlack,
-                              fontSize: 13,
-                              height: 20 / 13,
-                            ),
-                          ),
+                          // RN DiaryCard Content(large) — 본문 텍스트(marginV5) + 첨부 이미지(100%×150). 데모는 이미지가 비어 미렌더.
+                          CardBody(text: diary.text, image: diary.image, isLarge: true),
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
