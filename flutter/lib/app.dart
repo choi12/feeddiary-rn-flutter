@@ -1,7 +1,9 @@
 // feedDiary 앱 루트 — MaterialApp.router 로 GoRouter + 디자인 토큰 테마를 조립. builder 로 잠금 가드(LockGate)와 웹 폰 프레임을 라우터 위에 얹는다.
+import 'package:feeddiary/config/app_config.dart';
 import 'package:feeddiary/routing/app_router.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/setting/widgets/lock_gate.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -21,7 +23,47 @@ class FeedDiaryApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       routerConfig: router,
-      builder: (context, child) => _WebPhoneFrame(child: LockGate(child: child ?? const SizedBox.shrink())),
+      builder: (context, child) => _WebPhoneFrame(
+        child: _DemoBanner(child: LockGate(child: child ?? const SizedBox.shrink())),
+      ),
+    );
+  }
+}
+
+/// 데모(mock) 모드 상단 배너 — 빨강 바 + 안내 문구. RN `DemoBanner`(USE_MOCK=true 시 "DEMO · DEV · Mock 데이터로 시연 중") 대응.
+/// 실서버 빌드(useMock=false)에선 배너 없이 자식만 통과한다.
+class _DemoBanner extends StatelessWidget {
+  const _DemoBanner({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!AppConfig.useMock) return child;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Material(
+          color: FeedPalette.red,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'DEMO · ${AppConfig.appEnv == 'PRODUCTION' ? 'PROD' : 'DEV'} · Mock 데이터로 시연 중',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: FeedFonts.dovemayo,
+                  fontSize: 12,
+                  color: FeedPalette.white,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Expanded(child: child),
+      ],
     );
   }
 }

@@ -89,10 +89,12 @@ class _FeedToastState extends State<_FeedToast> with SingleTickerProviderStateMi
                         Expanded(
                           child: Text(
                             widget.message,
+                            // Overlay 엔트리는 Material 밖이라 DefaultTextStyle 폴백(노란 밑줄)을 상속한다 → none 으로 명시 차단.
                             style: const TextStyle(
                               fontFamily: FeedFonts.dovemayo,
                               fontSize: 13,
                               color: FeedPalette.lightBlack,
+                              decoration: TextDecoration.none,
                             ),
                           ),
                         ),
