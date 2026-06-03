@@ -2,9 +2,14 @@
 import 'package:feeddiary/data/models/comment.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/routing/auth_state.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
+import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/community/comments_controller.dart';
+import 'package:feeddiary/ui/features/setting/widgets/profile_avatar.dart';
 import 'package:feeddiary/utils/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,15 +23,13 @@ class CommentCard extends ConsumerWidget {
   final String? author;
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showFeedAlert<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        content: const Text('이 댓글을 삭제할까요?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('닫기')),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('삭제')),
-        ],
-      ),
+      message: '댓글을 삭제하시겠어요?',
+      actions: [
+        FeedAlertAction(text: '닫기', isCancel: true, onPressed: () => Navigator.of(context).pop(false)),
+        FeedAlertAction(text: '삭제하기', onPressed: () => Navigator.of(context).pop(true)),
+      ],
     );
     if (confirmed != true) {
       return;
@@ -35,7 +38,7 @@ class CommentCard extends ConsumerWidget {
       await ref.read(commentsControllerProvider(diaryIdx).notifier).delete(comment.idx);
     } on AppException catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+        showFeedToast(context, e.displayMessage);
       }
     }
   }
@@ -47,21 +50,16 @@ class CommentCard extends ConsumerWidget {
     final isAuthor = author != null && author == comment.nickname;
 
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-      ),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(color: FeedPalette.white, borderRadius: BorderRadius.circular(AppDimens.cardRadius)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: context.colors.background,
-            child: Text(
-              comment.nickname.isNotEmpty ? comment.nickname.substring(0, 1) : '?',
-              style: TextStyle(color: context.colors.primary, fontSize: 14),
-            ),
+          ProfileAvatar(
+            size: 46,
+            userImage: comment.userImage,
+            character: comment.character,
+            background: comment.background,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -71,27 +69,54 @@ class CommentCard extends ConsumerWidget {
                 Row(
                   children: [
                     if (isAuthor) ...[
-                      Icon(Icons.verified, size: 14, color: context.colors.primary),
+                      const Icon(FeedIcons.verified, size: 14, color: FeedPalette.main),
                       const SizedBox(width: 3),
                     ],
-                    Text(comment.nickname, style: TextStyle(color: context.colors.textPrimary, fontSize: 14)),
-                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        comment.nickname,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 14, color: FeedPalette.black),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
                     Text(
-                      formatYmd(comment.createdAt),
-                      style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
+                      formatDateTime(comment.createdAt),
+                      style: const TextStyle(
+                        fontFamily: FeedFonts.dovemayo,
+                        fontSize: 10,
+                        color: FeedPalette.gray,
+                        letterSpacing: -0.5,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(comment.text, style: TextStyle(color: context.colors.textPrimary, height: 1.4)),
+                const SizedBox(height: 5),
+                Text(
+                  comment.text,
+                  style: const TextStyle(
+                    fontFamily: FeedFonts.dovemayo,
+                    fontSize: 14,
+                    color: FeedPalette.lightBlack,
+                    height: 20 / 14,
+                  ),
+                ),
               ],
             ),
           ),
           if (canDelete)
-            IconButton(
-              onPressed: () => _confirmDelete(context, ref),
-              visualDensity: VisualDensity.compact,
-              icon: Icon(Icons.close, size: 18, color: context.colors.textSecondary),
+            Semantics(
+              button: true,
+              label: '댓글 삭제',
+              child: InkResponse(
+                onTap: () => _confirmDelete(context, ref),
+                radius: 18,
+                child: const Padding(
+                  padding: EdgeInsets.all(5),
+                  child: Icon(FeedIcons.close, size: 16, color: FeedPalette.gray),
+                ),
+              ),
             ),
         ],
       ),

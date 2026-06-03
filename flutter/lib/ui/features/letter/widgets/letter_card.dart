@@ -1,13 +1,16 @@
 // 편지 카드 — 핀에 매달린 듯 미세하게 흔들리는 편지(탭→펼침·편집 모드→삭제). RN LetterCard + useLetterSwingAnimation 대응.
+import 'dart:math' show pi;
+
 import 'package:feeddiary/config/app_assets.dart';
 import 'package:feeddiary/data/models/letter.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
+import 'package:feeddiary/ui/core/icons/feed_icons.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/letter/letter_strings.dart';
 import 'package:feeddiary/utils/date_format.dart';
 import 'package:flutter/material.dart';
 
-/// 편지 한 장. 짝/홀 인덱스로 흔들림 방향·주기를 달리해 핀(상단)에 매달린 느낌을 준다(경량 AnimationController·상단 회전축).
+/// 편지 한 장(100×100). 짝/홀 인덱스로 흔들림 방향·주기를 달리해 핀(상단)에 매달린 느낌을 준다(상단 회전축).
 /// 탭하면 누른 위치를 [onOpen]에 넘겨 펼침 모달을 띄우고, 편집 모드면 삭제(−) 버튼을 노출한다.
 class LetterCard extends StatefulWidget {
   const LetterCard({
@@ -41,10 +44,11 @@ class _LetterCardState extends State<LetterCard> with SingleTickerProviderStateM
       vsync: this,
       duration: Duration(milliseconds: isEven ? 2000 : 2500),
     )..repeat(reverse: true);
+    // RN useLetterSwingAnimation: 짝=0→+5°, 홀=0→−5° (5° = 5π/180 rad).
     final direction = isEven ? 1.0 : -1.0;
     _angle = Tween<double>(
       begin: 0,
-      end: direction * 0.05,
+      end: direction * 5 * pi / 180,
     ).animate(CurvedAnimation(parent: _swing, curve: Curves.easeInOut));
   }
 
@@ -58,6 +62,7 @@ class _LetterCardState extends State<LetterCard> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _angle,
+      // 핀(상단)을 회전축으로 매달린 듯 흔들린다. RN translateY(-50)·rotate·translateY(50) = 상단 회전축.
       builder: (context, child) => Transform.rotate(angle: _angle.value, alignment: Alignment.topCenter, child: child),
       child: _content(context),
     );
@@ -73,38 +78,72 @@ class _LetterCardState extends State<LetterCard> with SingleTickerProviderStateM
           GestureDetector(
             onTapUp: widget.editMode ? null : (details) => widget.onOpen(widget.letter, details.globalPosition),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+              width: 100,
+              height: 100,
               decoration: const BoxDecoration(
-                image: DecorationImage(image: AssetImage(AppAssets.letterPaper), fit: BoxFit.fill),
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3))],
+                image: DecorationImage(image: AssetImage(AppAssets.letterPaper), fit: BoxFit.contain),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${formatRelativeDate(widget.letter.createdAt)}의',
-                    style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
+              child: Center(
+                child: FractionallySizedBox(
+                  widthFactor: 0.8,
+                  // 손글씨 텍스트는 카드보다 길 수 있어(예: 다른 해 날짜) 폭에 맞춰 축소한다.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              formatRelativeDate(widget.letter.createdAt),
+                              style: const TextStyle(
+                                fontFamily: FeedFonts.ownglyph,
+                                fontSize: 14,
+                                color: FeedPalette.gray,
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 1),
+                              child: Text(
+                                '의',
+                                style: TextStyle(
+                                  fontFamily: FeedFonts.ownglyph,
+                                  fontSize: 13,
+                                  color: FeedPalette.darkGray,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Text(
+                          LetterStrings.to,
+                          style: TextStyle(fontFamily: FeedFonts.ownglyph, fontSize: 15, color: FeedPalette.darkGray),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    LetterStrings.to,
-                    style: TextStyle(color: context.colors.textPrimary, fontSize: 20, fontFamily: FeedFonts.ownglyph),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-          // 상단 핀(흔들림 회전축) — RN pin.png.
-          Positioned(top: -10, child: Image.asset(AppAssets.letterPin, width: 26, height: 26)),
+          // 상단 핀(흔들림 회전축) — RN pin.png 25×25·40° 기울임.
+          Positioned(
+            top: -3,
+            child: Transform.rotate(
+              angle: 40 * pi / 180,
+              child: Image.asset(AppAssets.letterPin, width: 25, height: 25),
+            ),
+          ),
           if (widget.editMode)
-            Positioned(top: -10, left: -6, child: _DeleteBadge(onTap: () => widget.onDelete(widget.letter))),
+            Positioned(top: -8, left: -2, child: _DeleteBadge(onTap: () => widget.onDelete(widget.letter))),
         ],
       ),
     );
   }
 }
 
-/// 편집 모드 삭제(−) 배지. RN DeleteButton(minus).
+/// 편집 모드 삭제(−) 배지 — 25 회색 원 + 검정 마이너스. RN DeleteButton(Entypo minus).
 class _DeleteBadge extends StatelessWidget {
   const _DeleteBadge({required this.onTap});
 
@@ -116,14 +155,15 @@ class _DeleteBadge extends StatelessWidget {
       button: true,
       label: '편지 삭제',
       child: Material(
-        color: context.colors.error,
+        color: FeedPalette.lightGray,
         shape: const CircleBorder(),
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          child: const Padding(
-            padding: EdgeInsets.all(3),
-            child: Icon(Icons.remove, size: 16, color: Colors.white),
+          child: const SizedBox(
+            width: 25,
+            height: 25,
+            child: Icon(FeedIcons.minus, size: 17, color: FeedPalette.black),
           ),
         ),
       ),
