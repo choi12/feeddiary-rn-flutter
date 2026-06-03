@@ -1,11 +1,13 @@
 // 잠금 설정 화면 — 비밀번호 잠금 토글 + 비밀번호 재설정. RN screens/home/setting/LockdownSettings.
 import 'package:feeddiary/data/services/lock_storage.dart';
 import 'package:feeddiary/routing/routes.dart';
-import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
 import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -69,16 +71,63 @@ class _LockdownSettingsScreenState extends ConsumerState<LockdownSettingsScreen>
     return Scaffold(
       backgroundColor: FeedPalette.white,
       appBar: const FeedHeader(title: SettingStrings.lockTitle, hasBackButton: true),
-      body: ListView(
+      body: Column(
         children: [
-          SwitchListTile(title: const Text(SettingStrings.lockUseSwitch), value: _useLock, onChanged: _toggle),
-          ListTile(
-            title: const Text(SettingStrings.lockResetPassword),
-            trailing: const Icon(FeedIcons.menuChevron, size: 20, color: FeedPalette.lightGray),
+          _LockRow(
+            label: SettingStrings.lockUseSwitch,
+            // RN: 행 전체(Pressable) 탭으로도 토글된다(handleLockToggle).
+            onTap: () => _toggle(!_useLock),
+            // RN Switch transform scale 0.6(iOS) — 기본 CupertinoSwitch 가 커서 축소.
+            trailing: Transform.scale(
+              scale: 0.6,
+              alignment: Alignment.centerRight,
+              child: CupertinoSwitch(value: _useLock, onChanged: _toggle, activeTrackColor: FeedPalette.main),
+            ),
+          ),
+          _LockRow(
+            label: SettingStrings.lockResetPassword,
             enabled: _hasPassword,
-            onTap: _resetPassword,
+            onTap: _hasPassword ? _resetPassword : null,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 잠금 설정 한 줄 — RN box(70px·가로패딩24·하단 1px 보더·텍스트15 lightBlack·비활성 lightGray). RN LockdownSettings.box.
+class _LockRow extends StatelessWidget {
+  const _LockRow({required this.label, this.trailing, this.onTap, this.enabled = true});
+
+  final String label;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 70,
+        padding: const EdgeInsets.symmetric(horizontal: AppDimens.padding),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: FeedPalette.whiteGray)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: FeedFonts.dovemayo,
+                fontSize: 15,
+                color: enabled ? FeedPalette.lightBlack : FeedPalette.lightGray,
+              ),
+            ),
+            ?trailing,
+          ],
+        ),
       ),
     );
   }
