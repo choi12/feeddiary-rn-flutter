@@ -1,7 +1,7 @@
-// 미션 카드 — 아이콘 + 제목/설명/진행도 + 완료(보상 받기) 버튼. RN Mission/MissionList/MissionBox 대응.
+// 미션 카드 — 베이지 원 아이콘 + 제목/진행도/설명 + 보상 받기/완료 버튼. RN Mission/MissionList/MissionBox 대응.
 import 'package:feeddiary/data/models/mission.dart';
-import 'package:feeddiary/ui/core/theme/build_context_x.dart';
-import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
+import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_presentation.dart';
 import 'package:flutter/material.dart';
 
@@ -11,48 +11,117 @@ class MissionCard extends StatelessWidget {
 
   final Mission mission;
 
-  /// 진행중 탭에서 달성 미션의 보상 받기 콜백. 완료 탭이면 null(체크 아이콘 표시).
+  /// 진행중 탭에서 달성 미션의 보상 받기 콜백. 완료 탭이면 null("완료" 칩 표시).
   final VoidCallback? onComplete;
   final bool completing;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(AppDimens.borderRadius),
-      ),
+      // RN MissionBox 는 공통 14가 아닌 16을 쓴다.
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      decoration: BoxDecoration(color: FeedPalette.white, borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
-          Icon(mission.type.icon, color: context.colors.primary),
-          const SizedBox(width: 12),
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: FeedPalette.beige,
+              shape: BoxShape.circle,
+              border: Border.all(color: FeedPalette.lightBeige),
+            ),
+            child: Icon(mission.type.icon, color: FeedPalette.orange, size: mission.type.iconSize),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(mission.type.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                Text(mission.type.content, style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
-                const SizedBox(height: 6),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: mission.type.title,
+                        style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 15, color: FeedPalette.black),
+                      ),
+                      TextSpan(
+                        text: ' [${mission.count}/${mission.maxCount}]',
+                        style: const TextStyle(
+                          fontFamily: FeedFonts.dovemayo,
+                          fontSize: 14,
+                          color: FeedPalette.main,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Text(
-                  '${mission.count} / ${mission.maxCount}',
-                  style: TextStyle(fontSize: 12, color: context.colors.textSecondary),
+                  mission.type.content,
+                  style: const TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 12, color: FeedPalette.gray),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          if (onComplete != null)
-            FilledButton(
-              onPressed: mission.isAchieved && !completing ? onComplete : null,
-              child: completing
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('보상 받기'),
-            )
-          else
-            Icon(Icons.check_circle, color: context.colors.primary),
+          const SizedBox(width: 10),
+          _trailing(),
         ],
+      ),
+    );
+  }
+
+  Widget _trailing() {
+    if (onComplete != null) {
+      // 진행중 탭: 달성한 미션만 보상 받기 버튼(미달성은 RN 처럼 렌더 안 함).
+      if (!mission.isAchieved) {
+        return const SizedBox.shrink();
+      }
+      return _MissionChip(
+        color: FeedPalette.main,
+        onTap: completing ? null : onComplete,
+        child: completing
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: FeedPalette.white),
+              )
+            : const Text(
+                '보상 받기',
+                style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.white),
+              ),
+      );
+    }
+    // 완료 탭: 정적 회색 "완료" 칩.
+    return const _MissionChip(
+      color: FeedPalette.whiteGray,
+      child: Text(
+        '완료',
+        style: TextStyle(fontFamily: FeedFonts.dovemayo, fontSize: 13, color: FeedPalette.gray),
+      ),
+    );
+  }
+}
+
+/// 미션 우측 칩 — 75×38·radius 10. RN MissionButton.
+class _MissionChip extends StatelessWidget {
+  const _MissionChip({required this.color, required this.child, this.onTap});
+
+  final Color color;
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(width: 75, height: 38, child: Center(child: child)),
       ),
     );
   }
