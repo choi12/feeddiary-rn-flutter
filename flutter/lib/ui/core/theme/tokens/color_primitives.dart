@@ -49,4 +49,7 @@ abstract final class FeedPalette {
 
   /// 탭바 등 옅은 그림자. RN `rgba(0,0,0,0.08)`.
   static const Color shadowSoft = Color(0x14000000);
+
+  /// 캘린더 카드 우/하단 보더(은은한 입체감). RN `TRANSPARENT.GRAY_87` rgba(236,236,236,0.875).
+  static const Color calendarBorder = Color(0xDFECECEC);
 }

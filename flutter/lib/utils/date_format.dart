@@ -27,3 +27,12 @@ String formatRelativeDate(DateTime date, {DateTime? now}) {
   }
   return formatDiaryDate(date);
 }
+
+/// 댓글용 상대 날짜 + 시각. 예 `오늘, 오후 2:10` · `3월 4일, 오전 9:30`.
+/// RN formatDate(_) 기본 포맷(상대 날짜 뒤 오전/오후 h:mm) 대응. [now]를 주입하면 결정적(테스트용).
+String formatDateTime(DateTime date, {DateTime? now}) {
+  final isPm = date.hour >= 12;
+  final hour12 = date.hour % 12 == 0 ? 12 : date.hour % 12;
+  final time = '${isPm ? '오후' : '오전'} $hour12:${pad2(date.minute)}';
+  return '${formatRelativeDate(date, now: now)}, $time';
+}
