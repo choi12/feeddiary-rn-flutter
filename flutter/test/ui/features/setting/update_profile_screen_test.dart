@@ -8,6 +8,7 @@ import 'package:feeddiary/ui/core/theme/app_theme.dart';
 import 'package:feeddiary/ui/core/widgets/feed_button.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:feeddiary/ui/features/setting/update_profile_screen.dart';
+import 'package:feeddiary/ui/features/setting/widgets/profile_image_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -42,9 +43,9 @@ void main() {
     );
     await tester.pump();
 
-    // 사진/캐릭터 토글(상단·항상 빌드)·탈퇴(헤더 rightItem)·저장(bottomNav)을 확인한다.
+    // 프로필 이미지 편집기(아바타 탭→타입 모달)·탈퇴(헤더 rightItem)·저장(bottomNav)을 확인한다.
     // 닉네임 TextField 는 36개 캐릭터 그리드 아래라 lazy ListView 에서 뷰포트 밖 → 폼 로직은 컨트롤러 테스트가 커버.
-    expect(find.text(SettingStrings.pickCharacter), findsOneWidget);
+    expect(find.byType(ProfileImageEditor), findsOneWidget);
     expect(find.text(SettingStrings.save), findsOneWidget);
     expect(find.text(SettingStrings.deleteAccount), findsOneWidget);
 

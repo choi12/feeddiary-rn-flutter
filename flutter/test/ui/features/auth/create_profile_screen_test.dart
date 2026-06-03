@@ -4,6 +4,7 @@ import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
 import 'package:feeddiary/ui/core/widgets/feed_button.dart';
 import 'package:feeddiary/ui/features/auth/create_profile_screen.dart';
+import 'package:feeddiary/ui/features/setting/widgets/profile_image_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,8 +24,8 @@ void main() {
     await tester.pump();
 
     expect(find.byType(TextField), findsOneWidget);
-    // ProfileImageEditor 의 사진/캐릭터 토글이 보인다(RN ProfileImageSection 공유 — 가입도 사진 지원).
-    expect(find.text('캐릭터'), findsOneWidget);
+    // 프로필 이미지 편집기(아바타 탭→사진/캐릭터 모달)가 렌더된다. RN ProfileImageSection 공유(가입도 사진 지원).
+    expect(find.byType(ProfileImageEditor), findsOneWidget);
     expect(find.text('새싹일기 시작하기'), findsOneWidget);
 
     // canSubmit=false(닉네임 미검증 + 프로필 이미지 미선택) → 가입 버튼 비활성.
