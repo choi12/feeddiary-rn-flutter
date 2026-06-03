@@ -6,6 +6,7 @@ import 'package:feeddiary/ui/features/auth/create_profile_screen.dart';
 import 'package:feeddiary/ui/features/auth/sign_in_screen.dart';
 import 'package:feeddiary/ui/features/auth/splash_screen.dart';
 import 'package:feeddiary/ui/features/community/comments_screen.dart';
+import 'package:feeddiary/ui/features/community/report_screen.dart';
 import 'package:feeddiary/ui/features/diary/create_diary_screen.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_screen.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_screen.dart';
@@ -74,6 +75,10 @@ GoRouter appRouter(Ref ref) {
         path: Routes.diaryComments,
         builder: (_, state) =>
             CommentsScreen(diaryIdx: int.parse(state.pathParameters['idx']!), author: state.extra as String?),
+      ),
+      GoRoute(
+        path: Routes.report,
+        builder: (_, state) => ReportScreen(diaryIdx: int.parse(state.pathParameters['idx']!)),
       ),
       GoRoute(path: Routes.mission, builder: (_, _) => const MissionScreen()),
       GoRoute(path: Routes.letterWrite, builder: (_, _) => const CreateLetterScreen()),

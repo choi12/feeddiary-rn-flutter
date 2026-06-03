@@ -22,6 +22,12 @@ abstract final class Routes {
   /// 일기 댓글 푸시 경로 생성. 예: `/diary/123/comments`.
   static String diaryCommentsPath(int idx) => '/diary/$idx/comments';
 
+  /// 일기 신고/차단(:idx). 푸시 경로는 [reportPath]. RN community `Report` 화면.
+  static const String report = '/report/:idx';
+
+  /// 일기 신고 푸시 경로 생성. 예: `/report/123`.
+  static String reportPath(int idx) => '/report/$idx';
+
   /// 오늘의 미션(화분 화면에서 push). 파라미터 없음.
   static const String mission = '/mission';
 
