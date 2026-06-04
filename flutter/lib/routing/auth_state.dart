@@ -109,7 +109,7 @@ class AuthController extends _$AuthController {
     state = state.copyWith(user: user);
   }
 
-  /// 토큰 저장 + authenticated 전환. RN `completeSignIn`(잠금/프리페치는 후속 PR).
+  /// 토큰 저장 + authenticated 전환. RN `completeSignIn`(잠금/프리페치는 데모 범위 밖 — 실 연동 시 추가).
   Future<void> _completeSignIn(User user) async {
     await ref.read(tokenStorageProvider).save(user.token);
     state = AuthState(status: AuthStatus.authenticated, user: user);
@@ -120,8 +120,8 @@ class AuthController extends _$AuthController {
     if (AppConfig.useMock) {
       return (uid: 'mock_user_id', email: 'demo@example.com');
     }
-    // 실제 OAuth 흐름(후속 PR): google_sign_in / sign_in_with_apple 로 토큰 획득 →
+    // 실제 OAuth 흐름(데모 범위 밖 — 실서버 연동 시): google_sign_in / sign_in_with_apple 로 토큰 획득 →
     // (RN) Firebase signInWithCredential 로 UID → 자체 `/auth/sign-in`. 플랫폼별 Apple(iOS 네이티브 / Android 웹 리다이렉트).
-    throw UnimplementedError('실제 OAuth 로그인은 후속 PR에서 연동합니다(현재 데모 모드 전용).');
+    throw UnimplementedError('실제 OAuth 로그인은 실서버 연동 시 구현됩니다(데모 모드 전용 스텁).');
   }
 }
