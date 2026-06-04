@@ -60,6 +60,33 @@ dev_dependencies:
   freezed: ^3.2.6-dev.1
   json_serializable: ^6.14.0
   http_mock_adapter: ^0.6.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
+
+# 런처 아이콘 생성 — RN 자산 1:1. 1024 마스터(전체 장면)는 iOS·web·legacy Android, RN foreground(레모니)는 Android adaptive(흰 배경).
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  adaptive_icon_foreground_inset: 0
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#FFFFFF"
+    theme_color: "#FFFFFF"
+
+# 네이티브 스플래시 — Android 12+ SplashScreen API 정석: 흰 배경 + 레모니(중앙·비번화면 캐릭터 lemony3). 워드마크는 인앱 SplashScreen 이 받는다. RN bootsplash 와 동일 구성.
+# android_12 는 OS 가 아이콘을 원형 마스크에 넣어 꽉 찬 이미지가 잘리므로, 여백 둔 정사각(splash_android12)을 따로 써 원 안에 맞춘다.
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/home/lemony3.png
+  android_12:
+    image: assets/icon/splash_android12.png
+    icon_background_color: "#FFFFFF"
+  web: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

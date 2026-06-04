@@ -1,11 +1,11 @@
 {
-    "name": "feeddiary",
-    "short_name": "feeddiary",
+    "name": "새싹일기",
+    "short_name": "새싹일기",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF",
+    "description": "마음을 기록하고 화분을 키우는 일기 앱 — 새싹일기",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
