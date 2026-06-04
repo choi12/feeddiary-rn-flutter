@@ -4,7 +4,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 
 /// 경량 로거. `print` 대신 dart:developer 의 log 을 쓴다.
-/// 상세 로그(network/debug)는 [kDebugMode]에서만 출력. (Sentry 등 관측성은 후속 PR.)
+/// 상세 로그(network/debug)는 [kDebugMode]에서만 출력. (Sentry 등 관측성은 데모에서 미연동 — DSN 자리만.)
 abstract final class AppLogger {
   static const String _name = 'feedDiary';
 
