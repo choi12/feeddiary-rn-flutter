@@ -27,6 +27,12 @@ import { getFormField, getImageUri, getNumber, getString } from './helpers';
 const okResponse = <T>(resData: T) => ({ status: 'success' as const, resData });
 const okStatus = () => ({ status: 'success' as const });
 
+// 데모 실패 시연 센티넬 — 제출 텍스트에 포함되면 mock 이 500 을 반환한다(Flutter DemoApiAdapter 와 대칭).
+const ERROR_SENTINEL = '#에러';
+const SERVER_FAULT_MESSAGE = '서버 오류가 발생했어요. 잠시 후 다시 시도해 주세요.';
+const hasErrorSentinel = (text: unknown): boolean => typeof text === 'string' && text.includes(ERROR_SENTINEL);
+const failResponse = (message: string) => ({ status: 'failed' as const, message });
+
 type MockInstalled = { __mockInstalled?: true };
 
 export const setupMockAdapter = () => {
@@ -41,6 +47,8 @@ export const setupMockAdapter = () => {
   let flowerpotState: FlowerpotResponse = { ...MOCK_FLOWERPOT };
   let myDiariesState: MyDiaryResponse[] = [...MOCK_MY_DIARIES];
   let nextDiaryIdx = 1100;
+  // 일기 작성/수정 본문에 #에러 → 다음 일기 상세 GET 1회 실패(ErrorView 시연), 1회 소비 후 해제(Flutter _armedDiaryDetailFault 대칭).
+  let armedDiaryDetailFault = false;
   const commentsByDiary: Record<number, CommentResponse[]> = {};
   const deletedFallbackCommentIdx = new Set<number>();
   const getComments = (diaryIdx: number): CommentResponse[] =>
@@ -134,6 +142,10 @@ export const setupMockAdapter = () => {
     return [200, okResponse(merged.slice(skip, skip + 10))];
   });
   mock.onGet(/\/diary\/\d+$/).reply((config) => {
+    if (armedDiaryDetailFault) {
+      armedDiaryDetailFault = false;
+      return [500, failResponse(SERVER_FAULT_MESSAGE)];
+    }
     const idx = Number(config.url?.split('/').pop());
     const my = toMyDiaryAsCommunity(idx);
     if (my) return [200, okResponse(my)];
@@ -143,6 +155,10 @@ export const setupMockAdapter = () => {
   mock.onPost('/diary').reply((config) => {
     const sticker = getString(getFormField(config.data, 'sticker'));
     const text = getString(getFormField(config.data, 'text'));
+    if (hasErrorSentinel(text)) {
+      armedDiaryDetailFault = true;
+      return [500, failResponse(SERVER_FAULT_MESSAGE)];
+    }
     const date = getString(getFormField(config.data, 'date')) || new Date().toISOString();
     const image = getImageUri(getFormField(config.data, 'image'));
 
@@ -166,6 +182,10 @@ export const setupMockAdapter = () => {
     const diaryIdx = getNumber(getFormField(config.data, 'diary_idx'));
     const sticker = getString(getFormField(config.data, 'sticker'));
     const text = getString(getFormField(config.data, 'text'));
+    if (hasErrorSentinel(text)) {
+      armedDiaryDetailFault = true;
+      return [500, failResponse(SERVER_FAULT_MESSAGE)];
+    }
     const date = getString(getFormField(config.data, 'date'));
     const newImage = getImageUri(getFormField(config.data, 'image'));
     const imageText = getFormField(config.data, 'image_text');
@@ -208,7 +228,11 @@ export const setupMockAdapter = () => {
     });
     return [200, okResponse({ is_visible: nextVisible })];
   });
-  mock.onPost('/diary/report').reply(200, okStatus());
+  mock.onPost('/diary/report').reply((config) => {
+    const body = JSON.parse(config.data as string);
+    if (hasErrorSentinel(body.text)) return [500, failResponse(SERVER_FAULT_MESSAGE)];
+    return [200, okStatus()];
+  });
 
   // === Comment ===
   mock.onGet(/\/comment\/list\/\d+$/).reply((config) => {
@@ -217,6 +241,7 @@ export const setupMockAdapter = () => {
   });
   mock.onPost('/comment').reply((config) => {
     const body = JSON.parse(config.data as string);
+    if (hasErrorSentinel(body.text)) return [500, failResponse(SERVER_FAULT_MESSAGE)];
     const diaryIdx = Number(body.diary_idx);
     const newComment: CommentResponse = {
       idx: Date.now(),
@@ -245,7 +270,11 @@ export const setupMockAdapter = () => {
     const skip = Number(config.params?.skip ?? 0);
     return [200, okResponse(MOCK_LETTERS.slice(skip, skip + 6))];
   });
-  mock.onPost('/letter').reply(200, okResponse(MOCK_LETTERS[0]));
+  mock.onPost('/letter').reply((config) => {
+    const body = JSON.parse(config.data as string);
+    if (hasErrorSentinel(body.text)) return [500, failResponse(SERVER_FAULT_MESSAGE)];
+    return [200, okResponse(MOCK_LETTERS[0])];
+  });
   mock.onDelete(/\/letter\/\d+$/).reply(200, okResponse(MOCK_LETTERS[0]));
 
   // === Flowerpot ===
@@ -299,11 +328,6 @@ export const setupMockAdapter = () => {
 
   // === etc ===
   mock.onGet('/etc/app-version').reply(200, okResponse(MOCK_APP_VERSION));
-
-  // === Error 시연 (A-10 ErrorView 데모용) ===
-  mock.onGet('/_demo/error-unauthorized').reply(401);
-  mock.onGet('/_demo/error-timeout').timeout();
-  mock.onGet('/_demo/error-network').networkError();
 
   // 정의 안 된 요청은 콘솔에 표시 + 404
   mock.onAny().reply((config) => {
