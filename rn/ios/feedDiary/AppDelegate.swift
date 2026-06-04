@@ -3,6 +3,7 @@ internal import Expo
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import RNBootSplash
 
 @main
 class AppDelegate: ExpoAppDelegate {
@@ -35,6 +36,12 @@ class AppDelegate: ExpoAppDelegate {
 }
 
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
+  // 네이티브 스플래시 초기화(흰 배경 + 레모니). BootSplash.storyboard 사용.
+  override func customize(_ rootView: RCTRootView) {
+    super.customize(rootView)
+    RNBootSplash.initWithStoryboard("BootSplash", rootView: rootView)
+  }
+
   override func sourceURL(for bridge: RCTBridge) -> URL? {
     // needed to return the correct URL for expo-dev-client.
     bridge.bundleURL ?? bundleURL()
