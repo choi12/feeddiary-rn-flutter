@@ -13,10 +13,13 @@ import 'package:feeddiary/config/flowerpot_config.dart';
 /// auth: 로그인은 항상 신규 사용자(401)로 처리해 CreateProfile 온보딩을 노출하고, 회원가입/자동로그인은
 /// 사용자+토큰을 발급한다. diary: 인메모리 state 로 목록(본인)/캘린더/상세/CRUD/좋아요/공개토글을 실제로 변형한다(RN mock state).
 /// community: 공개 일기 피드(정렬·페이지네이션)·댓글 CRUD·신고(작성자 차단)를 인메모리 맵/셋으로 시연한다.
-/// 전 도메인 종합 + 실패 시나리오 주입은 후속 polish PR(가이드 C-1).
+/// 실패 시나리오: 제출 텍스트에 센티넬 [_errorSentinel]이 있으면 500 을 내 에러 토스트를, 일기 작성 시엔 다음 상세 조회 1회도 실패시켜 ErrorView 를 시연한다(재시도 시 복구).
 class DemoApiAdapter implements HttpClientAdapter {
   /// 닉네임 중복으로 처리할 예약어(중복 상태 시연용).
   static const Set<String> _reservedNicknames = {'새싹이', 'admin', 'test'};
+
+  /// 실패 시나리오 데모 센티넬 — 제출 텍스트에 이 토큰이 포함되면 에러 응답을 낸다(USE_MOCK 한정).
+  static const String _errorSentinel = '#에러';
 
   static const String _demoToken = 'demo_access_token';
 
@@ -34,6 +37,9 @@ class DemoApiAdapter implements HttpClientAdapter {
 
   /// 신고로 차단된 작성자 user_idx 집합(community 목록에서 제외).
   final Set<int> _blockedUsers = {};
+
+  /// 일기 작성 본문에 센티넬이 있으면 무장 — 다음 일기 상세 조회를 1회 실패시켜 ErrorView 를 시연한다(재시도 시 복구).
+  bool _armedDiaryDetailFault = false;
 
   /// 새 일기에 부여할 다음 idx. RN nextDiaryIdx(1100)+1 — 1100 이상이라 공개 시 community 피드에 노출된다.
   int _nextIdx = 1101;
@@ -251,6 +257,10 @@ class DemoApiAdapter implements HttpClientAdapter {
   }
 
   ResponseBody _getDiary(int idx) {
+    if (_armedDiaryDetailFault) {
+      _armedDiaryDetailFault = false;
+      return _serverFault();
+    }
     final found = _diaries.where((d) => d['idx'] == idx).toList();
     if (found.isEmpty) {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
@@ -260,6 +270,10 @@ class DemoApiAdapter implements HttpClientAdapter {
 
   ResponseBody _createDiary(Object? data) {
     final fields = _formFields(data);
+    if (_hasErrorSentinel(fields['text'])) {
+      _armedDiaryDetailFault = true;
+      return _serverFault();
+    }
     final idx = _nextIdx++;
     _diaries.insert(
       0,
@@ -279,6 +293,10 @@ class DemoApiAdapter implements HttpClientAdapter {
 
   ResponseBody _editDiary(Object? data) {
     final fields = _formFields(data);
+    if (_hasErrorSentinel(fields['text'])) {
+      _armedDiaryDetailFault = true;
+      return _serverFault();
+    }
     final idx = int.tryParse(fields['diary_idx'] ?? '');
     final i = idx == null ? -1 : _diaries.indexWhere((d) => d['idx'] == idx);
     if (i == -1) {
@@ -358,6 +376,9 @@ class DemoApiAdapter implements HttpClientAdapter {
   }
 
   ResponseBody _reportDiary(Object? data) {
+    if (_hasErrorSentinel(data is Map ? data['text']?.toString() : null)) {
+      return _serverFault();
+    }
     final diaryIdx = data is Map ? (data['diary_idx'] as num?)?.toInt() : null;
     final matches = diaryIdx == null
         ? const <Map<String, dynamic>>[]
@@ -408,6 +429,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     if (diaryIdx == null) {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
+    if (_hasErrorSentinel(text)) return _serverFault();
     final idx = _nextCommentIdx++;
     // 새 댓글은 현재 로그인 사용자로 귀속한다(실서버 동작). fallback 6건을 보존한 뒤 새 댓글을 덧붙인다(RN [...getComments, new]).
     _commentsByDiary[diaryIdx] = [
@@ -464,6 +486,7 @@ class DemoApiAdapter implements HttpClientAdapter {
 
   ResponseBody _createLetter(Object? data) {
     final text = data is Map ? (data['text']?.toString() ?? '') : '';
+    if (_hasErrorSentinel(text)) return _serverFault();
     final letter = _letterEntry(idx: _nextLetterIdx++, text: text, created: DateTime.now());
     _letters.insert(0, letter);
     return _json(200, {'status': 'success', 'resData': letter});
@@ -839,6 +862,12 @@ class DemoApiAdapter implements HttpClientAdapter {
         ),
     ];
   }
+
+  /// 제출 텍스트에 실패 센티넬이 있는지(트림 무관 — 포함만 검사). 실패 시나리오 데모용.
+  bool _hasErrorSentinel(String? text) => text != null && text.contains(_errorSentinel);
+
+  /// 데모 실패 응답(HTTP 500) — 인터셉터가 message 를 그대로 에러 토스트/ErrorView 문구로 노출한다.
+  ResponseBody _serverFault() => _json(500, {'status': 'failed', 'message': '서버 오류가 발생했어요. 잠시 후 다시 시도해 주세요.'});
 
   ResponseBody _json(int statusCode, Map<String, dynamic> body) {
     return ResponseBody.fromString(
