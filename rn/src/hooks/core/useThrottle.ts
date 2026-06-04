@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 
-type AnyFunction = (...args: any[]) => any;
+type AnyFunction = (...args: never[]) => unknown;
 
 type UseThrottleReturn<T extends AnyFunction> = (...args: Parameters<T>) => ReturnType<T> | undefined;
 
@@ -18,13 +18,15 @@ function useThrottle<T extends AnyFunction>({
   const lastRun = useRef(0);
 
   const throttledCallback = useCallback(
-    (...args: Parameters<T>) => {
+    (...args: Parameters<T>): ReturnType<T> | undefined => {
       const now = Date.now();
       if (now - lastRun.current >= delay) {
         lastRun.current = now;
 
-        return callback(...args);
+        return callback(...args) as ReturnType<T>;
       }
+
+      return undefined;
     },
     [callback, delay],
   );
