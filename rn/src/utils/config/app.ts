@@ -13,7 +13,7 @@ const hideSplash = async () => {
   try {
     await BootSplash.hide({ fade: true });
   } catch {
-    // native init 미와이어 시 silent — generate-bootsplash + AppDelegate/MainActivity wire-up 후 제거
+    // 네이티브 스플래시 숨김 실패는 무시(핫리로드·테스트 등). 네이티브 와이어업 완료(AppDelegate/MainActivity).
   }
 };
 

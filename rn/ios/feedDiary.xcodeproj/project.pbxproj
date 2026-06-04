@@ -34,6 +34,8 @@
 		E5FE30C69E5A4D40A17CC5A4 /* FontAwesome6_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E5317F5D58C64F3C82492DCD /* FontAwesome6_Regular.ttf */; };
 		F8352C743A474C04A4F91E26 /* FontAwesome6_Brands.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5D4E358E9EBB4AFD8AE682BE /* FontAwesome6_Brands.ttf */; };
 		FEDC69B9ADBE415199873229 /* SimpleLineIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 40EA83818A764E66BE1B9547 /* SimpleLineIcons.ttf */; };
+		A02D51DDA7634915AEA281DC /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C7C869750F47496EA22FFF6A /* BootSplash.storyboard */; };
+		924BD4CCED7D481988C817FC /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 98C9E991390045AA99DA3EBA /* Colors.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -71,6 +73,8 @@
 		EC92ECF3E15D109F87A2A3F6 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-feedDiary/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FDB89FE96B4DF54F1353690A /* Pods-feedDiary.release.dev.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-feedDiary.release.dev.xcconfig"; path = "Target Support Files/Pods-feedDiary/Pods-feedDiary.release.dev.xcconfig"; sourceTree = "<group>"; };
+		C7C869750F47496EA22FFF6A /* BootSplash.storyboard */ = {isa = PBXFileReference; name = "BootSplash.storyboard"; path = "feedDiary/BootSplash.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		98C9E991390045AA99DA3EBA /* Colors.xcassets */ = {isa = PBXFileReference; name = "Colors.xcassets"; path = "feedDiary/Colors.xcassets"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = folder.assetcatalog; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +97,8 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				C7C869750F47496EA22FFF6A /* BootSplash.storyboard */,
+				98C9E991390045AA99DA3EBA /* Colors.xcassets */,
 			);
 			name = feedDiary;
 			sourceTree = "<group>";
@@ -277,6 +283,8 @@
 				FEDC69B9ADBE415199873229 /* SimpleLineIcons.ttf in Resources */,
 				F8352C743A474C04A4F91E26 /* FontAwesome6_Brands.ttf in Resources */,
 				7B8AF865C1644AFB89A25A54 /* MaterialIcons.ttf in Resources */,
+				A02D51DDA7634915AEA281DC /* BootSplash.storyboard in Resources */,
+				924BD4CCED7D481988C817FC /* Colors.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -414,7 +422,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary; APP_DISPLAY_NAME = "새싹일기";
+				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary;
+				APP_DISPLAY_NAME = "새싹일기";
 				PRODUCT_NAME = feedDiary;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -444,7 +453,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary; APP_DISPLAY_NAME = "새싹일기";
+				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary;
+				APP_DISPLAY_NAME = "새싹일기";
 				PRODUCT_NAME = feedDiary;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;
@@ -760,7 +770,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary.dev; APP_DISPLAY_NAME = "[DEV]새싹일기";
+				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary.dev;
+				APP_DISPLAY_NAME = "[DEV]새싹일기";
 				PRODUCT_NAME = feedDiary;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -880,7 +891,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary.dev; APP_DISPLAY_NAME = "[DEV]새싹일기";
+				PRODUCT_BUNDLE_IDENTIFIER = com.feeddiary.dev;
+				APP_DISPLAY_NAME = "[DEV]새싹일기";
 				PRODUCT_NAME = feedDiary;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;
