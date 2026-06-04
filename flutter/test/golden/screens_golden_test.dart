@@ -40,7 +40,8 @@ Future<void> _pumpScreen(WidgetTester tester, Widget screen, {bool withUser = fa
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  final dio = buildDio(TokenStorage(const FlutterSecureStorage()))..httpClientAdapter = DemoApiAdapter();
+  final dio = buildDio(TokenStorage(const FlutterSecureStorage()))
+    ..httpClientAdapter = DemoApiAdapter(latency: Duration.zero);
   final container = ProviderContainer(retry: (_, _) => null, overrides: [dioProvider.overrideWithValue(dio)]);
   addTearDown(container.dispose);
   if (withUser) container.read(authControllerProvider.notifier).setUser(_testUser);
