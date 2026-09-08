@@ -6,18 +6,16 @@ import { QUERY_KEYS } from '@/constants';
 type QueryKeyValue = (typeof QUERY_KEYS)[keyof typeof QUERY_KEYS];
 
 const queryInvalidator = {
-  one: (queryClient: QueryClient, queryKey: QueryKeyValue, diaryIdx?: number) => {
-    queryClient.invalidateQueries({ queryKey: diaryIdx ? [queryKey, diaryIdx] : [queryKey] });
-  },
-  many: (queryClient: QueryClient, queryKeys: QueryKeyValue[]) => {
+  one: (queryClient: QueryClient, queryKey: QueryKeyValue, diaryIdx?: number) =>
+    queryClient.invalidateQueries({ queryKey: diaryIdx ? [queryKey, diaryIdx] : [queryKey] }),
+  many: (queryClient: QueryClient, queryKeys: QueryKeyValue[]) =>
     queryClient.invalidateQueries({
       // 각 쿼리마다 이 함수가 실행되어 true를 반환하면 해당 쿼리를 무효화
       predicate: (query): boolean => {
         const rootKey = query.queryKey[0] as QueryKeyValue;
         return queryKeys.includes(rootKey);
       },
-    });
-  },
+    }),
 };
 
 const DIARIES_GROUP = [QUERY_KEYS.DIARIES, QUERY_KEYS.MONTHLY_DIARIES, QUERY_KEYS.COMMUNITY_DIARIES];
@@ -41,15 +39,18 @@ export const invalidateQueries = {
   },
 
   // 일기 공개 설정(6) : [DIARY, diaryIdx], DIARIES_GROUP, MISSION_GROUP
-  setVisibility: (queryClient: QueryClient, diaryIdx: number) => {
-    queryInvalidator.one(queryClient, QUERY_KEYS.DIARY, diaryIdx);
-    queryInvalidator.many(queryClient, [...DIARIES_GROUP, ...MISSION_GROUP]);
-  },
+  // 낙관 갱신(useOptimistic) transition 이 refetch 완료까지 기다릴 수 있도록 Promise 를 돌려준다
+  setVisibility: (queryClient: QueryClient, diaryIdx: number) =>
+    Promise.all([
+      queryInvalidator.one(queryClient, QUERY_KEYS.DIARY, diaryIdx),
+      queryInvalidator.many(queryClient, [...DIARIES_GROUP, ...MISSION_GROUP]),
+    ]),
   // 일기 좋아요(4) : [DIARY, diaryIdx], COMMUNITY_DIARIES, MISSION_GROUP
-  likeDiary: (queryClient: QueryClient, diaryIdx: number) => {
-    queryInvalidator.one(queryClient, QUERY_KEYS.DIARY, diaryIdx);
-    queryInvalidator.many(queryClient, [QUERY_KEYS.COMMUNITY_DIARIES, ...MISSION_GROUP]);
-  },
+  likeDiary: (queryClient: QueryClient, diaryIdx: number) =>
+    Promise.all([
+      queryInvalidator.one(queryClient, QUERY_KEYS.DIARY, diaryIdx),
+      queryInvalidator.many(queryClient, [QUERY_KEYS.COMMUNITY_DIARIES, ...MISSION_GROUP]),
+    ]),
 
   // 댓글 등록(6) : [COMMENTS, diaryIdx], [DIARY, diaryIdx], DIARIES, COMMUNITY_DIARIES, MISSION_GROUP
   createComment: (queryClient: QueryClient, diaryIdx: number) => {
