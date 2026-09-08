@@ -1,7 +1,7 @@
 // 앱 루트 — 전역 Provider(SafeArea·Query·Navigation) 조립 및 mock/Sentry/초기설정 부트스트랩
 import { NavigationContainer } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import React, { useEffect } from 'react';
@@ -27,7 +27,11 @@ setupMockAdapter();
 // Sentry 초기화 — enabled: !__DEV__ 이라 데모/dev 빌드에선 비활성(no-op)
 initSentry();
 
-const queryClient = new QueryClient(QUERY_CLIENT_CONFIG);
+// 조회 실패는 화면이 ErrorView 로 받되, 보고는 뮤테이션·렌더 에러와 같은 창구(reportError)로 모은다
+const queryClient = new QueryClient({
+  ...QUERY_CLIENT_CONFIG,
+  queryCache: new QueryCache({ onError: reportError }),
+});
 
 function App() {
   useEffect(() => {
