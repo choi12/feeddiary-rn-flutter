@@ -1,6 +1,7 @@
 // GoRouter 설정 — AuthState 기반 redirect + 인증/일기 라우트(splash/signIn/createProfile/home/diary). (Riverpod 코드젠)
 import 'package:feeddiary/data/models/diary.dart';
 import 'package:feeddiary/routing/auth_state.dart';
+import 'package:feeddiary/routing/extra_codec.dart';
 import 'package:feeddiary/routing/routes.dart';
 import 'package:feeddiary/ui/features/auth/create_profile_screen.dart';
 import 'package:feeddiary/ui/features/auth/sign_in_screen.dart';
@@ -37,6 +38,8 @@ GoRouter appRouter(Ref ref) {
   return GoRouter(
     initialLocation: Routes.splash,
     refreshListenable: authListenable,
+    // 웹 뒤로/앞으로 가기로 복원되는 extra 를 원래 타입으로 되돌린다(없으면 Map 이 와서 캐스팅이 깨짐).
+    extraCodec: const ExtraCodec(),
     redirect: (_, state) {
       final status = authListenable.value;
       final location = state.matchedLocation;
