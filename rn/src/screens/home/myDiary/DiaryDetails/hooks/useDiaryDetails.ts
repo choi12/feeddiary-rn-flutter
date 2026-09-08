@@ -46,7 +46,7 @@ function useDiaryDetails({ diaryIdx }: UseDiaryDetailsProps) {
       applyVisibilityToggle(null);
       try {
         await APISetVisibility({ diaryIdx: diary.idx });
-        invalidateQueries.setVisibility(queryClient, diary.idx);
+        await invalidateQueries.setVisibility(queryClient, diary.idx); // 재조회 완료까지 낙관 값 유지
       } catch (error) {
         handleErrorWithToast(error, TOAST_BOTTOM_OFFSET.DIARY_DETAILS);
       }

@@ -42,13 +42,15 @@ function useLikeDiary({ diary, isMyDiary }: UseLikeDiaryProps) {
       toggleOptimisticLike(null);
       try {
         const response = await APILikeDiary({ diaryIdx: diary.idx });
-        invalidateQueries.likeDiary(queryClient, diary.idx);
+        const refetched = invalidateQueries.likeDiary(queryClient, diary.idx);
 
         if (response.isLike) {
           setIsLikeAnimationVisible(true);
           await delay(ANIMATION_DURATION);
           setIsLikeAnimationVisible(false);
         }
+        // transition 이 끝나면 낙관 값이 base(서버값)로 돌아가므로, 재조회가 끝날 때까지 기다린다
+        await refetched;
       } catch (error) {
         handleErrorWithToast(error, TOAST_BOTTOM_OFFSET.DIARY_DETAILS);
       }
