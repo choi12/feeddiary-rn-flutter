@@ -38,11 +38,15 @@ function BottomTabNavigation() {
       ];
     }
 
+    // Android 15+ 는 Edge-to-Edge 가 강제라 시스템이 오프셋을 넣지 않는다. 실측 inset 을 쓰고(3버튼 내비는 제스처보다 크다),
+    // inset 을 못 읽는 경우에만 상수로 폴백한다.
+    const androidBottomInset = safeAreaBottomInset > 0 ? safeAreaBottomInset : LAYOUT.BOTTOM_INSET_ANDROID;
+
     return [
       defaultTabBarStyle,
       {
-        height: LAYOUT.BOTTOM_TAB_HEIGHT + LAYOUT.BOTTOM_INSET_ANDROID,
-        paddingBottom: TAB_BAR_LAYOUT.BOTTOM_PADDING + LAYOUT.BOTTOM_INSET_ANDROID,
+        height: LAYOUT.BOTTOM_TAB_HEIGHT + androidBottomInset,
+        paddingBottom: TAB_BAR_LAYOUT.BOTTOM_PADDING + androidBottomInset,
       },
     ];
   }, [safeAreaBottomInset]);
