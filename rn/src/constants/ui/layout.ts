@@ -8,7 +8,7 @@ export const LAYOUT = {
   PADDING: 24,
   BORDER_RADIUS: 14,
 
-  // 안드로이드 기기의 하단 여백 보정값
+  // 안드로이드 하단 여백 폴백값 — safe area inset 을 못 읽을 때만 사용
   BOTTOM_INSET_ANDROID: 20,
 
   STATUS_BAR_HEIGHT: 7, // iOS 상태 바 높이 보정값
