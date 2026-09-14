@@ -20,7 +20,7 @@ export const SETTING_MENU_ITEMS: SettingMenuConfig[] = [
     onPress: (_, senderInfo) => sendSupportEmail(senderInfo!),
   },
   {
-    title: '오픈소스 라이선스',
+    title: '라이선스',
     onPress: (navigation) => navigation.navigate('License'),
   },
   {

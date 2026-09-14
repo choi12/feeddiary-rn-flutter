@@ -1,4 +1,6 @@
-// 오픈소스 라이선스 목록 — 프로덕션 의존성(package.json dependencies) 기준 생성. 화면(LicenseItem)은 libraryName·_license·_description 을 렌더한다.
+// 라이선스 목록 — 프로덕션 의존성(package.json dependencies) + 번들 에셋.
+// 에셋 셋은 출처 표기가 라이선스 조건이라 뺄 수 없다(근거는 루트 THIRD_PARTY_NOTICES.md).
+// 의존성 목록 생성 기준은 아래와 같다. 화면(LicenseItem)은 libraryName·_license·_description 을 렌더한다.
 export const OPEN_SOURCE_LICENSE = [
   {
     libraryName: '@choi12/rn-basic-calendar',
@@ -473,5 +475,23 @@ export const OPEN_SOURCE_LICENSE = [
     },
     _licenseContent:
       'MIT License\n\nCopyright (c) 2019 Paul Henschel\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the "Software"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n',
+  },
+  {
+    libraryName: 'Freepik',
+    _license: 'Freepik 무료 라이선스',
+    _description:
+      '캐릭터 · 감정 스티커 · 날씨 아이콘 일러스트. Designed by Freepik (freepik.com)',
+  },
+  {
+    libraryName: '아이콘 폰트',
+    _license: 'MIT · CC BY-SA 4.0 · CC BY 4.0 · SIL OFL 1.1 · Apache 2.0',
+    _description:
+      'Entypo (Daniel Bruce) · FontAwesome · Ionicons · MaterialIcons (Google) · Octicons (GitHub) 등',
+  },
+  {
+    libraryName: '본문 폰트',
+    _license: '무료 배포 폰트',
+    _description:
+      '온글잎 박다현체 (VoyagerX, inc. & Dahyeon Park) · 둘기마요 고딕 (둘기마요)',
   },
 ] as const;

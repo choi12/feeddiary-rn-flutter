@@ -1,4 +1,4 @@
-// 오픈소스 라이선스 화면 — 사용 라이브러리 라이선스 목록을 나열
+// 라이선스 화면 — 사용 라이브러리와 번들 에셋의 라이선스 목록을 나열
 import React from 'react';
 
 import CustomHeader from '@/components/common/CustomHeader';
@@ -11,7 +11,7 @@ import { OPEN_SOURCE_LICENSE } from './data';
 function License() {
   return (
     <SafeAreaContainer edges={['top']}>
-      <CustomHeader title="오픈소스 라이선스" hasBackButton />
+      <CustomHeader title="라이선스" hasBackButton />
       <ScrollContainer hasPadding>
         {OPEN_SOURCE_LICENSE.map((licenseInfo) => (
           <LicenseBox key={licenseInfo.libraryName} licenseInfo={licenseInfo} />
