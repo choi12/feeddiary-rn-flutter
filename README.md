@@ -1,5 +1,7 @@
 # 새싹일기 (FeedDiary) — React Native & Flutter
 
+[![CI](https://github.com/choi12/feeddiary-rn-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/choi12/feeddiary-rn-flutter/actions/workflows/ci.yml)
+
 > **2024~2025년 직접 운영한** 일기 앱을 RN 0.85 + Flutter 두 스택으로 재구현한 모노레포. 하루의 감정을 기록하고, 매일 미션으로 식물을 키우고, 다른 사용자와 일기를 나누는 앱입니다.
 
 ![새싹일기: 로그인 · 나의 화분 · 캘린더 · 일기 작성 · 오늘의 미션 · 잠금화면](assets/readme/screens.png)
