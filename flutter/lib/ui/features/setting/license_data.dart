@@ -1,4 +1,5 @@
-// 오픈소스 라이선스 목록 — Flutter 스택 의존성(이름/라이선스/설명 3필드). RN License/data.ts 구조 1:1, 내용은 Flutter 의존성.
+// 라이선스 목록 — 오픈소스 의존성 + 번들 에셋(이름/라이선스/설명 3필드). RN License/data.ts 구조 1:1, 내용은 Flutter 의존성.
+// 에셋 셋은 출처 표기가 라이선스 조건이라 뺄 수 없다(근거는 루트 THIRD_PARTY_NOTICES.md).
 /// 라이선스 화면에 노출하는 라이브러리 한 줄. RN `LicenseItem`(libraryName/_license/_description) 대응.
 class LicenseEntry {
   const LicenseEntry({required this.name, required this.license, required this.description});
@@ -69,5 +70,20 @@ const List<LicenseEntry> openSourceLicenses = [
     name: 'url_launcher',
     license: 'BSD-3-Clause',
     description: 'Launches URLs, emails, and other schemes in the mobile platform.',
+  ),
+  LicenseEntry(
+    name: 'Freepik',
+    license: 'Freepik 무료 라이선스',
+    description: '캐릭터 · 감정 스티커 · 날씨 아이콘 일러스트. Designed by Freepik (freepik.com)',
+  ),
+  LicenseEntry(
+    name: '아이콘 폰트',
+    license: 'MIT · CC BY-SA 4.0 · CC BY 4.0 · SIL OFL 1.1 · Apache 2.0',
+    description: 'Entypo (Daniel Bruce) · FontAwesome · Ionicons · MaterialIcons (Google) · Octicons (GitHub) 등',
+  ),
+  LicenseEntry(
+    name: '본문 폰트',
+    license: '무료 배포 폰트',
+    description: '온글잎 박다현체 (VoyagerX, inc. & Dahyeon Park) · 둘기마요 고딕 (둘기마요)',
   ),
 ];

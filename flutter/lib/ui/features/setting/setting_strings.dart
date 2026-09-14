@@ -5,7 +5,7 @@ abstract final class SettingStrings {
   static const String editProfile = '내 정보 수정';
   static const String menuLock = '잠금 설정';
   static const String menuSupport = '문의하기';
-  static const String menuLicense = '오픈소스 라이선스';
+  static const String menuLicense = '라이선스';
   static const String menuAppVersion = '앱 버전 정보';
   static const String signOut = '로그아웃';
   static const String signOutConfirm = '로그아웃 하시겠어요?';
