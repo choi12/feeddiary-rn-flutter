@@ -1,0 +1,53 @@
+# RN·Flutter 두 트랙의 테스트 게이트 — 골든만 제외한다(아래 flutter test 주석 참조)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  rn:
+    name: React Native
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rn
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      # package.json 의 packageManager(yarn@3.6.4) 와 커밋된 .yarn/releases 로 해석된다
+      - run: corepack enable
+
+      - run: yarn install --immutable
+      - run: yarn lint
+      - run: yarn tsc --noEmit
+      - run: yarn test
+
+  flutter:
+    name: Flutter
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+
+      # test/golden 은 뺀다 — 골든 PNG 는 macOS 에서 생성한 것이라 폰트 힌팅·플랫폼 렌더 차이로
+      # 리눅스 러너에서는 픽셀 diff 가 난다(README 「5. 테스트」). 로컬 비주얼 회귀 가드 전용이다.
+      # 새 테스트 디렉토리를 만들면 이 목록에도 추가해야 CI 에서 돌아간다.
+      - run: flutter test test/data test/domain test/routing test/ui test/utils test/widget_test.dart
