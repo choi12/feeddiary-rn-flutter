@@ -6,6 +6,12 @@
 !env/.env.development
 **/google-services.json
 **/GoogleService-Info.plist
+*.p8
+*.p12
+*.mobileprovision
+*.pem
+.netrc
+sentry.properties
 
 # rn
 rn/node_modules/
@@ -26,9 +32,13 @@ flutter/skills-lock.json
 # docs (작업용 — 공개 안 함)
 docs/
 
-# 문서 파일 — 완성본만 `git add -f` 로 명시적 commit
+# 문서 파일 — 루트 공개 문서 둘만 추적하고 나머지(작업 노트)는 제외
+# 예외에 루트 고정 `/` 를 붙인다. 안 붙이면 rn/README.md·flutter/README.md 까지 딸려 들어가는데
+# 그 둘은 CLI 부트스트랩 템플릿 그대로다(「A new Flutter project」).
 *.md
 *.txt
+!/README.md
+!/THIRD_PARTY_NOTICES.md
 
 # IDE / editor
 .idea/
