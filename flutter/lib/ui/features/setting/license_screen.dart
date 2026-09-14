@@ -1,4 +1,4 @@
-// 오픈소스 라이선스 화면 — 라이브러리 이름/라이선스/설명 3줄 리스트. RN screens/home/setting/License + LicenseItem 1:1.
+// 라이선스 화면 — 라이브러리·에셋의 이름/라이선스/설명 3줄 리스트. RN screens/home/setting/License + LicenseItem 1:1.
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
