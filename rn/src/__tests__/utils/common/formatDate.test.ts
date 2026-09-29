@@ -24,11 +24,16 @@ describe('formatDate', () => {
 
   describe('default format', () => {
     it('prefixes today with "오늘," and includes the time', () => {
-      expect(formatDate('2026-06-02 09:30:00')).toMatch(/^오늘, (오전|오후) 9:30$/);
+      expect(formatDate('2026-06-02 09:30:00')).toBe('오늘, 오전 9:30');
     });
 
     it('uses "M월 D일," for another day this year', () => {
-      expect(formatDate('2026-03-04 09:30:00')).toMatch(/^3월 4일, (오전|오후) 9:30$/);
+      expect(formatDate('2026-03-04 09:30:00')).toBe('3월 4일, 오전 9:30');
+    });
+
+    it('marks noon and afternoon as "오후"', () => {
+      expect(formatDate('2026-03-04 12:00:00')).toBe('3월 4일, 오후 12:00');
+      expect(formatDate('2026-03-04 14:10:00')).toBe('3월 4일, 오후 2:10');
     });
 
     it('returns "YYYY년 M월 D일" for another year', () => {
