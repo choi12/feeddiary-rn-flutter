@@ -28,7 +28,7 @@ export const formatDate = (date: string, format: DateFormat = 'default') => {
   const today = dayjs();
   const isThisYear = inputDate.year() === today.year();
   const isToday = inputDate.isSame(today, 'day');
-  const isMorning = inputDate.format('A') === DATE_CONSTANTS.AM;
+  const isMorning = inputDate.hour() < 12;
 
   const FORMAT_DATE_ACTIONS = {
     diary: () =>
