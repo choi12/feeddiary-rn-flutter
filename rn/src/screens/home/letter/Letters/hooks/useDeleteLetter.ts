@@ -1,6 +1,6 @@
 // 편지 삭제 훅 — 낙관적 제거(실패 시 롤백)와 삭제 확인 모달 구성
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { APIDeleteLetter, APIDeleteLetterParams } from '@/api/letter/APIDeleteLetter';
 import { LetterDTO } from '@/api/letter/types';
@@ -49,8 +49,13 @@ function useDeleteLetter() {
     onSettled: () => invalidateQueries.deleteLetter(queryClient),
   });
 
+  // 모달 버튼의 isLoading 은 열 때 값으로 고정되므로, 연타로 DELETE 가 두 번 나가지 않게 진행 중 탭을 무시
+  const isDeletingRef = useRef(false);
+
   const handleDeleteLetter = useCallback(
     async (letterIdx: number) => {
+      if (isDeletingRef.current) return;
+      isDeletingRef.current = true;
       try {
         await deleteLetterMutation(letterIdx);
         closeAlertModal();
@@ -60,6 +65,8 @@ function useDeleteLetter() {
       } catch (error) {
         await delay(100);
         handleErrorWithToast(error, TOAST_BOTTOM_OFFSET.HOME_SCREEN);
+      } finally {
+        isDeletingRef.current = false;
       }
     },
     [closeAlertModal, deleteLetterMutation, handleErrorWithToast, showToast],

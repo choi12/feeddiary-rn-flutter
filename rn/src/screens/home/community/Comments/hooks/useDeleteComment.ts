@@ -1,6 +1,6 @@
 // 댓글 삭제 훅 — 낙관적 제거(실패 시 롤백)와 삭제 확인 모달 구성
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { APIDeleteComment, APIDeleteCommentParams } from '@/api/comment/APIDeleteComment';
 import { CommentDTO } from '@/api/comment/types';
@@ -46,12 +46,19 @@ function useDeleteComment({ commentIdx }: UseDeleteCommentProps) {
     onSettled: () => invalidateQueries.deleteComment(queryClient, diaryIdx),
   });
 
+  // 모달 버튼의 isLoading 은 열 때 값으로 고정되므로, 연타로 DELETE 가 두 번 나가지 않게 진행 중 탭을 무시
+  const isDeletingRef = useRef(false);
+
   const handleDeleteComment = useCallback(async () => {
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
     try {
       await deleteCommentMutation();
     } catch (error) {
       await delay(100);
       handleErrorWithToast(error, TOAST_BOTTOM_OFFSET.COMMENT);
+    } finally {
+      isDeletingRef.current = false;
     }
   }, [deleteCommentMutation, handleErrorWithToast]);
 

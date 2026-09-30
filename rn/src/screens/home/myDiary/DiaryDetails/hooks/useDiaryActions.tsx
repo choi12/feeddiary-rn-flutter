@@ -1,6 +1,6 @@
 // 일기 상세 액션 훅 — 공개 토글·수정 이동·삭제를 바텀시트/알림 모달로 구성
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import { CommunityDiaryDTO } from '@/api/community/types';
 import { APIDeleteDiary, APIDeleteDiaryParams } from '@/api/diary/APIDeleteDiary';
@@ -50,7 +50,12 @@ function useDiaryActions({ diary, isVisible, toggleVisibility }: UseDiaryActions
     onSuccess: () => invalidateQueries.deleteDiary(queryClient),
   });
 
+  // 모달 버튼의 isLoading 은 열 때 값으로 고정되므로, 연타로 DELETE 가 두 번 나가지 않게 진행 중 탭을 무시
+  const isDeletingRef = useRef(false);
+
   const handleDeleteDiary = useCallback(async () => {
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
     try {
       await deleteDiaryMutation();
       closeAlertModal();
@@ -59,6 +64,8 @@ function useDiaryActions({ diary, isVisible, toggleVisibility }: UseDiaryActions
       showToast(MESSAGE.DIARY.DELETED, TOAST_BOTTOM_OFFSET.HOME_SCREEN);
     } catch (error) {
       handleErrorWithToast(error, TOAST_BOTTOM_OFFSET.DIARY_DETAILS);
+    } finally {
+      isDeletingRef.current = false;
     }
   }, [handleErrorWithToast, showToast, deleteDiaryMutation, closeAlertModal, navigation]);
 
