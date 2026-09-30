@@ -41,7 +41,7 @@ export const setupMockAdapter = () => {
   if ((request as unknown as MockInstalled).__mockInstalled) return;
   (request as unknown as MockInstalled).__mockInstalled = true;
 
-  const mock = new MockAdapter(request, { delayResponse: 600 });
+  const mock = new MockAdapter(request);
 
   // mutable demo state — let UI changes feel real
   let userState: UserResponse = { ...MOCK_USER };
