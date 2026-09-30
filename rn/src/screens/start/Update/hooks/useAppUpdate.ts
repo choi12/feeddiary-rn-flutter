@@ -75,7 +75,7 @@ function useAppUpdate() {
 
   useEffect(() => {
     checkAppVersion();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 마운트 시 1회만 버전 확인
   }, []);
 }
 export default useAppUpdate;

@@ -41,14 +41,14 @@ function useToastBox() {
     await delay(TOAST_CONSTANTS.DISPLAY_DURATION);
     await hideAnimation();
     hideToast();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값과 그것만 다루는 hideAnimation 은 제외
   }, [bottomOffset, hideToast, safeAreaBottomInset]);
 
   useEffect(() => {
     if (isVisible) {
       showToast();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isVisible 이 켜질 때만 실행(showToast 재생성으로 재실행 방지)
   }, [isVisible]);
 
   return {

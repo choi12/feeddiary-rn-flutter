@@ -19,7 +19,7 @@ function Mission() {
     return () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.FLOWERPOT] });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 언마운트 시 1회 무효화, queryClient 는 참조 고정
   }, []);
 
   return (
