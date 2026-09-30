@@ -49,7 +49,12 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
     setState(() => _submitting = true);
     try {
       final idx = await ref.read(_provider.notifier).submit();
-      if (mounted) {
+      if (!mounted) return;
+      // 수정은 스택에 있는 기존 상세로 돌아간다(상세 캐시는 컨트롤러가 무효화 → 수정 내용으로 다시 그림).
+      // 작성은 작성 화면을 새 상세로 바꾼다 — 수정에서도 교체하면 상세가 두 번 쌓여 뒤로가기에 한 번 더 보인다.
+      if (widget.initial != null) {
+        context.pop();
+      } else {
         context.pushReplacement(Routes.diaryDetailPath(idx));
       }
     } on AppException catch (e) {

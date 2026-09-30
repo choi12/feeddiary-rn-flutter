@@ -62,7 +62,7 @@ class CreateDiaryController extends _$CreateDiaryController {
     ref.invalidate(monthlyDiariesProvider);
     ref.invalidate(communityListProvider);
     if (target != null) {
-      // 수정이면 해당 상세 캐시도 무효화해 pushReplacement 후 최신 내용으로 다시 불러온다.
+      // 수정이면 해당 상세 캐시도 무효화해 기존 상세로 돌아갔을 때 최신 내용으로 다시 불러온다.
       ref.invalidate(diaryDetailControllerProvider(target.idx));
     } else {
       // 신규 등록은 미션 진행(일기 미션)·화분을 교차 무효화한다(RN diaryAction 신규 → MISSION_GROUP).
