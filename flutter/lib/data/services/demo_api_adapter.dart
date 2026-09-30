@@ -253,7 +253,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     // 나의 일기 탭은 본인(user_idx==1) 일기만. 타작성자 시드는 community 피드 전용.
     final own = _diaries.where((d) => d['user_idx'] == 1).toList()
       ..sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
-    final page = own.skip(skip).take(ApiConfig.itemsPerPage).map(_withCommentCount).toList();
+    final page = own.skip(skip).take(ApiConfig.itemsPerPage).map(_served).toList();
     return _json(200, {'status': 'success', 'resData': page});
   }
 
@@ -272,7 +272,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     if (found.isEmpty) {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
-    return _json(200, {'status': 'success', 'resData': _withCommentCount(found.first)});
+    return _json(200, {'status': 'success', 'resData': _served(found.first)});
   }
 
   ResponseBody _createDiary(Object? data) {
@@ -282,15 +282,17 @@ class DemoApiAdapter implements HttpClientAdapter {
       return _serverFault();
     }
     final idx = _nextIdx++;
-    _diaries.insert(
-      0,
-      _diary(
+    // 새 일기는 현재 로그인 사용자 프로필로 귀속한다(실서버 동작).
+    _diaries.insert(0, {
+      ..._diary(
         idx: idx,
         sticker: fields['sticker'] ?? 'CloudSun',
         text: fields['text'] ?? '',
         created: DateTime.tryParse(fields['date'] ?? '') ?? DateTime.now(),
+        userIdx: _user['idx'] as int,
       ),
-    );
+      ..._currentAuthor(),
+    });
     _progressMission('diary');
     return _json(200, {
       'status': 'success',
@@ -378,7 +380,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     } else {
       visible.sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
     }
-    final page = visible.skip(skip).take(ApiConfig.itemsPerPage).map(_withCommentCount).toList();
+    final page = visible.skip(skip).take(ApiConfig.itemsPerPage).map(_served).toList();
     return _json(200, {'status': 'success', 'resData': page});
   }
 
@@ -419,15 +421,30 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 특정 일기의 댓글 목록 — 추가/삭제로 생긴 목록이 있으면 그것, 없으면 fallback 6건(RN getComments).
   List<Map<String, dynamic>> _commentsFor(int diaryIdx) => _commentsByDiary[diaryIdx] ?? _fallbackComments;
 
-  /// 일기에 동적 댓글 수를 주입(RN withCommentCount) — 시드의 정적 commentCount 를 getComments 길이로 덮어 카드·상세·댓글화면이 일치한다.
-  Map<String, dynamic> _withCommentCount(Map<String, dynamic> diary) => {
-    ...diary,
+  /// 응답용 일기 — 동적 댓글 수를 주입(RN withCommentCount)해 시드의 정적 commentCount 를 getComments 길이로 덮어
+  /// 카드·상세·댓글화면이 일치하게 하고, 작성자 프로필을 [_withCurrentAuthor]로 해석한다.
+  Map<String, dynamic> _served(Map<String, dynamic> diary) => {
+    ..._withCurrentAuthor(diary),
     'commentCount': _commentsFor(diary['idx'] as int).length,
+  };
+
+  /// 데모 사용자가 쓴 레코드(일기·댓글)는 저장 시점이 아닌 현재 [_user] 프로필(닉네임·아바타)로 내려보낸다. 실서버는
+  /// 조회 시 작성자 프로필을 JOIN 하므로, 닉네임을 바꿔도 화면의 `nickname == 내 닉네임` 소유 판정(수정·삭제)이 유지되고
+  /// 캐릭터·배경을 바꾸면 본인 일기·댓글 아바타도 따라 바뀐다. RN withMyCommentAuthor.
+  Map<String, dynamic> _withCurrentAuthor(Map<String, dynamic> record) =>
+      record['user_idx'] == _user['idx'] ? {...record, ..._currentAuthor()} : record;
+
+  /// 현재 [_user]의 작성자 표시 필드(응답 레코드 키). 신규 일기·댓글 저장과 조회 해석이 공유한다.
+  Map<String, dynamic> _currentAuthor() => {
+    'nickname': _user['nickname'],
+    'background': _user['background'],
+    'character': _user['character'],
+    'user_image': _user['image'],
   };
 
   ResponseBody _getComments(int diaryIdx) {
     // RN getComments: 특정 일기 댓글이 있으면 그것, 없으면 fallback 6건. 댓글 화면을 항상 채워 보여 준다.
-    return _json(200, {'status': 'success', 'resData': _commentsFor(diaryIdx)});
+    return _json(200, {'status': 'success', 'resData': _commentsFor(diaryIdx).map(_withCurrentAuthor).toList()});
   }
 
   ResponseBody _createComment(Object? data) {
@@ -441,13 +458,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     // 새 댓글은 현재 로그인 사용자로 귀속한다(실서버 동작). fallback 6건을 보존한 뒤 새 댓글을 덧붙인다(RN [...getComments, new]).
     _commentsByDiary[diaryIdx] = [
       ..._commentsFor(diaryIdx),
-      _comment(
-        idx: idx,
-        text: text,
-        created: DateTime.now(),
-        nickname: _user['nickname'] as String,
-        character: _user['character'] as String,
-      ),
+      {..._comment(idx: idx, text: text, created: DateTime.now(), userIdx: _user['idx'] as int), ..._currentAuthor()},
     ];
     _progressMission('comment');
     return _json(200, {'status': 'success', 'resData': '$idx'});
@@ -706,9 +717,11 @@ class DemoApiAdapter implements HttpClientAdapter {
     String character = 'Chick',
     String background = '',
     String userImage = '',
+    int? userIdx,
   }) {
     return {
       'idx': idx,
+      'user_idx': ?userIdx,
       'nickname': nickname,
       'background': background,
       'character': character,
