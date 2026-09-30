@@ -52,11 +52,6 @@ const List<LicenseEntry> openSourceLicenses = [
     description: 'Encrypted key-value storage backed by Keychain (iOS) and Keystore (Android).',
   ),
   LicenseEntry(
-    name: 'shared_preferences',
-    license: 'BSD-3-Clause',
-    description: 'Persistent key-value storage wrapping each platform store for simple data.',
-  ),
-  LicenseEntry(
     name: 'lottie',
     license: 'MIT',
     description: 'Renders After Effects animations exported as JSON (Bodymovin) natively.',
