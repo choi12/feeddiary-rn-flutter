@@ -42,6 +42,9 @@ class SettingScreen extends ConsumerWidget {
     if (confirmed != true) return;
     try {
       await ref.read(authControllerProvider.notifier).signOut();
+      // 로그인 화면 redirect 는 다음 프레임에 반영되므로 이 화면은 아직 마운트돼 있다. 토스트는 루트 Overlay(redirect 뒤에도
+      // 남는 루트 Navigator 소유)에 붙어 로그인 화면 위에 그대로 보인다. RN useSignOut(INNER_SCREEN).
+      if (context.mounted) showFeedToast(context, SettingStrings.signedOut, offset: FeedToastOffset.inner);
     } on AppException catch (e) {
       if (context.mounted) showFeedToast(context, e.displayMessage, offset: FeedToastOffset.home);
     }

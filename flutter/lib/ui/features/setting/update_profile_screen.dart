@@ -69,8 +69,11 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
     );
     if (confirmed != true) return;
     try {
-      // 성공 시 signOut → redirect 로 화면이 사라진다(별도 pop 불필요).
+      // 성공 시 signOut → redirect 로 화면이 사라진다(별도 pop 불필요). redirect 는 다음 프레임이라 토스트를 띄울 때는
+      // 아직 마운트돼 있고, 토스트는 루트 Overlay 에 붙어 로그인 화면 위에 남는다. RN useDeleteAccount(INNER_SCREEN).
       await _controller.deleteAccount();
+      if (!mounted) return;
+      showFeedToast(context, SettingStrings.accountDeleted, offset: FeedToastOffset.inner);
     } on AppException catch (e) {
       if (!mounted) return;
       showFeedToast(context, e.displayMessage, offset: FeedToastOffset.button);
