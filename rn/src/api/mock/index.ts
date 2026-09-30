@@ -55,6 +55,18 @@ export const setupMockAdapter = () => {
     commentsByDiary[diaryIdx] ?? MOCK_COMMENTS.filter((c) => !deletedFallbackCommentIdx.has(c.idx));
   const getCommentCount = (diaryIdx: number): number => getComments(diaryIdx).length;
   const withCommentCount = <T extends { idx: number }>(d: T): T => ({ ...d, commentCount: getCommentCount(d.idx) });
+  // 실서버는 조회 시 user 를 JOIN 해 작성자 정보를 채움 → 내 일기·댓글은 저장 시점 복사본 대신 현재 프로필로 응답
+  const myCommentIdx = new Set<number>();
+  const withMyCommentAuthor = (c: CommentResponse): CommentResponse =>
+    myCommentIdx.has(c.idx)
+      ? {
+          ...c,
+          nickname: userState.nickname,
+          background: userState.background,
+          character: userState.character,
+          user_image: userState.image,
+        }
+      : c;
 
   const likeByDiary: Record<number, { count: number; liked: boolean }> = {};
   const getLikeState = (idx: number) => {
@@ -81,6 +93,7 @@ export const setupMockAdapter = () => {
     const likeState = getLikeState(my.idx);
     return {
       ...my,
+      nickname: userState.nickname,
       like_count: likeState.count,
       commentCount: getCommentCount(my.idx),
       user_image: userState.image,
@@ -131,6 +144,7 @@ export const setupMockAdapter = () => {
       .filter((d) => d.is_visible === 1 && d.idx >= 1100)
       .map((d) => ({
         ...d,
+        nickname: userState.nickname,
         user_image: userState.image,
         background: userState.background,
         character: userState.character,
@@ -237,7 +251,7 @@ export const setupMockAdapter = () => {
   // === Comment ===
   mock.onGet(/\/comment\/list\/\d+$/).reply((config) => {
     const diaryIdx = Number(config.url?.split('/').pop());
-    return [200, okResponse(getComments(diaryIdx))];
+    return [200, okResponse(getComments(diaryIdx).map(withMyCommentAuthor))];
   });
   mock.onPost('/comment').reply((config) => {
     const body = JSON.parse(config.data as string);
@@ -253,6 +267,7 @@ export const setupMockAdapter = () => {
       user_image: userState.image,
     };
     commentsByDiary[diaryIdx] = [...getComments(diaryIdx), newComment];
+    myCommentIdx.add(newComment.idx);
     return [200, okStatus()];
   });
   mock.onDelete(/\/comment\/\d+$/).reply((config) => {
