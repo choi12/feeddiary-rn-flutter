@@ -56,7 +56,7 @@ final class DiaryDetailControllerProvider extends $AsyncNotifierProvider<DiaryDe
   }
 }
 
-String _$diaryDetailControllerHash() => r'3590ba909c4f74343d5c859ddfdb416f02a6deb8';
+String _$diaryDetailControllerHash() => r'8fbcff50b41bedc7f3bf9ef41a4c8f69c734355e';
 
 /// 일기 상세 상태. 공개여부는 낙관적으로 즉시 반영하고 실패 시 이전 상태로 되돌린다
 /// (RN useOptimistic). 좋아요는 목록↔상세 동기화를 위해 `DiaryLikes` 글로벌 provider 가 담당한다.

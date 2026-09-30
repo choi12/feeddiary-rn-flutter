@@ -57,6 +57,24 @@ mixin OffsetPagination<T> on AsyncNotifier<PagedState<T>> {
     }
   }
 
+  /// 로드된 항목 중 [test]에 맞는 것을 즉시 뺀다(서버 삭제 성공 후 재조회 응답 전까지 목록에 남지 않게). 미로드면 무시.
+  void removeLocally(bool Function(T item) test) {
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+    state = AsyncData(current.copyWith(items: current.items.where((item) => !test(item)).toList()));
+  }
+
+  /// 로드된 항목 중 [test]에 맞는 것만 [transform] 으로 즉시 바꾼다(누적 페이지·스크롤 유지). 미로드면 무시.
+  void updateLocally(bool Function(T item) test, T Function(T item) transform) {
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+    state = AsyncData(current.copyWith(items: [for (final item in current.items) test(item) ? transform(item) : item]));
+  }
+
   /// 처음부터 다시 로드(당겨서 새로고침). RN refetch.
   Future<void> refreshList() async {
     state = const AsyncLoading();

@@ -1,6 +1,7 @@
 // 일기 작성/수정 폼 컨트롤러 — 스티커·본문·날짜 상태 + 등록/수정 제출. RN useWriteDiary 대응.
 import 'package:feeddiary/data/models/diary.dart';
 import 'package:feeddiary/data/repositories/diary_repository.dart';
+import 'package:feeddiary/ui/features/community/community_list_controller.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
 import 'package:feeddiary/ui/features/diary/diary_list_controller.dart';
 import 'package:feeddiary/ui/features/diary/monthly_diaries_provider.dart';
@@ -43,7 +44,7 @@ class CreateDiaryController extends _$CreateDiaryController {
 
   void setDate(DateTime date) => state = state.copyWith(date: date);
 
-  /// 등록 또는 수정. 성공 시 목록/월별 캐시를 무효화하고 생성된 일기 idx 를 반환. RN useWriteDiary.handleSubmitDiary.
+  /// 등록 또는 수정. 성공 시 목록/월별/공유 목록 캐시를 무효화하고 생성된 일기 idx 를 반환. RN useWriteDiary.handleSubmitDiary.
   Future<int> submit() async {
     final repo = ref.read(diaryRepositoryProvider);
     final form = state;
@@ -59,6 +60,7 @@ class CreateDiaryController extends _$CreateDiaryController {
           );
     ref.invalidate(diaryListProvider);
     ref.invalidate(monthlyDiariesProvider);
+    ref.invalidate(communityListProvider);
     if (target != null) {
       // 수정이면 해당 상세 캐시도 무효화해 pushReplacement 후 최신 내용으로 다시 불러온다.
       ref.invalidate(diaryDetailControllerProvider(target.idx));
