@@ -2,7 +2,7 @@ import type { CommunityDiaryResponse } from '@/api/community/types';
 import type { CommentResponse } from '@/api/comment/types';
 import type { MyDiaryResponse, CreateDiaryResponse } from '@/api/diary/types';
 import type { LetterResponse } from '@/api/letter/types';
-import type { MissionResponse, MissionsResponse, CompleteMissionResponse } from '@/api/mission/types';
+import type { MissionResponse, MissionsResponse } from '@/api/mission/types';
 import type { UserResponse } from '@/api/auth/types';
 import type { FlowerpotResponse } from '@/api/flowerpot/types';
 
@@ -137,13 +137,8 @@ const mkMission = (idx: number, type: MissionResponse['type'], count: number, ma
 });
 
 export const MOCK_MISSIONS: MissionsResponse = {
-  completed: [mkMission(1, 'diary', 5, 5)],
+  completed: [mkMission(1, 'diary', 1, 1)],
   inProgress: [mkMission(2, 'comment', 1, 3), mkMission(3, 'visible', 0, 1), mkMission(4, 'like', 2, 5)],
-};
-
-export const MOCK_COMPLETE_MISSION: CompleteMissionResponse = {
-  missions: MOCK_MISSIONS,
-  reward: { count: 1, item: 'watering' },
 };
 
 export const MOCK_CREATE_DIARY: CreateDiaryResponse = { diaryIdx: 999 };

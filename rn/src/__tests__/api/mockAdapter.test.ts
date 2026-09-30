@@ -2,13 +2,19 @@
 import { APICreateComment } from '@/api/comment/APICreateComment';
 import { APIGetComments } from '@/api/comment/APIGetComments';
 import { APIGetCommunityDiaries } from '@/api/community/APIGetCommunityDiaries';
+import { APIReportDiary } from '@/api/community/APIReportDiary';
 import { CommunityDiaryDTO } from '@/api/community/types';
 import { APICreateDiary } from '@/api/diary/APICreateDiary';
+import { APIEditDiary } from '@/api/diary/APIEditDiary';
+import { APIGetDiaries } from '@/api/diary/APIGetDiaries';
 import { APIGetDiary } from '@/api/diary/APIGetDiary';
 import { APIGetMonthlyDiaries } from '@/api/diary/APIGetMonthlyDiaries';
 import { APISetVisibility } from '@/api/diary/APISetVisibility';
+import { APICreateLetter } from '@/api/letter/APICreateLetter';
+import { APIDeleteLetter } from '@/api/letter/APIDeleteLetter';
+import { APIGetLetters } from '@/api/letter/APIGetLetters';
 import { setupMockAdapter } from '@/api/mock';
-import { MOCK_MY_DIARIES, MOCK_USER } from '@/api/mock/data';
+import { MOCK_COMMUNITY_DIARIES, MOCK_MY_DIARIES, MOCK_USER } from '@/api/mock/data';
 import { APIUpdateProfile } from '@/api/user/APIUpdateProfile';
 import { CommunitySort } from '@/types/community';
 
@@ -116,6 +122,35 @@ describe('mock adapter — community feed sort', () => {
   });
 });
 
+describe('mock adapter — letters', () => {
+  beforeAll(() => setupMockAdapter());
+
+  it('lists a written letter first and drops it after delete', async () => {
+    const written = await APICreateLetter({ text: '새 편지' });
+    const listed = await APIGetLetters({ skip: 0 });
+    expect(listed[0]).toMatchObject({ idx: written.idx, text: '새 편지' });
+
+    await APIDeleteLetter({ letterIdx: written.idx });
+    expect((await APIGetLetters({ skip: 0 })).map((l) => l.idx)).not.toContain(written.idx);
+  });
+});
+
+describe('mock adapter — report blocks author', () => {
+  beforeAll(() => setupMockAdapter());
+
+  it('hides the reported author\'s diaries from the community feed and keeps the rest', async () => {
+    const reported = MOCK_COMMUNITY_DIARIES[0];
+    const before = await collectCommunityFeed('latest');
+    expect(before.some((d) => d.userIdx === reported.user_idx)).toBe(true);
+
+    await APIReportDiary({ diaryIdx: reported.idx, text: '신고 사유', blockIdx: reported.user_idx });
+
+    const after = await collectCommunityFeed('latest');
+    expect(after.some((d) => d.userIdx === reported.user_idx)).toBe(false);
+    expect(after).toEqual(before.filter((d) => d.userIdx !== reported.user_idx));
+  });
+});
+
 describe('mock adapter — my diary ordering and missing diaries', () => {
   beforeAll(() => setupMockAdapter());
 
@@ -125,5 +160,21 @@ describe('mock adapter — my diary ordering and missing diaries', () => {
     const diaries = await APIGetMonthlyDiaries({ month: '2026-05' });
     expect(diaries.length).toBeGreaterThan(1);
     expect(times(diaries)).toEqual([...times(diaries)].sort((a, b) => a - b));
+  });
+
+  it('re-sorts my diary list newest first after a date edit', async () => {
+    const oldest = MOCK_MY_DIARIES[MOCK_MY_DIARIES.length - 1];
+    await APIEditDiary({
+      diaryFormData: buildFormData({ diary_idx: String(oldest.idx), date: '2030-01-01T00:00:00.000Z' }),
+    });
+
+    const page = await APIGetDiaries({ skip: 0 });
+    expect(page[0].idx).toBe(oldest.idx);
+    expect(times(page)).toEqual([...times(page)].sort((a, b) => b - a));
+  });
+
+  it('rejects detail and visibility for an unknown diary', async () => {
+    await expect(APIGetDiary({ diaryIdx: 999999 })).rejects.toBeDefined();
+    await expect(APISetVisibility({ diaryIdx: 999999 })).rejects.toBeDefined();
   });
 });

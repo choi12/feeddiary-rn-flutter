@@ -7,6 +7,9 @@ import type { CommentResponse } from '@/api/comment/types';
 import type { CommunityDiaryResponse } from '@/api/community/types';
 import type { DailyDiaryResponse, MyDiaryResponse } from '@/api/diary/types';
 import type { FlowerpotResponse } from '@/api/flowerpot/types';
+import type { LetterResponse } from '@/api/letter/types';
+import type { CompleteMissionResponse, MissionsResponse } from '@/api/mission/types';
+import type { Mission, RewardItem } from '@/types/mission';
 
 import request from '../request';
 
@@ -14,7 +17,6 @@ import {
   MOCK_APP_VERSION,
   MOCK_COMMENTS,
   MOCK_COMMUNITY_DIARIES,
-  MOCK_COMPLETE_MISSION,
   MOCK_FLOWERPOT,
   MOCK_LETTERS,
   MOCK_MISSIONS,
@@ -45,7 +47,40 @@ export const setupMockAdapter = () => {
   let userState: UserResponse = { ...MOCK_USER };
   let flowerpotState: FlowerpotResponse = { ...MOCK_FLOWERPOT };
   let myDiariesState: MyDiaryResponse[] = [...MOCK_MY_DIARIES];
+  let missionsState: MissionsResponse = {
+    completed: [...MOCK_MISSIONS.completed],
+    inProgress: [...MOCK_MISSIONS.inProgress],
+  };
+  // 일기 작성·좋아요·공개·댓글이 해당 종류의 첫 진행중 미션을 1 올린다(목표 초과 금지) — Flutter _progressMission 과 대칭
+  const progressMission = (type: Mission) => {
+    const target = missionsState.inProgress.find((m) => m.type === type);
+    if (!target) return;
+    missionsState = {
+      ...missionsState,
+      inProgress: missionsState.inProgress.map((m) =>
+        m === target ? { ...m, count: Math.min(m.count + 1, m.max_count) } : m,
+      ),
+    };
+  };
+  // 미션 종류별 보상 — 원본 백엔드 MISSION_REWARD(feedDiary-back router/mission.js) 와 같은 표
+  const rewardFor = (type: Mission): RewardItem => {
+    switch (type) {
+      case 'diary':
+        return { count: 3, item: 'watering' };
+      case 'visible':
+        return { count: 3, item: 'love' };
+      case 'comment':
+        return { count: 2, item: 'watering' };
+      case 'like':
+        return { count: 1, item: 'love' };
+    }
+  };
   let nextDiaryIdx = 1100;
+  // 나에게 쓰는 편지 — 작성·삭제로 변형(미션과 무관, Flutter _letters 와 대칭). 새 편지 idx 는 시드(1~3) 다음부터
+  let lettersState: LetterResponse[] = [...MOCK_LETTERS];
+  let nextLetterIdx = MOCK_LETTERS.length + 1;
+  // 신고로 차단된 작성자 user_idx — 커뮤니티 목록에서 제외(Flutter _blockedUsers 와 대칭)
+  const blockedUsers = new Set<number>();
   // 일기 작성/수정 본문에 #에러 → 다음 일기 상세 GET 1회 실패(ErrorView 시연), 1회 소비 후 해제(Flutter _armedDiaryDetailFault 대칭).
   let armedDiaryDetailFault = false;
   const commentsByDiary: Record<number, CommentResponse[]> = {};
@@ -56,6 +91,7 @@ export const setupMockAdapter = () => {
   const withCommentCount = <T extends { idx: number }>(d: T): T => ({ ...d, commentCount: getCommentCount(d.idx) });
   // 실서버는 조회 시 user 를 JOIN 해 작성자 정보를 채움 → 내 일기·댓글은 저장 시점 복사본 대신 현재 프로필로 응답
   const myCommentIdx = new Set<number>();
+  const withMyNickname = <T extends { nickname: string }>(d: T): T => ({ ...d, nickname: userState.nickname });
   const withMyCommentAuthor = (c: CommentResponse): CommentResponse =>
     myCommentIdx.has(c.idx)
       ? {
@@ -112,7 +148,11 @@ export const setupMockAdapter = () => {
   // === Diary ===
   mock.onGet('/diary/list').reply((config) => {
     const skip = Number(config.params?.skip ?? 0);
-    const page = myDiariesState.slice(skip, skip + 10).map(withCommentCount).map(withLikeCount);
+    // 날짜 수정·과거 날짜 작성이 있어도 최신순 — Flutter _listDiaries 와 대칭
+    const sorted = [...myDiariesState].sort(
+      (a, b) => new Date(b.created_time).getTime() - new Date(a.created_time).getTime(),
+    );
+    const page = sorted.slice(skip, skip + 10).map(withMyNickname).map(withCommentCount).map(withLikeCount);
     return [200, okResponse(page)];
   });
   mock.onGet(/\/diary\/list-by-month\/[\w-]+$/).reply((config) => {
@@ -152,6 +192,7 @@ export const setupMockAdapter = () => {
         isLike: false,
       }));
     const merged = [...publishedFromMy, ...MOCK_COMMUNITY_DIARIES]
+      .filter((d) => !blockedUsers.has(d.user_idx))
       .map(withCommentCount)
       .map(withLikeAndIsLike)
       // 내 일기·타작성자 일기를 합친 뒤 정렬하고 나서 페이징(Flutter DemoApiAdapter._communityList 와 대칭)
@@ -170,7 +211,9 @@ export const setupMockAdapter = () => {
     const idx = Number(config.url?.split('/').pop());
     const my = toMyDiaryAsCommunity(idx);
     if (my) return [200, okResponse(my)];
-    const community = MOCK_COMMUNITY_DIARIES.find((d) => d.idx === idx) ?? MOCK_COMMUNITY_DIARIES[0];
+    const community = MOCK_COMMUNITY_DIARIES.find((d) => d.idx === idx);
+    // 없거나 삭제된 일기는 404 — Flutter _getDiary 와 대칭(상세 화면은 ErrorView)
+    if (!community) return [404, failResponse('일기를 찾을 수 없습니다.')];
     return [200, okResponse(withLikeAndIsLike(withCommentCount(community)))];
   });
   mock.onPost('/diary').reply((config) => {
@@ -197,6 +240,7 @@ export const setupMockAdapter = () => {
       commentCount: 0,
     };
     myDiariesState = [newDiary, ...myDiariesState];
+    progressMission('diary');
     return [200, okResponse({ diaryIdx: newDiary.idx })];
   });
   mock.onPut('/diary').reply((config) => {
@@ -236,22 +280,31 @@ export const setupMockAdapter = () => {
     const state = getLikeState(idx);
     state.liked = !state.liked;
     state.count = Math.max(0, state.count + (state.liked ? 1 : -1));
+    // 좋아요 취소는 미션을 되돌리지 않는다(Flutter 와 같음)
+    if (state.liked) progressMission('like');
     return [200, okResponse({ like_count: state.count, isLike: state.liked })];
   });
   mock.onPost('/diary/visibility').reply((config) => {
     const body = JSON.parse(config.data as string);
     const idx = Number(body.diary_idx);
+    if (!myDiariesState.some((d) => d.idx === idx)) return [404, failResponse('일기를 찾을 수 없습니다.')];
     let nextVisible: 1 | 0 = 1;
     myDiariesState = myDiariesState.map((d) => {
       if (d.idx !== idx) return d;
       nextVisible = d.is_visible === 1 ? 0 : 1;
       return { ...d, is_visible: nextVisible };
     });
+    // 비공개 → 공개로 바뀐 경우에만 공개 미션 진행(Flutter 와 같음)
+    if (nextVisible === 1) progressMission('visible');
     return [200, okResponse({ is_visible: nextVisible })];
   });
   mock.onPost('/diary/report').reply((config) => {
     const body = JSON.parse(config.data as string);
     if (hasErrorSentinel(body.text)) return [500, failResponse(SERVER_FAULT_MESSAGE)];
+    // 신고한 일기의 작성자를 차단 — Flutter 처럼 block_idx 대신 diary_idx 로 작성자를 찾는다
+    const diaryIdx = Number(body.diary_idx);
+    const reported = [...myDiariesState, ...MOCK_COMMUNITY_DIARIES].find((d) => d.idx === diaryIdx);
+    if (reported) blockedUsers.add(reported.user_idx);
     return [200, okStatus()];
   });
 
@@ -275,6 +328,7 @@ export const setupMockAdapter = () => {
     };
     commentsByDiary[diaryIdx] = [...getComments(diaryIdx), newComment];
     myCommentIdx.add(newComment.idx);
+    progressMission('comment');
     return [200, okStatus()];
   });
   mock.onDelete(/\/comment\/\d+$/).reply((config) => {
@@ -290,17 +344,34 @@ export const setupMockAdapter = () => {
   // === Letter ===
   mock.onGet('/letter/list').reply((config) => {
     const skip = Number(config.params?.skip ?? 0);
-    return [200, okResponse(MOCK_LETTERS.slice(skip, skip + 6))];
+    const sorted = [...lettersState].sort(
+      (a, b) => new Date(b.created_time).getTime() - new Date(a.created_time).getTime(),
+    );
+    return [200, okResponse(sorted.slice(skip, skip + 10))];
   });
   mock.onPost('/letter').reply((config) => {
     const body = JSON.parse(config.data as string);
     if (hasErrorSentinel(body.text)) return [500, failResponse(SERVER_FAULT_MESSAGE)];
-    return [200, okResponse(MOCK_LETTERS[0])];
+    const letter: LetterResponse = { idx: nextLetterIdx, text: String(body.text ?? ''), created_time: new Date().toISOString() };
+    nextLetterIdx += 1;
+    lettersState = [letter, ...lettersState];
+    return [200, okResponse(letter)];
   });
-  mock.onDelete(/\/letter\/\d+$/).reply(200, okResponse(MOCK_LETTERS[0]));
+  // RN 클라이언트는 삭제 응답을 편지 스키마로 파싱하므로 지운 편지를 돌려준다(없으면 404)
+  mock.onDelete(/\/letter\/\d+$/).reply((config) => {
+    const idx = Number(config.url?.split('/').pop());
+    const deleted = lettersState.find((l) => l.idx === idx);
+    if (!deleted) return [404, failResponse('편지를 찾을 수 없습니다.')];
+    lettersState = lettersState.filter((l) => l.idx !== idx);
+    return [200, okResponse(deleted)];
+  });
 
   // === Flowerpot ===
-  mock.onGet('/flowerpot').reply(() => [200, okResponse(flowerpotState)]);
+  // showBadge 는 받을 수 있는(목표 달성한) 진행중 미션이 있는지로 계산 — Flutter _flowerpotJson 과 대칭
+  mock.onGet('/flowerpot').reply(() => [
+    200,
+    okResponse({ ...flowerpotState, showBadge: missionsState.inProgress.some((m) => m.count >= m.max_count) }),
+  ]);
   mock.onPost('/flowerpot/watering').reply(() => {
     if (flowerpotState.watering_count > 0) {
       const nextExp = flowerpotState.exp + 10;
@@ -331,8 +402,22 @@ export const setupMockAdapter = () => {
   });
 
   // === Mission ===
-  mock.onGet('/mission/list').reply(200, okResponse(MOCK_MISSIONS));
-  mock.onPost('/mission').reply(200, okResponse(MOCK_COMPLETE_MISSION));
+  mock.onGet('/mission/list').reply(() => [200, okResponse(missionsState)]);
+  // 진행중 미션을 완료로 옮기고 보상 충전을 화분에 더한다. 이미 완료했거나 없는 미션은 404(Flutter _completeMission 과 대칭)
+  mock.onPost('/mission').reply((config) => {
+    const body = JSON.parse(config.data as string);
+    const mission = missionsState.inProgress.find((m) => m.idx === Number(body.mission_idx));
+    if (!mission) return [404, failResponse('미션을 찾을 수 없습니다.')];
+    missionsState = {
+      completed: [{ ...mission, count: mission.max_count, is_completed: 1 }, ...missionsState.completed],
+      inProgress: missionsState.inProgress.filter((m) => m !== mission),
+    };
+    const reward = rewardFor(mission.type);
+    const chargeKey = reward.item === 'watering' ? 'watering_count' : 'love_count';
+    flowerpotState = { ...flowerpotState, [chargeKey]: flowerpotState[chargeKey] + reward.count };
+    const resData: CompleteMissionResponse = { missions: missionsState, reward };
+    return [200, okResponse(resData)];
+  });
 
   // === User ===
   mock.onPut('/user').reply((config) => {
