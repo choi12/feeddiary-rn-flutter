@@ -15,9 +15,8 @@ import 'package:feeddiary/config/flowerpot_config.dart';
 /// community: 공개 일기 피드(정렬·페이지네이션)·댓글 CRUD·신고(작성자 차단)를 인메모리 맵/셋으로 시연한다.
 /// 실패 시나리오: 제출 텍스트에 센티넬 [_errorSentinel]이 있으면 500 을 내 에러 토스트를, 일기 작성 시엔 다음 상세 조회 1회도 실패시켜 ErrorView 를 시연한다(재시도 시 복구).
 class DemoApiAdapter implements HttpClientAdapter {
-  /// 데모 인위 지연(RN axios-mock-adapter `delayResponse: 600` 대칭) — 스피너·낙관 보정이 보이도록 모든 응답을 지연시킨다.
-  /// 골든/위젯 테스트는 결정성을 위해 [Duration.zero] 를 주입한다.
-  DemoApiAdapter({this.latency = const Duration(milliseconds: 600)});
+  /// 응답 지연. 데모는 즉시 응답한다(RN mock 과 같음). 로딩 중·늦은 응답 경합을 재현하는 테스트만 지연을 주입한다.
+  DemoApiAdapter({this.latency = Duration.zero});
 
   final Duration latency;
 
