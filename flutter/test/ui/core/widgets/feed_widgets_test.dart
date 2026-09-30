@@ -1,4 +1,4 @@
-// 핵심 chrome 위젯 단위 테스트 — FeedButton(활성/비활성/로딩)·FeedHeader(제목·뒤로)·FeedTabBar(탭 콜백)·FeedLoading (widget test).
+// 핵심 chrome 위젯 단위 테스트 — FeedButton(활성/비활성/로딩)·FeedHeader(제목·뒤로)·FeedTabBar(탭 콜백)·FeedLoading·테마 hover (widget test).
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
@@ -107,6 +107,18 @@ void main() {
       final indicator = tester.widget<CircularProgressIndicator>(find.byType(CircularProgressIndicator));
       expect(indicator.color, FeedPalette.lightGray);
       expect(find.ancestor(of: find.byType(CircularProgressIndicator), matching: find.byType(Center)), findsWidgets);
+    });
+  });
+
+  group('앱 테마', () {
+    test('웹 마우스 hover·포커스 틴트가 없다(모바일 RN 은 hover 가 없음)', () {
+      final theme = buildAppTheme();
+      expect(theme.hoverColor, Colors.transparent);
+      expect(theme.focusColor, Colors.transparent);
+      final overlay = theme.textButtonTheme.style?.overlayColor;
+      expect(overlay?.resolve({WidgetState.hovered}), Colors.transparent);
+      expect(overlay?.resolve({WidgetState.focused}), Colors.transparent);
+      expect(overlay?.resolve({WidgetState.pressed}), isNot(Colors.transparent));
     });
   });
 }

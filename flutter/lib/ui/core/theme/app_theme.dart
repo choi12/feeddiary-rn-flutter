@@ -24,6 +24,18 @@ ThemeData buildAppTheme() {
     splashFactory: NoSplash.splashFactory,
     splashColor: Colors.transparent,
     highlightColor: Colors.transparent,
+    // 모바일 RN 에는 마우스 hover·키보드 포커스 틴트가 없다 → 웹에서도 안 보이게 전역 투명.
+    hoverColor: Colors.transparent,
+    focusColor: Colors.transparent,
+    // TextButton 은 hover/focus 오버레이를 자체 스타일로 칠하므로 따로 끈다. 누름 오버레이는 Material 기본(primary 10%) 유지.
+    textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        overlayColor: WidgetStateProperty.resolveWith(
+          (states) =>
+              states.contains(WidgetState.pressed) ? colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+        ),
+      ),
+    ),
     extensions: <ThemeExtension<dynamic>>[colors],
   );
 }
