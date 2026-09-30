@@ -1,6 +1,6 @@
 import type { CommunityDiaryResponse } from '@/api/community/types';
 import type { CommentResponse } from '@/api/comment/types';
-import type { MyDiaryResponse, CreateDiaryResponse } from '@/api/diary/types';
+import type { MyDiaryResponse } from '@/api/diary/types';
 import type { LetterResponse } from '@/api/letter/types';
 import type { MissionResponse, MissionsResponse } from '@/api/mission/types';
 import type { UserResponse } from '@/api/auth/types';
@@ -140,8 +140,6 @@ export const MOCK_MISSIONS: MissionsResponse = {
   completed: [mkMission(1, 'diary', 1, 1)],
   inProgress: [mkMission(2, 'comment', 1, 3), mkMission(3, 'visible', 0, 1), mkMission(4, 'like', 2, 5)],
 };
-
-export const MOCK_CREATE_DIARY: CreateDiaryResponse = { diaryIdx: 999 };
 
 export const MOCK_APP_VERSION = {
   app_version_android: '0.0.1',

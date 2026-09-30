@@ -7,19 +7,16 @@ export { default as LemonyMain } from './signIn/lemony_main.png';
 export { default as Sun } from './signIn/sun.png';
 export { default as Watering } from './signIn/watering.png';
 
-export { default as ProfileLemony } from './profile/profile_lemony.png';
 export { default as Success } from './profile/success.png';
 export { default as Error } from './profile/error.png';
 
 export { default as HomeBGTop } from './home/bg_top.png';
 export { default as HomeBGBottom } from './home/bg_bottom.png';
-export { default as Lemony1 } from './home/lemony1.png';
 
 export { default as Lemony1Seed } from './home/lemony_seed.png';
 export { default as Lemony1Flowerpot } from './home/lemony1_flowerpot.png';
 
 export { default as Lemony2 } from './home/lemony2.png';
-export { default as Lemony3 } from './home/lemony3.png';
 export { default as Lemony3New } from './home/lemony3_new.png';
 export { default as LevelBox } from './home/level_box.png';
 export { default as Lemony2Preview } from './home/lemony2_preview.png';
@@ -36,7 +33,7 @@ export { default as LetterBoard } from './letter/letter_board.png';
 
 export { default as BlueMoon } from './diary/weather/bluemoon.png';
 export { default as CloudSun } from './diary/weather/cloudsun.png';
-export { default as Moon } from './diary/weather//moon.png';
+export { default as Moon } from './diary/weather/moon.png';
 export { default as Rain } from './diary/weather/rain.png';
 export { default as Rainbow } from './diary/weather/rainbow.png';
 export { default as Snow } from './diary/weather/snow.png';
