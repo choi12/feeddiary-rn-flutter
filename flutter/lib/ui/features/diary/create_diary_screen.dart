@@ -35,7 +35,8 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
   late final _provider = createDiaryControllerProvider(widget.initial);
   bool _submitting = false;
 
-  // 사진 첨부 로컬 상태 — 갤러리 선택분(bytes)·삭제 여부. 데모 백엔드는 이미지 호스팅이 없어 제출에 포함하지 않는다(RN 데모와 동일).
+  // 사진 첨부 로컬 상태 — 갤러리 선택분(bytes)은 데모 백엔드에 이미지 호스팅이 없어 제출에 포함하지 않고(RN 데모와 동일),
+  // 삭제 여부는 수정 제출 시 image_text 로 전달한다.
   Uint8List? _imageBytes;
   bool _imageDeleted = false;
 
@@ -48,7 +49,7 @@ class _CreateDiaryScreenState extends ConsumerState<CreateDiaryScreen> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
-      final idx = await ref.read(_provider.notifier).submit();
+      final idx = await ref.read(_provider.notifier).submit(imageDeleted: _imageDeleted);
       if (!mounted) return;
       // 수정은 스택에 있는 기존 상세로 돌아간다(상세 캐시는 컨트롤러가 무효화 → 수정 내용으로 다시 그림).
       // 작성은 작성 화면을 새 상세로 바꾼다 — 수정에서도 교체하면 상세가 두 번 쌓여 뒤로가기에 한 번 더 보인다.

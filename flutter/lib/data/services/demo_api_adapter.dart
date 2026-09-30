@@ -311,6 +311,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     if (i == -1) {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
+    // 사진(image·image_text)은 데모 경계라 반영하지 않는다(이미지 호스팅 없음 · README 데모 경계「일기 사진」).
     _diaries[i] = {
       ..._diaries[i],
       'sticker': fields['sticker'] ?? _diaries[i]['sticker'],

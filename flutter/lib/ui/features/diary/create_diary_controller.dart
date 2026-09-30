@@ -45,7 +45,8 @@ class CreateDiaryController extends _$CreateDiaryController {
   void setDate(DateTime date) => state = state.copyWith(date: date);
 
   /// 등록 또는 수정. 성공 시 목록/월별/공유 목록 캐시를 무효화하고 생성된 일기 idx 를 반환. RN useWriteDiary.handleSubmitDiary.
-  Future<int> submit() async {
+  /// 수정에서 [imageDeleted]면 기존 사진을 지우도록 image_text 를 비워 보낸다(RN `isDeleted ? '' : diary.image`).
+  Future<int> submit({bool imageDeleted = false}) async {
     final repo = ref.read(diaryRepositoryProvider);
     final form = state;
     final target = initial;
@@ -56,7 +57,7 @@ class CreateDiaryController extends _$CreateDiaryController {
             sticker: form.sticker,
             text: form.text,
             date: form.date,
-            imageText: target.image,
+            imageText: imageDeleted ? '' : target.image,
           );
     ref.invalidate(diaryListProvider);
     ref.invalidate(monthlyDiariesProvider);
