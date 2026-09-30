@@ -10,8 +10,8 @@ import 'package:feeddiary/config/flowerpot_config.dart';
 /// USE_MOCK 데모 모드에서 Dio 의 [HttpClientAdapter]를 대체해 엔드포인트를 mock 한다.
 /// 응답을 백엔드 원본과 같은 snake_case 로 내려보내 인터셉터·DTO 매핑이 실제로 실행되게 한다(가이드 원칙2).
 ///
-/// auth: 로그인은 항상 신규 사용자(401)로 처리해 CreateProfile 온보딩을 노출하고, 회원가입/자동로그인은
-/// 사용자+토큰을 발급한다. diary: 인메모리 state 로 목록(본인)/캘린더/상세/CRUD/좋아요/공개토글을 실제로 변형한다(RN mock state).
+/// auth: 로그인·자동로그인은 기존 데모 사용자+토큰(200)을 반환해 바로 메인으로 진입하고(가입 우회 — RN 데모와 동일),
+/// 회원가입·프로필 수정은 폼 값을 데모 사용자에 반영한다. diary: 인메모리 state 로 목록(본인)/캘린더/상세/CRUD/좋아요/공개토글을 실제로 변형한다(RN mock state).
 /// community: 공개 일기 피드(정렬·페이지네이션)·댓글 CRUD·신고(작성자 차단)를 인메모리 맵/셋으로 시연한다.
 /// 실패 시나리오: 제출 텍스트에 센티넬 [_errorSentinel]이 있으면 500 을 내 에러 토스트를, 일기 작성 시엔 다음 상세 조회 1회도 실패시켜 ErrorView 를 시연한다(재시도 시 복구).
 class DemoApiAdapter implements HttpClientAdapter {
@@ -710,7 +710,8 @@ class DemoApiAdapter implements HttpClientAdapter {
     };
   }
 
-  /// 데모 댓글 한 건(snake_case). 기본 작성자는 데모 사용자('새싹이')라 데모상 삭제 가능하다.
+  /// 데모 댓글 한 건(snake_case). [userIdx]가 없으면 타작성자 댓글이다 — 소유(삭제 가능)는 user_idx 가 데모 사용자일 때
+  /// [_withCurrentAuthor]가 입히는 현재 닉네임으로 판정되므로, 작성자 기본값은 소유와 무관하다.
   Map<String, dynamic> _comment({
     required int idx,
     required String text,
