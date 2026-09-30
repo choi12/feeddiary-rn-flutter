@@ -1,11 +1,14 @@
-// DemoApiAdapter — 닉네임 변경 후에도 본인 일기·댓글이 현재 닉네임으로 내려오는지(작성자 소유 판정 유지) + 공유 목록의 본인 일기 노출 규칙.
+// DemoApiAdapter — 닉네임 변경 후에도 본인 일기·댓글이 현재 닉네임으로 내려오는지(작성자 소유 판정 유지) + 공유 목록의 본인 일기 노출 규칙 + 미션 시드·보상(원본 백엔드 값).
+import 'package:feeddiary/data/models/mission.dart';
 import 'package:feeddiary/data/repositories/community_repository.dart';
 import 'package:feeddiary/data/repositories/diary_repository.dart';
+import 'package:feeddiary/data/repositories/mission_repository.dart';
 import 'package:feeddiary/data/repositories/profile_repository.dart';
 import 'package:feeddiary/data/services/demo_api_adapter.dart';
 import 'package:feeddiary/data/services/dio_client.dart';
 import 'package:feeddiary/data/services/token_storage.dart';
 import 'package:feeddiary/domain/models/community_sort.dart';
+import 'package:feeddiary/domain/models/mission_type.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -75,5 +78,27 @@ void main() {
 
     expect(await diaries.setVisibility(diaryIdx: 1002), isFalse);
     expect(await communityIdxs(), isNot(contains(1002)));
+  });
+
+  test('미션 시드 목표와 완료 보상이 원본 백엔드(MISSION_LIST·MISSION_REWARD)와 같다', () async {
+    final dio = buildDio(TokenStorage(const FlutterSecureStorage()))
+      ..httpClientAdapter = DemoApiAdapter(latency: Duration.zero);
+    final missions = MissionRepository(dio);
+
+    final seed = await missions.getMissions();
+    final all = [...seed.completed, ...seed.inProgress];
+    expect(
+      {for (final m in all) m.type: m.maxCount},
+      {MissionType.diary: 1, MissionType.visible: 1, MissionType.like: 5, MissionType.comment: 3},
+    );
+    final diary = seed.completed.single;
+    expect((diary.type, diary.count, diary.isCompleted), (MissionType.diary, 1, true));
+
+    final rewards = {
+      for (final m in seed.inProgress) m.type: (await missions.completeMission(missionIdx: m.idx, type: m.type)).reward,
+    };
+    expect(rewards[MissionType.visible], const RewardItem(count: 3, item: PlantAction.love));
+    expect(rewards[MissionType.like], const RewardItem(count: 1, item: PlantAction.love));
+    expect(rewards[MissionType.comment], const RewardItem(count: 2, item: PlantAction.watering));
   });
 }

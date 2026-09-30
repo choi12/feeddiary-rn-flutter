@@ -613,15 +613,15 @@ class DemoApiAdapter implements HttpClientAdapter {
     });
   }
 
-  /// 미션 보상 규칙(미션 종류별 결정적). RN 서버 보상 계산 대응.
+  /// 미션 보상 규칙(미션 종류별 결정적). 원본 백엔드 router/mission.js `MISSION_REWARD` 값 그대로.
   Map<String, dynamic> _rewardFor(String type) {
     switch (type) {
       case 'diary':
-        return {'count': 2, 'item': 'watering'};
+        return {'count': 3, 'item': 'watering'};
       case 'visible':
-        return {'count': 1, 'item': 'watering'};
+        return {'count': 3, 'item': 'love'};
       case 'comment':
-        return {'count': 2, 'item': 'love'};
+        return {'count': 2, 'item': 'watering'};
       case 'like':
       default:
         return {'count': 1, 'item': 'love'};
@@ -640,10 +640,11 @@ class DemoApiAdapter implements HttpClientAdapter {
     }
   }
 
-  /// 시드 미션 — RN MOCK_MISSIONS. diary 5/5 완료 + comment/visible/like 진행중.
+  /// 시드 미션 — 목표(max_count)는 원본 백엔드 router/auth.js `MISSION_LIST`(diary 1·visible 1·like 5·comment 3).
+  /// diary 1/1 완료 + comment/visible/like 진행중.
   Map<String, List<Map<String, dynamic>>> _seedMissions() {
     return {
-      'completed': [_mission(idx: 1, type: 'diary', count: 5, maxCount: 5)],
+      'completed': [_mission(idx: 1, type: 'diary', count: 1, maxCount: 1)],
       'inProgress': [
         _mission(idx: 2, type: 'comment', count: 1, maxCount: 3),
         _mission(idx: 3, type: 'visible', count: 0, maxCount: 1),
