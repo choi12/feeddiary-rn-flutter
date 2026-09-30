@@ -15,7 +15,6 @@ import {
   MOCK_COMMENTS,
   MOCK_COMMUNITY_DIARIES,
   MOCK_COMPLETE_MISSION,
-  MOCK_DAILY_DIARIES_BY_MONTH,
   MOCK_FLOWERPOT,
   MOCK_LETTERS,
   MOCK_MISSIONS,
@@ -120,22 +119,22 @@ export const setupMockAdapter = () => {
     const rawMonth = (config.url?.split('/').pop() ?? '').replace('-', '');
     const year = Number(rawMonth.slice(0, 4));
     const month = Number(rawMonth.slice(4, 6));
-    const inMonth = myDiariesState.filter((d) => {
-      const t = new Date(d.created_time);
-      return t.getFullYear() === year && t.getMonth() + 1 === month;
-    });
-    const dailies: DailyDiaryResponse[] =
-      inMonth.length > 0
-        ? inMonth.map((d) => ({
-            idx: d.idx,
-            sticker: d.sticker,
-            text: d.text,
-            image: d.image,
-            created_time: d.created_time,
-            updated_time: d.updated_time,
-            is_visible: d.is_visible,
-          }))
-        : MOCK_DAILY_DIARIES_BY_MONTH[rawMonth] ?? MOCK_DAILY_DIARIES_BY_MONTH['202605'];
+    const inMonth = myDiariesState
+      .filter((d) => {
+        const t = new Date(d.created_time);
+        return t.getFullYear() === year && t.getMonth() + 1 === month;
+      })
+      .sort((a, b) => new Date(a.created_time).getTime() - new Date(b.created_time).getTime());
+    // 해당 월 본인 일기만 오래된 순으로 반환(없으면 빈 배열) — Flutter DemoApiAdapter._monthlyDiaries 와 대칭
+    const dailies: DailyDiaryResponse[] = inMonth.map((d) => ({
+      idx: d.idx,
+      sticker: d.sticker,
+      text: d.text,
+      image: d.image,
+      created_time: d.created_time,
+      updated_time: d.updated_time,
+      is_visible: d.is_visible,
+    }));
     return [200, okResponse(dailies)];
   });
   mock.onGet('/diary/community-list').reply((config) => {
