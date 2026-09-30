@@ -139,8 +139,10 @@ export const setupMockAdapter = () => {
   });
   mock.onGet('/diary/community-list').reply((config) => {
     const skip = Number(config.params?.skip ?? 0);
+    const sortType = config.params?.sort_type === 'popular' ? 'popular' : 'latest';
+    // 실서비스와 같이 공개한 내 일기는 시드·새 일기 구분 없이 모두 공유 피드에 노출
     const publishedFromMy: CommunityDiaryResponse[] = myDiariesState
-      .filter((d) => d.is_visible === 1 && d.idx >= 1100)
+      .filter((d) => d.is_visible === 1)
       .map((d) => ({
         ...d,
         nickname: userState.nickname,
@@ -151,7 +153,13 @@ export const setupMockAdapter = () => {
       }));
     const merged = [...publishedFromMy, ...MOCK_COMMUNITY_DIARIES]
       .map(withCommentCount)
-      .map(withLikeAndIsLike);
+      .map(withLikeAndIsLike)
+      // 내 일기·타작성자 일기를 합친 뒤 정렬하고 나서 페이징(Flutter DemoApiAdapter._communityList 와 대칭)
+      .sort((a, b) =>
+        sortType === 'popular'
+          ? b.like_count - a.like_count
+          : new Date(b.created_time).getTime() - new Date(a.created_time).getTime(),
+      );
     return [200, okResponse(merged.slice(skip, skip + 10))];
   });
   mock.onGet(/\/diary\/\d+$/).reply((config) => {
