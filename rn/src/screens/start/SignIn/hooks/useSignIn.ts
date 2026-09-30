@@ -71,7 +71,7 @@ function useSignIn() {
     async ({ uid, email, type }: SignInParams) => {
       try {
         const response = await signInMutation(uid);
-        completeSignIn(response);
+        await completeSignIn(response);
       } catch (error) {
         if (error instanceof UnauthorizedError) {
           hideLoading();
@@ -198,7 +198,7 @@ function useSignIn() {
         return;
       }
       const response = await autoSignInMutation(token);
-      completeSignIn(response);
+      await completeSignIn(response);
     } catch (error) {
       reportError(error);
       navigation.replace('SignIn');
