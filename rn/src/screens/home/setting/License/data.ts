@@ -4,7 +4,7 @@
 export const OPEN_SOURCE_LICENSE = [
   {
     libraryName: '@choi12/rn-basic-calendar',
-    version: '0.2.0',
+    version: '0.2.5',
     _license: 'MIT',
     _description:
       'A lightweight and customizable calendar component for React Native. Includes basic features like date marking and modal support.',

@@ -1517,14 +1517,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@choi12/rn-basic-calendar@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@choi12/rn-basic-calendar@npm:0.2.0"
+"@choi12/rn-basic-calendar@npm:^0.2.5":
+  version: 0.2.5
+  resolution: "@choi12/rn-basic-calendar@npm:0.2.5"
   peerDependencies:
     dayjs: ^1.11.0
     react: ^17.0.0 || ^18.0.0 || ^19.0.0
     react-native: ">=0.65.0 <1.0.0"
-  checksum: 9d9efe0dda24ee245edd0a556da66c12e0fcf9d148aba0293deba7a64abea6aa181c2afe5da797634c4345f5a4a8fa5f07bedb5b1599df739aa2c4f44efd5e4c
+  checksum: dbb58bc5f5229418f806821f8d11aaece06d32da67611fcb4ffe5dfa0480dd7380c3ec4de56958761a879b9eb91d55d04eb2fa351c67f48cbec3e3160674f056
   languageName: node
   linkType: hard
 
@@ -6324,7 +6324,7 @@ __metadata:
     "@babel/core": ^7.25.2
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@choi12/rn-basic-calendar": ^0.2.0
+    "@choi12/rn-basic-calendar": ^0.2.5
     "@invertase/react-native-apple-authentication": ^2.4
     "@notifee/react-native": 9.1.8
     "@react-native-community/cli": 20.1.0
