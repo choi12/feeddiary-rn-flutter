@@ -1,10 +1,11 @@
-// DemoApiAdapter — 닉네임 변경 후에도 본인 일기·댓글이 현재 닉네임으로 내려오는지(작성자 소유 판정 유지).
+// DemoApiAdapter — 닉네임 변경 후에도 본인 일기·댓글이 현재 닉네임으로 내려오는지(작성자 소유 판정 유지) + 공유 목록의 본인 일기 노출 규칙.
 import 'package:feeddiary/data/repositories/community_repository.dart';
 import 'package:feeddiary/data/repositories/diary_repository.dart';
 import 'package:feeddiary/data/repositories/profile_repository.dart';
 import 'package:feeddiary/data/services/demo_api_adapter.dart';
 import 'package:feeddiary/data/services/dio_client.dart';
 import 'package:feeddiary/data/services/token_storage.dart';
+import 'package:feeddiary/domain/models/community_sort.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -48,5 +49,31 @@ void main() {
     expect((mine.character, mine.background, mine.userImage), ('Bear', '#ABCDEF', user.image));
     expect(comments.first, seedComment);
     expect(await diaries.getDiary(diaryIdx: 1), seedAuthor);
+  });
+
+  test('본인 일기는 시드든 신규든 공개면 공유 목록에 보이고, 비공개로 돌리면 빠진다(실서비스와 같은 규칙)', () async {
+    final dio = buildDio(TokenStorage(const FlutterSecureStorage()))
+      ..httpClientAdapter = DemoApiAdapter(latency: Duration.zero);
+    final diaries = DiaryRepository(dio);
+    final community = CommunityRepository(dio);
+    Future<List<int>> communityIdxs() async {
+      final idxs = <int>[];
+      for (var skip = 0; ; skip = idxs.length) {
+        final page = await community.getCommunityDiaries(skip: skip, sort: CommunitySort.latest);
+        idxs.addAll(page.map((d) => d.idx));
+        if (page.isEmpty) return idxs;
+      }
+    }
+
+    // 시드 1002 는 처음부터 공개, 1001 은 비공개.
+    expect((await diaries.getDiary(diaryIdx: 1002)).isVisible, isTrue);
+    expect((await diaries.getDiary(diaryIdx: 1001)).isVisible, isFalse);
+    expect(await communityIdxs(), allOf(contains(1002), isNot(contains(1001))));
+
+    expect(await diaries.setVisibility(diaryIdx: 1001), isTrue);
+    expect(await communityIdxs(), contains(1001));
+
+    expect(await diaries.setVisibility(diaryIdx: 1002), isFalse);
+    expect(await communityIdxs(), isNot(contains(1002)));
   });
 }

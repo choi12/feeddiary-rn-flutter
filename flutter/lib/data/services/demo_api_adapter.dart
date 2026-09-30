@@ -47,7 +47,7 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 일기 작성 본문에 센티넬이 있으면 무장 — 다음 일기 상세 조회를 1회 실패시켜 ErrorView 를 시연한다(재시도 시 복구).
   bool _armedDiaryDetailFault = false;
 
-  /// 새 일기에 부여할 다음 idx. RN nextDiaryIdx(1100)+1 — 1100 이상이라 공개 시 community 피드에 노출된다.
+  /// 새 일기에 부여할 다음 idx. RN nextDiaryIdx(1100)+1 — 시드 idx(1001~1012·1~30)와 무충돌.
   int _nextIdx = 1101;
 
   /// 새 댓글에 부여할 다음 idx(fallback 댓글 idx 1~6 과 무충돌).
@@ -368,12 +368,13 @@ class DemoApiAdapter implements HttpClientAdapter {
   ResponseBody _communityList(RequestOptions options) {
     final skip = int.tryParse(options.uri.queryParameters['skip'] ?? '0') ?? 0;
     final sortType = options.uri.queryParameters['sort_type'] ?? 'latest';
-    // RN community-list: 타작성자 일기는 공개 여부 무관 전부, 본인 일기는 공개+세션생성(idx>=1100)만. 신고 차단 작성자는 제외.
+    // RN community-list: 타작성자 일기는 공개 여부 무관 전부, 본인 일기는 시드·신규 모두 공개일 때만(실서비스와 같은 규칙).
+    // 신고 차단 작성자는 제외.
     final visible = _diaries.where((d) {
       final userIdx = d['user_idx'] as int;
       if (_blockedUsers.contains(userIdx)) return false;
       if (userIdx != 1) return true;
-      return d['is_visible'] == 1 && (d['idx'] as int) >= 1100;
+      return d['is_visible'] == 1;
     }).toList();
     if (sortType == 'popular') {
       visible.sort((a, b) => (b['like_count'] as int).compareTo(a['like_count'] as int));
