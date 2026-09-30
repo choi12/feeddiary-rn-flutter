@@ -1,4 +1,4 @@
-// useLikeDiary 훅 테스트 — 초기 좋아요 상태, 내 일기 차단, 좋아요 API 호출
+// useLikeDiary 훅 테스트 — 초기 좋아요 상태, 내 일기 차단, 좋아요 API 호출, 실패 시 롤백
 import { act, renderHook } from '@testing-library/react-native';
 
 import { CommunityDiaryDTO } from '@/api/community/types';
@@ -9,6 +9,7 @@ import { useStore } from '@/store';
 import { createQueryWrapper } from '@/test-utils/queryWrapper';
 
 jest.mock('@/api/diary/APILikeDiary', () => ({ APILikeDiary: jest.fn() }));
+jest.mock('@/utils/error/reportError', () => ({ reportError: jest.fn() }));
 
 const mockLike = APILikeDiary as jest.MockedFunction<typeof APILikeDiary>;
 
@@ -64,5 +65,25 @@ describe('useLikeDiary', () => {
     });
 
     expect(mockLike).toHaveBeenCalledWith({ diaryIdx: 10 });
+  });
+
+  it('rolls the optimistic like back and shows an error toast when the API fails', async () => {
+    let rejectLike: (error: Error) => void = () => {};
+    mockLike.mockReturnValue(
+      new Promise((_, reject) => {
+        rejectLike = reject;
+      }),
+    );
+    const { result } = renderLike({ diary: buildDiary({ isLike: false, likeCount: 5 }), isMyDiary: false });
+
+    act(() => result.current.handleLike());
+    expect(result.current.isLiked).toBe(true);
+    expect(result.current.likeCount).toBe(6);
+
+    await act(async () => rejectLike(new Error('like failed')));
+
+    expect(result.current.isLiked).toBe(false);
+    expect(result.current.likeCount).toBe(5);
+    expect(useStore.getState().toast.isVisible).toBe(true);
   });
 });
