@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 import { APICreateDiary } from '@/api/diary/APICreateDiary';
 import { APIEditDiary } from '@/api/diary/APIEditDiary';
 import { APIWriteDiaryParams, MyDiaryDTO } from '@/api/diary/types';
-import { MESSAGE, TIMEZONE_OFFSET, TOAST_BOTTOM_OFFSET } from '@/constants';
+import { MESSAGE, TOAST_BOTTOM_OFFSET } from '@/constants';
 import useScreenNavigation from '@/hooks/core/navigation/useScreenNavigation';
 import usePrefetchNextDiary from '@/hooks/prefetch/usePrefetchNextDiary';
 import useToast from '@/hooks/store/useToast';
@@ -53,7 +53,7 @@ function useWriteDiary({ diary }: UseWriteDiaryProps) {
     data.append('sticker', diaryState.sticker);
     data.append('image', selectedImage ?? null);
     data.append('text', diaryState.text.trim());
-    data.append('date', dayjs(diaryState.date).add(TIMEZONE_OFFSET, 'hour').toISOString());
+    data.append('date', dayjs(diaryState.date).toISOString());
     if (diary) {
       data.append('diary_idx', diary.idx);
       data.append('image_text', diaryState.isDeleted ? '' : diary.image);
