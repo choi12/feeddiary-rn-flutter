@@ -47,7 +47,7 @@ function useAnimatedLetterModal() {
     translateY.value = withSpring(0, SPRING_ANIMATION_CONFIG);
     scale.value = withSpring(1, SPRING_ANIMATION_CONFIG);
     opacity.value = withTiming(1, TIMING_ANIMATION_CONFIG);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값(useSharedValue)은 참조가 고정돼 제외
   }, []);
 
   const hideModalAnimation = useCallback(
@@ -64,8 +64,8 @@ function useAnimatedLetterModal() {
         });
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [closeLetterModal],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값(useSharedValue)은 참조가 고정돼 제외
+    [],
   );
 
   const getModalOffset = useCallback(
@@ -96,7 +96,7 @@ function useAnimatedLetterModal() {
       openLetterModal();
       showModalAnimation(); // 2. 여기서 다시 편지 모달을 중앙(0)으로 이동시킴
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값(useSharedValue)은 참조가 고정돼 제외
     [getModalOffset, openLetterModal, showModalAnimation],
   );
 

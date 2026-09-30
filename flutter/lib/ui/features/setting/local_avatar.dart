@@ -15,9 +15,9 @@ class LocalAvatar extends _$LocalAvatar {
   @override
   Uint8List? build() => null;
 
-  /// 사진 선택/저장 시 바이트 설정.
+  /// 회원가입·프로필 수정을 사진으로 저장할 때 바이트 설정.
   void set(Uint8List bytes) => state = bytes;
 
-  /// 캐릭터로 전환하거나 로그아웃할 때 해제.
+  /// 회원가입·프로필 수정을 캐릭터로 저장하거나 계정을 탈퇴할 때 해제. 로그아웃·로그인에서는 해제하지 않는다.
   void clear() => state = null;
 }

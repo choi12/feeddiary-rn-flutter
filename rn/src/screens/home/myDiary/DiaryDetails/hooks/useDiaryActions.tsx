@@ -1,6 +1,6 @@
 // 일기 상세 액션 훅 — 공개 토글·수정 이동·삭제를 바텀시트/알림 모달로 구성
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import { CommunityDiaryDTO } from '@/api/community/types';
 import { APIDeleteDiary, APIDeleteDiaryParams } from '@/api/diary/APIDeleteDiary';
@@ -13,6 +13,7 @@ import useToast from '@/hooks/store/useToast';
 import useErrorToast from '@/hooks/ui/feedback/useErrorToast';
 import { AlertModalContent, BottomSheetModalContent } from '@/types/modal';
 import { invalidateQueries } from '@/utils/query/invalidateQueries';
+import { removeDiaryFromCaches, restoreQueriesData } from '@/utils/query/removeDiaryFromCaches';
 
 interface UseDiaryActionsProps {
   diary: CommunityDiaryDTO | undefined;
@@ -47,10 +48,21 @@ function useDiaryActions({ diary, isVisible, toggleVisibility }: UseDiaryActions
       };
       await APIDeleteDiary(params);
     },
-    onSuccess: () => invalidateQueries.deleteDiary(queryClient),
+    // 상세에서 goBack 했을 때 목록에 삭제한 카드가 refetch 전까지 남아 있다가 튀지 않도록 먼저 뺀다
+    onMutate: async () => {
+      if (!diary) return undefined;
+      return { snapshot: await removeDiaryFromCaches(queryClient, diary.idx) };
+    },
+    onError: (error, variables, context) => restoreQueriesData(queryClient, context?.snapshot),
+    onSettled: () => invalidateQueries.deleteDiary(queryClient),
   });
 
+  // 모달 버튼의 isLoading 은 열 때 값으로 고정되므로, 연타로 DELETE 가 두 번 나가지 않게 진행 중 탭을 무시
+  const isDeletingRef = useRef(false);
+
   const handleDeleteDiary = useCallback(async () => {
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
     try {
       await deleteDiaryMutation();
       closeAlertModal();
@@ -59,6 +71,8 @@ function useDiaryActions({ diary, isVisible, toggleVisibility }: UseDiaryActions
       showToast(MESSAGE.DIARY.DELETED, TOAST_BOTTOM_OFFSET.HOME_SCREEN);
     } catch (error) {
       handleErrorWithToast(error, TOAST_BOTTOM_OFFSET.DIARY_DETAILS);
+    } finally {
+      isDeletingRef.current = false;
     }
   }, [handleErrorWithToast, showToast, deleteDiaryMutation, closeAlertModal, navigation]);
 

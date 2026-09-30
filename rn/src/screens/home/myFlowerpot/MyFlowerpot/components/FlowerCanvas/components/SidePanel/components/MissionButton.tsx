@@ -36,7 +36,7 @@ function MissionButton() {
     return () => {
       cancelAnimation(opacity);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값(useSharedValue)은 참조가 고정돼 제외
   }, [showBadge]);
 
   return (

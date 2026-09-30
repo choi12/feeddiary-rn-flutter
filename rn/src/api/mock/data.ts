@@ -1,8 +1,8 @@
 import type { CommunityDiaryResponse } from '@/api/community/types';
 import type { CommentResponse } from '@/api/comment/types';
-import type { MyDiaryResponse, DailyDiaryResponse, CreateDiaryResponse } from '@/api/diary/types';
+import type { MyDiaryResponse } from '@/api/diary/types';
 import type { LetterResponse } from '@/api/letter/types';
-import type { MissionResponse, MissionsResponse, CompleteMissionResponse } from '@/api/mission/types';
+import type { MissionResponse, MissionsResponse } from '@/api/mission/types';
 import type { UserResponse } from '@/api/auth/types';
 import type { FlowerpotResponse } from '@/api/flowerpot/types';
 
@@ -112,16 +112,6 @@ export const MOCK_COMMUNITY_DIARIES: CommunityDiaryResponse[] = Array.from({ len
   makeCommunityDiary(i + 1),
 );
 
-export const MOCK_DAILY_DIARIES_BY_MONTH: Record<string, DailyDiaryResponse[]> = {
-  '202605': Array.from({ length: 8 }, (_, i) => ({
-    idx: 1001 + i,
-    sticker: STICKERS[i % STICKERS.length],
-    text: TEXTS[i % TEXTS.length],
-    created_time: new Date(2026, 4, (i + 1) * 3).toISOString(),
-    is_visible: i % 3 === 0 ? 0 : 1,
-  })),
-};
-
 export const MOCK_LETTERS: LetterResponse[] = Array.from({ length: 3 }, (_, i) => ({
   idx: i + 1,
   text: `오늘 나에게 보내는 작은 편지 ${i + 1}: 잘하고 있어, 천천히 가도 괜찮아.`,
@@ -147,16 +137,9 @@ const mkMission = (idx: number, type: MissionResponse['type'], count: number, ma
 });
 
 export const MOCK_MISSIONS: MissionsResponse = {
-  completed: [mkMission(1, 'diary', 5, 5)],
+  completed: [mkMission(1, 'diary', 1, 1)],
   inProgress: [mkMission(2, 'comment', 1, 3), mkMission(3, 'visible', 0, 1), mkMission(4, 'like', 2, 5)],
 };
-
-export const MOCK_COMPLETE_MISSION: CompleteMissionResponse = {
-  missions: MOCK_MISSIONS,
-  reward: { count: 1, item: 'watering' },
-};
-
-export const MOCK_CREATE_DIARY: CreateDiaryResponse = { diaryIdx: 999 };
 
 export const MOCK_APP_VERSION = {
   app_version_android: '0.0.1',

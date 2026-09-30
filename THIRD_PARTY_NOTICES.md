@@ -17,17 +17,13 @@
 |---|---|---|
 | `AntDesign.ttf` | RN 두 곳 · `flutter/assets/fonts/icons/` | MIT |
 | `Entypo.ttf` | RN 두 곳 · `flutter/assets/fonts/icons/` | CC BY-SA 4.0 (Daniel Bruce) |
-| `EvilIcons.ttf` | RN 두 곳 | MIT |
 | `Feather.ttf` | RN 두 곳 · `flutter/assets/fonts/icons/` | MIT |
 | `FontAwesome.ttf` | RN 두 곳 · `flutter/assets/fonts/icons/` | SIL OFL 1.1 (폰트) |
-| `FontAwesome5_*.ttf` · `FontAwesome6_*.ttf` (Free) | RN 두 곳 · `FontAwesome5_Solid.ttf` 는 Flutter 도 | 폰트 SIL OFL 1.1 · 아이콘 CC BY 4.0 |
-| `Fontisto.ttf` | RN 두 곳 | MIT |
-| `Foundation.ttf` | RN 두 곳 | MIT |
+| `FontAwesome5_Regular.ttf` · `FontAwesome5_Solid.ttf` (Free) | RN 두 곳 · `FontAwesome5_Solid.ttf` 는 Flutter 도 | 폰트 SIL OFL 1.1 · 아이콘 CC BY 4.0 |
 | `Ionicons.ttf` | RN 두 곳 · `flutter/assets/fonts/icons/` | MIT |
 | `MaterialCommunityIcons.ttf` | RN 두 곳 · `flutter/assets/fonts/icons/` | Apache 2.0 (Pictogrammers) |
 | `MaterialIcons.ttf` | RN 두 곳 | Apache 2.0 (Google) |
 | `Octicons.ttf` | RN 두 곳 · `flutter/assets/fonts/icons/` | MIT (GitHub) |
-| `SimpleLineIcons.ttf` · `Zocial.ttf` | RN 두 곳 | MIT |
 
 「RN 두 곳」은 `rn/assets/fonts/` 와 `rn/android/app/src/main/assets/fonts/` 입니다.
 

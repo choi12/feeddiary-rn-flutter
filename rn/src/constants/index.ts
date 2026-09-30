@@ -8,7 +8,6 @@ export { GOOGLE_CLIENT_ID } from './environment/oauth';
 export { isAndroid, isiOS } from './environment/platform';
 export { STORE_URL } from './environment/store';
 export { FLOWERPOT_CONFIG } from './flowerpot/level';
-export { TIMEZONE_OFFSET } from './time/timezone';
 export { WEEKDAYS } from './time/weekdays';
 export { COLORS } from './ui/color';
 export { MAX_DISPLAY_COUNT } from './ui/count';

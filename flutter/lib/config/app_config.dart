@@ -19,7 +19,4 @@ abstract final class AppConfig {
 
   /// Sentry DSN. 비어 있으면 비활성(데모/테스트).
   static const String sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
-
-  /// 개발(mock) 환경 여부.
-  static bool get isDevelopment => appEnv == 'DEVELOPMENT';
 }

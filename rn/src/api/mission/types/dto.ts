@@ -1,6 +1,6 @@
 import { Mission } from '@/types/mission';
 
-import { MissionResponseSchema, MissionsResponseSchema } from './response';
+import { MissionsResponseSchema } from './response';
 
 export type MissionDTO = {
   idx: number;
@@ -14,16 +14,6 @@ export type MissionsDTO = {
   completed: MissionDTO[];
   inProgress: MissionDTO[];
 };
-
-export const MissionDTOSchema = MissionResponseSchema.transform(
-  (m): MissionDTO => ({
-    idx: m.idx,
-    type: m.type,
-    count: m.count,
-    maxCount: m.max_count,
-    isCompleted: m.is_completed,
-  }),
-);
 
 export const MissionsDTOSchema = MissionsResponseSchema.transform(
   (m): MissionsDTO => ({

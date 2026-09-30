@@ -65,7 +65,6 @@ abstract final class FeedIcons {
 
   // ── 프로필 ──
   static const IconData profileUser = IconData(0xf007, fontFamily: _fa); // FontAwesome user
-  static const IconData plus = IconData(0xe627, fontFamily: _ant); // AntDesign plus
   static const IconData colorize = Icons.colorize; // MaterialIcons colorize
   static const IconData question = IconData(0xe63a, fontFamily: _ant); // AntDesign question
   static const IconData backgroundFill = IconData(0xf0266, fontFamily: _mci); // MCI format-color-fill

@@ -43,7 +43,7 @@ final class CreateProfileControllerProvider extends $NotifierProvider<CreateProf
   }
 }
 
-String _$createProfileControllerHash() => r'314cf29fe60a5a84281370f96b672c5692136a23';
+String _$createProfileControllerHash() => r'cd65c5483d63af78d705939a66d3fd3bd383773d';
 
 /// 프로필 작성 폼 컨트롤러. 닉네임은 입력 디바운스 후 정규식 → 중복검사 순으로 검증하고,
 /// 프로필 이미지(사진 업로드/캐릭터 프리셋)를 고른 뒤 가입한다. RN `useCheckNickname` + `ProfileProvider` + `useSignUp` ViewModel.

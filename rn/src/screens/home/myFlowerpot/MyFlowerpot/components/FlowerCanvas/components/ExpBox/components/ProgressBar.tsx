@@ -18,7 +18,7 @@ function ProgressBar() {
 
   useEffect(() => {
     progress.value = withTiming(maxExp > 0 ? exp / maxExp : 0, { duration: 1000 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값(useSharedValue)은 참조가 고정돼 제외
   }, [exp, maxExp]);
 
   const percent = maxExp > 0 ? Number(((exp / maxExp) * 100).toFixed(1)) : 0;

@@ -14,7 +14,7 @@
 - 🔌 원본은 **자체 백엔드**로 운영하던 서비스였고, 운영 비용 때문에 서버를 종료한 뒤 지금은 **네트워크 경계에서 mock 어댑터로 가로채는 데모 모드**로 동작합니다. 키·서버 설정 없이 clone 후 바로 실행됩니다.
 - ⚖️ 같은 앱을 Flutter 로도 만들어, 네트워크·캐시·낙관 업데이트·환경 분리를 **두 프레임워크가 어떻게 다르게 푸는지** 코드로 비교합니다.
 
-RN 에서 React Query 가 맡아주던 **캐시 수명**이 Flutter 에서는 숙제로 남았습니다. *언제 낡았다고 볼지* 와 *언제 버릴지* 를 Riverpod 에는 구분할 장치가 없어 직접 만들어 붙였습니다.
+RN 에서 React Query 가 맡아주던 **캐시 수명**이 Flutter 에서는 숙제로 남았습니다. *언제 낡았다고 볼지* 와 *언제 버릴지* 를 Riverpod 에는 구분할 장치가 없어, 버릴 시점만 직접 만들어 붙이고 낡음은 뮤테이션 직후 무효화로 덮었습니다.
 
 막혔던 지점 세 곳입니다. [React Query 캐시 수명을 Riverpod 로 손수 조립](#2-서버-상태-캐시--변동-주체로-분류한-캐시-정책) · [무한리스트가 만든 낙관 업데이트 분기](#3-낙관적-업데이트--그리고-무한리스트가-만든-분기) · [Android 15 Edge-to-Edge 가 드러낸 iOS 전용 inset 계산](#운영하며-겪은-것-2024-25)
 
@@ -25,14 +25,14 @@ RN 에서 React Query 가 맡아주던 **캐시 수명**이 Flutter 에서는 �
 새싹일기는 하루의 감정을 스티커·사진과 함께 기록하고, 매일 주어지는 미션(일기 쓰기·공개·댓글·좋아요)을 완료해 얻은 물주기·사랑주기 아이템으로 화분(식물)을 키우며, 다른 사용자와 일기를 공유하는 일기 앱입니다.
 
 - **보존한 것**: 화면 구성, 디자인, 인터랙션, 화면 흐름 (실제 서비스 당시 그대로)
-- **바꾼 것**: 내부를 RN 0.85 + React 19 기준으로 현대화했습니다. 새로 넣은 것은 zod 응답 검증·변환, 토큰의 Keychain 이전, React Compiler · `useOptimistic` · ErrorBoundary, Jest 테스트, 네트워크 경계의 mock 데모입니다. Zustand/React Query 분리 · 인터셉터 · 네이티브 flavor · `Update` 진입 분기는 원본 설계를 현재 기준으로 정비해 보존했습니다
-- **Flutter 트랙**: 같은 앱을 포팅이 아니라 Flutter 관용대로 처음부터 재구현 (설계 차이는 비교 섹션에서). 기능 범위는 거의 겹치지만 아직 안 채운 자리는 비고의 데모 경계 목록에 적었습니다
+- **바꾼 것**: 내부를 RN 0.85 + React 19 기준으로 현대화했습니다. 새로 넣은 것은 zod 응답 검증·변환, 토큰의 Keychain 이전, React Compiler · `useOptimistic` · ErrorBoundary, Jest 테스트, 네트워크 경계의 mock 데모입니다. Zustand/React Query 분리 · 인터셉터 · 네이티브 flavor · `Update` 진입 분기는 원본 설계를 현재 기준으로 정비해 보존했습니다.
+- **Flutter 트랙**: 같은 앱을 Flutter 로 다시 구현했습니다. RN 코드를 명세 삼아 화면·동작은 맞추고, 구조는 Flutter 관용대로 설계했습니다(설계 차이는 비교 섹션에서). 기능 범위는 거의 겹치지만 아직 안 채운 자리는 비고의 데모 경계 목록에 적었습니다.
 
 ## 운영하며 겪은 것 (2024-25)
 
 2025년, 스토어에 나가 있던 앱을 **RN 0.72 에서 0.80 으로** 올렸습니다. 마이너 여덟 단계를 한 번에 건너뛰는 데다 React 18 → 19 전환까지 함께 걸려 있었고, 이미 쓰고 있는 사용자가 있어 깨뜨리지 않고 통과시켜야 했습니다. 정작 문제를 낸 건 그 전환 자체가 아니라 업그레이드에 딸려 온 두 가지, **targetSdk 상향(OS 쪽)과 Zustand 메이저 업(프레임워크 쪽)** 이었습니다.
 
-- **Android 15 Edge-to-Edge 강제 적용**: 0.80 으로 올려 배포한 뒤, **앱 코드는 한 줄도 안 건드렸는데 기기가 Android 15 로 올라가면서** 바텀탭이 내비게이션 바와 겹쳐 터치가 막혔습니다. targetSdk 35 이상인 앱은 Android 15부터 Edge-to-Edge 가 강제돼 시스템이 자동 오프셋을 넣지 않습니다. 그 조건은 0.80 업그레이드가 만들었고(앱이 0.72 때 쓰던 targetSdk 34 를 그때 35 로 상향), **원인은 기존 코드 쪽**이었습니다. iOS 가 아니면 inset 계산 자체를 건너뛰고 있었습니다(`if (!isiOS) return defaultTabBarStyle`). iOS 는 노치 대응을 이미 하고 있었으니 Android 가 시스템 오프셋에 의존하던 동안에는 이 분기가 드러나지 않다가, 시스템이 오프셋을 빼는 순간 Android 만 남은 것입니다. 조기 반환을 걷어내고 Android 분기를 추가해, 바텀탭 높이와 패딩에 실측 safe-area inset(못 읽으면 상수 폴백)을 더하도록 고쳤습니다. 3버튼 내비게이션이 제스처보다 크기 때문에 상수로는 부족합니다.
+- **Android 15 Edge-to-Edge 강제 적용**: 0.80 으로 올려 배포한 뒤, **앱 코드는 한 줄도 안 건드렸는데 기기가 Android 15 로 올라가면서** 바텀탭이 내비게이션 바와 겹쳐 터치가 막혔습니다. targetSdk 35 이상인 앱은 Android 15부터 Edge-to-Edge 가 강제돼 시스템이 자동 오프셋을 넣지 않습니다. 그 조건은 0.80 업그레이드가 만들었고(앱이 0.72 때 쓰던 targetSdk 33 을 그때 35 로 상향), **원인은 기존 코드 쪽**이었습니다. iOS 가 아니면 inset 계산 자체를 건너뛰고 있었습니다(`if (!isiOS) return defaultTabBarStyle`). iOS 는 노치 대응을 이미 하고 있었으니 Android 가 시스템 오프셋에 의존하던 동안에는 이 분기가 드러나지 않다가, 시스템이 오프셋을 빼는 순간 Android 만 남은 것입니다. 조기 반환을 걷어내고 Android 분기를 추가해, 바텀탭 높이와 패딩에 실측 safe-area inset(못 읽으면 상수 폴백)을 더하도록 고쳤습니다. 3버튼 내비게이션이 제스처보다 크기 때문에 상수로는 부족합니다.
 - **Zustand v5 selector 무한 루프**: `The result of getSnapshot should be cached to avoid an infinite loop` 경고와 함께 `Maximum update depth exceeded` 크래시가 났습니다. 객체를 반환하는 selector 는 매 렌더마다 새 객체를 만드는데, React 19 이행과 함께 올린 **Zustand v5** 가 `useSyncExternalStore` 를 직접 쓰면서 `Object.is` 참조 비교에 항상 변경으로 걸린 게 원인이었습니다(React 19 자체가 아니라 그때 같이 올린 v5 쪽입니다). 해법은 selector 를 필드 단위로 쪼개 참조를 안정화하는 것이었습니다. 이 레포도 같은 규칙이고, 여러 값을 묶어야 하는 스토어 훅 5개만 `useShallow` 로 감싸 얕은 비교를 겁니다.
 
 ## 기술 스택
@@ -194,14 +194,14 @@ export const setAccessToken  = async (t) => { cached = t; await Keychain.setGene
 
 RN 은 Jest 로 검증합니다. 스키마 DTO 변환·거부 케이스 · 에러 변환 · Keychain 래퍼 같은 단위 테스트 위에 컴포넌트 렌더·훅·화면 스모크가 붙어 있고, 훅 테스트(`useCheckNickname`·`useDiaryDetails`·`useLikeDiary`)는 `queryWrapper` 로 React Query 를 실제로 래핑합니다.
 
-Flutter 쪽은 **골든의 결정성**이 관건이었습니다. `test/flutter_test_config.dart` 의 `testExecutable` 이 번들 폰트를 `FontLoader` 로 먼저 등록하고(안 하면 Ahem 박스로 렌더돼 스냅샷이 무의미해집니다), 화면 골든은 데모 어댑터를 그대로 시드로 재사용하되 `DemoApiAdapter(latency: Duration.zero)` 로 인위 지연만 뺍니다. '나의 일기' 골든은 `await tester.pump(CachePolicy.standardGcTime + …)` 로 남은 타이머를 소진시켜야 통과합니다. [캐시 정책 비교](#2-서버-상태-캐시--변동-주체로-분류한-캐시-정책)에서 손수 조립한 `cacheFor` 폐기 타이머가 테스트에선 pending timer 로 잡히기 때문입니다.
+Flutter 쪽은 **골든의 결정성**이 관건이었습니다. `test/flutter_test_config.dart` 의 `testExecutable` 이 번들 폰트를 `FontLoader` 로 먼저 등록하고(안 하면 Ahem 박스로 렌더돼 스냅샷이 무의미해집니다), 화면 골든은 데모 어댑터를 그대로 시드로 재사용합니다. '나의 일기' 골든은 `await tester.pump(CachePolicy.standardGcTime + …)` 로 남은 타이머를 소진시켜야 통과합니다. [캐시 정책 비교](#2-서버-상태-캐시--변동-주체로-분류한-캐시-정책)에서 손수 조립한 `cacheFor` 폐기 타이머가 테스트에선 pending timer 로 잡히기 때문입니다.
 
 ```bash
 (cd rn && yarn test)          # Jest
 (cd flutter && flutter test)  # 위젯·repository + 골든
 ```
 
-골든 PNG 는 이 저장소를 만든 머신에서 생성한 것이라 **다른 OS·CI 에서는 폰트 힌팅·플랫폼 렌더 차이로 픽셀 diff 가 날 수 있습니다** (로컬 비주얼 회귀 가드 용도이고 레포가 깨진 게 아닙니다). 의도한 UI 변경으로 깨졌다면 `flutter test --update-goldens test/golden/` 로 갱신합니다.
+골든 PNG 는 이 저장소를 만든 머신에서 생성한 것이라 **다른 OS·CI 에서는 폰트 힌팅·플랫폼 렌더 차이로 픽셀 diff 가 날 수 있습니다** (로컬 비주얼 회귀 가드 용도이고 레포가 깨진 게 아닙니다). 같은 이유로 CI 는 `test/golden` 을 빼고 돌립니다. 의도한 UI 변경으로 깨졌다면 `flutter test --update-goldens test/golden/` 로 갱신합니다.
 
 통합 레이어는 아직입니다. 다음은 mock 어댑터를 활용한 API 함수 통합 테스트입니다.
 
@@ -357,7 +357,7 @@ RN 에서는 라이브러리나 언어가 대신 해 주던 것을 Flutter 에�
 
 ### 현대화하며 다시 본 것
 
-옛 RN 앱을 현재 기준으로 다시 손대며 가장 크게 바뀐 건 **경계에서 무엇을 보장하느냐**였습니다. 예전 `toXxxDTO()` 수동 매퍼를 zod `.transform()` 으로 옮기며, 백엔드 계약이 바뀌면 화면이 아니라 네트워크 경계에서 먼저 깨지게 만들었습니다. 그게 디버깅 비용을 가장 크게 줄여 준 변화였습니다. 메모이제이션은 React Compiler 를 켰습니다.
+옛 RN 앱을 현재 기준으로 다시 손대며 가장 크게 바뀐 건 **경계에서 무엇을 보장하느냐**였습니다. 예전 `toXxxDTO()` 수동 매퍼를 zod `.transform()` 으로 옮기며, 백엔드 계약이 바뀌면 화면이 아니라 네트워크 경계에서 먼저 깨지게 만들었습니다. 그게 디버깅 비용을 가장 크게 줄여 준 변화였습니다.
 
 ### 데모 모드 — 네트워크 파이프라인을 살린 채 경계만 가로채기
 
@@ -387,7 +387,7 @@ RN 에서는 라이브러리나 언어가 대신 해 주던 것을 Flutter 에�
 
 ### React Native (`rn/`)
 
-전제: Node **22.22.3**(저장소 루트 `.nvmrc`) · Yarn **3.6.4** Berry(`rn/package.json` 의 `packageManager` · 릴리스 바이너리는 `rn/.yarn/releases` 에 포함) · Ruby **3.2.6**(루트 `.ruby-version` · CocoaPods 는 `rn/Gemfile.lock` 이 1.15.2 로 고정). `.yarnrc.yml` 의 `yarnPath` 가 커밋된 Yarn 3 릴리스를 가리키므로 Yarn 1.22 이상이 깔려 있으면 `corepack enable` 없이도 위임됩니다. Ruby 는 `.ruby-version` 의 3.2.6 으로 검증했습니다.
+전제: Node **22.22.3**(저장소 루트 `.nvmrc`) · Yarn **3.6.4** Berry(`rn/package.json` 의 `packageManager` · 릴리스 바이너리는 `rn/.yarn/releases` 에 포함) · Ruby **3.2.6**(루트 `.ruby-version` · CocoaPods 는 `rn/Gemfile.lock` 이 1.15.2 로 고정). `.yarnrc.yml` 의 `yarnPath` 가 커밋된 Yarn 3 릴리스를 가리키므로 Yarn 1.22 이상이 깔려 있으면 `corepack enable` 없이도 위임됩니다.
 
 ```bash
 cd rn
@@ -414,7 +414,7 @@ yarn android:prod
 
 ### Flutter (`flutter/`)
 
-전제: Flutter **3.44**(개발 버전) · 최소 Flutter **3.38.4** · Dart **3.12.0**(`flutter/pubspec.lock` 의 `sdks:`). 더 낮은 버전에서는 `flutter pub get` 이 SDK 버전 오류로 멈춥니다.
+전제: Flutter **3.44** 이상 · Dart **3.12.0**(`flutter/pubspec.yaml` 의 `sdk: ^3.12.0` · Dart 3.12 를 담은 첫 안정판이 Flutter 3.44). 더 낮은 버전에서는 `flutter pub get` 이 SDK 버전 오류로 멈춥니다.
 
 ```bash
 cd flutter
@@ -436,9 +436,9 @@ flutter run --dart-define-from-file=config/prod.json
 
 RN 의 `react-native-config`(env 파일)에 대응해 Flutter 는 **`--dart-define-from-file`** 로 환경을 주입합니다. 주입값은 전부 컴파일타임 const(`AppConfig`)라, 릴리스(AOT) 빌드에서는 쓰지 않는 분기가 트리셰이킹으로 제거됩니다. 또 `fromEnvironment` 기본값(`USE_MOCK` 은 `bool.fromEnvironment`)을 둬서, 인자 없이 `flutter test` 만 돌려도 동작합니다.
 
-가로채는 방식은 RN 과 같습니다. 실제 네트워크 코드(Dio 인터셉터 · freezed DTO · Riverpod 캐시)는 살아 있고, **네트워크 경계(Dio `httpClientAdapter`)를 `DemoApiAdapter` 로 교체**해 인터셉터·DTO 를 그대로 둔 채 **요청만 경계에서 가로챕니다**. `#에러` 센티넬·약 600ms 지연·에러/로딩 시연 방식도 위 RN 데모와 같습니다.
+가로채는 방식은 RN 과 같습니다. 실제 네트워크 코드(Dio 인터셉터 · freezed DTO · Riverpod 캐시)는 살아 있고, **네트워크 경계(Dio `httpClientAdapter`)를 `DemoApiAdapter` 로 교체**해 인터셉터·DTO 를 그대로 둔 채 **요청만 경계에서 가로챕니다**. `#에러` 센티넬로 실패를 시연하는 방식도 위 RN 데모와 같습니다.
 
-다만 **mock 이 들고 있는 상태의 범위는 두 스택이 다릅니다.** Flutter `DemoApiAdapter` 는 편지 작성·삭제를 목록에 반영하고, 일기·좋아요·공개·댓글마다 미션 진행도를 올리고, 신고한 작성자를 커뮤니티 목록에서 빼고, 정렬 파라미터를 처리합니다. RN mock 은 이 네 가지가 고정 응답이라 화면은 뜨지만 값이 안 움직입니다(일기 작성·좋아요·공개 전환은 RN 도 상태를 반영합니다). 나중에 붙인 Flutter 쪽을 더 채운 결과입니다.
+mock 이 세션 동안 들고 있는 상태도 두 스택이 같습니다. 일기 작성·수정·삭제·공개 전환·좋아요·댓글, 미션 진행과 보상, 편지 작성·삭제, 신고한 작성자 차단이 화면에 반영되고, 커뮤니티 목록은 최신순·공감순으로 정렬됩니다.
 
 ## 비고
 

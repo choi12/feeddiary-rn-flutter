@@ -14,7 +14,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@choi12/rn-basic-calendar": "^0.2.0",
+    "@choi12/rn-basic-calendar": "^0.2.5",
     "@invertase/react-native-apple-authentication": "^2.4",
     "@notifee/react-native": "9.1.8",
     "@react-native-google-signin/google-signin": "^16",

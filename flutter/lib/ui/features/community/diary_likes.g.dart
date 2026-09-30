@@ -10,7 +10,7 @@ part of 'diary_likes.dart';
 // ignore_for_file: type=lint, type=warning
 /// 좋아요 글로벌 override 저장소. 같은 일기가 community 목록 카드와 상세에 동시 등장하므로,
 /// 좋아요를 화면 로컬이 아닌 이 keepAlive provider 한 곳에 모아 양쪽이 같은 소스를 구독한다
-/// (flutter/CLAUDE.md "유저 관계 상태=글로벌 Provider"). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
+/// (화면마다 따로 들면 한쪽에서 누른 좋아요가 다른 화면에 반영되지 않는다). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
 ///
 /// RN 은 좋아요 후 DIARY·COMMUNITY 쿼리를 invalidate 해 동기화하지만, 우리 무한리스트(OffsetPagination)는
 /// 부분 재조회가 불가해 invalidate 시 1페이지로 리셋된다. override 방식이 리스트 누적·스크롤을 보존한다.
@@ -20,14 +20,14 @@ final diaryLikesProvider = DiaryLikesProvider._();
 
 /// 좋아요 글로벌 override 저장소. 같은 일기가 community 목록 카드와 상세에 동시 등장하므로,
 /// 좋아요를 화면 로컬이 아닌 이 keepAlive provider 한 곳에 모아 양쪽이 같은 소스를 구독한다
-/// (flutter/CLAUDE.md "유저 관계 상태=글로벌 Provider"). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
+/// (화면마다 따로 들면 한쪽에서 누른 좋아요가 다른 화면에 반영되지 않는다). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
 ///
 /// RN 은 좋아요 후 DIARY·COMMUNITY 쿼리를 invalidate 해 동기화하지만, 우리 무한리스트(OffsetPagination)는
 /// 부분 재조회가 불가해 invalidate 시 1페이지로 리셋된다. override 방식이 리스트 누적·스크롤을 보존한다.
 final class DiaryLikesProvider extends $NotifierProvider<DiaryLikes, Map<int, LikeState>> {
   /// 좋아요 글로벌 override 저장소. 같은 일기가 community 목록 카드와 상세에 동시 등장하므로,
   /// 좋아요를 화면 로컬이 아닌 이 keepAlive provider 한 곳에 모아 양쪽이 같은 소스를 구독한다
-  /// (flutter/CLAUDE.md "유저 관계 상태=글로벌 Provider"). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
+  /// (화면마다 따로 들면 한쪽에서 누른 좋아요가 다른 화면에 반영되지 않는다). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
   ///
   /// RN 은 좋아요 후 DIARY·COMMUNITY 쿼리를 invalidate 해 동기화하지만, 우리 무한리스트(OffsetPagination)는
   /// 부분 재조회가 불가해 invalidate 시 1페이지로 리셋된다. override 방식이 리스트 누적·스크롤을 보존한다.
@@ -59,7 +59,7 @@ String _$diaryLikesHash() => r'982eb90209a20a6a23af3013a7c9d81fe12749ec';
 
 /// 좋아요 글로벌 override 저장소. 같은 일기가 community 목록 카드와 상세에 동시 등장하므로,
 /// 좋아요를 화면 로컬이 아닌 이 keepAlive provider 한 곳에 모아 양쪽이 같은 소스를 구독한다
-/// (flutter/CLAUDE.md "유저 관계 상태=글로벌 Provider"). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
+/// (화면마다 따로 들면 한쪽에서 누른 좋아요가 다른 화면에 반영되지 않는다). override 가 없으면 위젯은 서버값(base)을 그대로 쓴다.
 ///
 /// RN 은 좋아요 후 DIARY·COMMUNITY 쿼리를 invalidate 해 동기화하지만, 우리 무한리스트(OffsetPagination)는
 /// 부분 재조회가 불가해 invalidate 시 1페이지로 리셋된다. override 방식이 리스트 누적·스크롤을 보존한다.

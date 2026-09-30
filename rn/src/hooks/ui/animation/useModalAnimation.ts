@@ -26,7 +26,7 @@ function useModalAnimation() {
 
     opacity.value = withTiming(1, ANIMATION_CONFIG);
     translateY.value = withTiming(0, ANIMATION_CONFIG);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값(useSharedValue)은 참조가 고정돼 제외
   }, []);
 
   const hideAnimation = useCallback(() => {
@@ -45,7 +45,7 @@ function useModalAnimation() {
       opacity.value = withTiming(0, ANIMATION_CONFIG, checkAnimationComplete);
       translateY.value = withTiming(DEFAULT_TRANSLATE_Y, ANIMATION_CONFIG, checkAnimationComplete);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 공유값(useSharedValue)은 참조가 고정돼 제외
   }, []);
 
   const animatedOpacityStyle = useAnimatedStyle(() => ({

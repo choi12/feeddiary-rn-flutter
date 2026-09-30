@@ -10,14 +10,13 @@ import 'package:feeddiary/config/flowerpot_config.dart';
 /// USE_MOCK 데모 모드에서 Dio 의 [HttpClientAdapter]를 대체해 엔드포인트를 mock 한다.
 /// 응답을 백엔드 원본과 같은 snake_case 로 내려보내 인터셉터·DTO 매핑이 실제로 실행되게 한다(가이드 원칙2).
 ///
-/// auth: 로그인은 항상 신규 사용자(401)로 처리해 CreateProfile 온보딩을 노출하고, 회원가입/자동로그인은
-/// 사용자+토큰을 발급한다. diary: 인메모리 state 로 목록(본인)/캘린더/상세/CRUD/좋아요/공개토글을 실제로 변형한다(RN mock state).
+/// auth: 로그인·자동로그인은 기존 데모 사용자+토큰(200)을 반환해 바로 메인으로 진입하고(가입 우회 — RN 데모와 동일),
+/// 회원가입·프로필 수정은 폼 값을 데모 사용자에 반영한다. diary: 인메모리 state 로 목록(본인)/캘린더/상세/CRUD/좋아요/공개토글을 실제로 변형한다(RN mock state).
 /// community: 공개 일기 피드(정렬·페이지네이션)·댓글 CRUD·신고(작성자 차단)를 인메모리 맵/셋으로 시연한다.
 /// 실패 시나리오: 제출 텍스트에 센티넬 [_errorSentinel]이 있으면 500 을 내 에러 토스트를, 일기 작성 시엔 다음 상세 조회 1회도 실패시켜 ErrorView 를 시연한다(재시도 시 복구).
 class DemoApiAdapter implements HttpClientAdapter {
-  /// 데모 인위 지연(RN axios-mock-adapter `delayResponse: 600` 대칭) — 스피너·낙관 보정이 보이도록 모든 응답을 지연시킨다.
-  /// 골든/위젯 테스트는 결정성을 위해 [Duration.zero] 를 주입한다.
-  DemoApiAdapter({this.latency = const Duration(milliseconds: 600)});
+  /// 응답 지연. 데모는 즉시 응답한다(RN mock 과 같음). 로딩 중·늦은 응답 경합을 재현하는 테스트만 지연을 주입한다.
+  DemoApiAdapter({this.latency = Duration.zero});
 
   final Duration latency;
 
@@ -47,7 +46,7 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 일기 작성 본문에 센티넬이 있으면 무장 — 다음 일기 상세 조회를 1회 실패시켜 ErrorView 를 시연한다(재시도 시 복구).
   bool _armedDiaryDetailFault = false;
 
-  /// 새 일기에 부여할 다음 idx. RN nextDiaryIdx(1100)+1 — 1100 이상이라 공개 시 community 피드에 노출된다.
+  /// 새 일기에 부여할 다음 idx. RN nextDiaryIdx(1100)+1 — 시드 idx(1001~1012·1~30)와 무충돌.
   int _nextIdx = 1101;
 
   /// 새 댓글에 부여할 다음 idx(fallback 댓글 idx 1~6 과 무충돌).
@@ -253,7 +252,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     // 나의 일기 탭은 본인(user_idx==1) 일기만. 타작성자 시드는 community 피드 전용.
     final own = _diaries.where((d) => d['user_idx'] == 1).toList()
       ..sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
-    final page = own.skip(skip).take(ApiConfig.itemsPerPage).map(_withCommentCount).toList();
+    final page = own.skip(skip).take(ApiConfig.itemsPerPage).map(_served).toList();
     return _json(200, {'status': 'success', 'resData': page});
   }
 
@@ -272,7 +271,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     if (found.isEmpty) {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
-    return _json(200, {'status': 'success', 'resData': _withCommentCount(found.first)});
+    return _json(200, {'status': 'success', 'resData': _served(found.first)});
   }
 
   ResponseBody _createDiary(Object? data) {
@@ -282,15 +281,17 @@ class DemoApiAdapter implements HttpClientAdapter {
       return _serverFault();
     }
     final idx = _nextIdx++;
-    _diaries.insert(
-      0,
-      _diary(
+    // 새 일기는 현재 로그인 사용자 프로필로 귀속한다(실서버 동작).
+    _diaries.insert(0, {
+      ..._diary(
         idx: idx,
         sticker: fields['sticker'] ?? 'CloudSun',
         text: fields['text'] ?? '',
         created: DateTime.tryParse(fields['date'] ?? '') ?? DateTime.now(),
+        userIdx: _user['idx'] as int,
       ),
-    );
+      ..._currentAuthor(),
+    });
     _progressMission('diary');
     return _json(200, {
       'status': 'success',
@@ -309,6 +310,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     if (i == -1) {
       return _json(404, {'status': 'failed', 'message': '일기를 찾을 수 없습니다.'});
     }
+    // 사진(image·image_text)은 데모 경계라 반영하지 않는다(이미지 호스팅 없음 · README 데모 경계「일기 사진」).
     _diaries[i] = {
       ..._diaries[i],
       'sticker': fields['sticker'] ?? _diaries[i]['sticker'],
@@ -366,19 +368,20 @@ class DemoApiAdapter implements HttpClientAdapter {
   ResponseBody _communityList(RequestOptions options) {
     final skip = int.tryParse(options.uri.queryParameters['skip'] ?? '0') ?? 0;
     final sortType = options.uri.queryParameters['sort_type'] ?? 'latest';
-    // RN community-list: 타작성자 일기는 공개 여부 무관 전부, 본인 일기는 공개+세션생성(idx>=1100)만. 신고 차단 작성자는 제외.
+    // RN community-list: 타작성자 일기는 공개 여부 무관 전부, 본인 일기는 시드·신규 모두 공개일 때만(실서비스와 같은 규칙).
+    // 신고 차단 작성자는 제외.
     final visible = _diaries.where((d) {
       final userIdx = d['user_idx'] as int;
       if (_blockedUsers.contains(userIdx)) return false;
       if (userIdx != 1) return true;
-      return d['is_visible'] == 1 && (d['idx'] as int) >= 1100;
+      return d['is_visible'] == 1;
     }).toList();
     if (sortType == 'popular') {
       visible.sort((a, b) => (b['like_count'] as int).compareTo(a['like_count'] as int));
     } else {
       visible.sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
     }
-    final page = visible.skip(skip).take(ApiConfig.itemsPerPage).map(_withCommentCount).toList();
+    final page = visible.skip(skip).take(ApiConfig.itemsPerPage).map(_served).toList();
     return _json(200, {'status': 'success', 'resData': page});
   }
 
@@ -419,15 +422,30 @@ class DemoApiAdapter implements HttpClientAdapter {
   /// 특정 일기의 댓글 목록 — 추가/삭제로 생긴 목록이 있으면 그것, 없으면 fallback 6건(RN getComments).
   List<Map<String, dynamic>> _commentsFor(int diaryIdx) => _commentsByDiary[diaryIdx] ?? _fallbackComments;
 
-  /// 일기에 동적 댓글 수를 주입(RN withCommentCount) — 시드의 정적 commentCount 를 getComments 길이로 덮어 카드·상세·댓글화면이 일치한다.
-  Map<String, dynamic> _withCommentCount(Map<String, dynamic> diary) => {
-    ...diary,
+  /// 응답용 일기 — 동적 댓글 수를 주입(RN withCommentCount)해 시드의 정적 commentCount 를 getComments 길이로 덮어
+  /// 카드·상세·댓글화면이 일치하게 하고, 작성자 프로필을 [_withCurrentAuthor]로 해석한다.
+  Map<String, dynamic> _served(Map<String, dynamic> diary) => {
+    ..._withCurrentAuthor(diary),
     'commentCount': _commentsFor(diary['idx'] as int).length,
+  };
+
+  /// 데모 사용자가 쓴 레코드(일기·댓글)는 저장 시점이 아닌 현재 [_user] 프로필(닉네임·아바타)로 내려보낸다. 실서버는
+  /// 조회 시 작성자 프로필을 JOIN 하므로, 닉네임을 바꿔도 화면의 `nickname == 내 닉네임` 소유 판정(수정·삭제)이 유지되고
+  /// 캐릭터·배경을 바꾸면 본인 일기·댓글 아바타도 따라 바뀐다. RN withMyCommentAuthor.
+  Map<String, dynamic> _withCurrentAuthor(Map<String, dynamic> record) =>
+      record['user_idx'] == _user['idx'] ? {...record, ..._currentAuthor()} : record;
+
+  /// 현재 [_user]의 작성자 표시 필드(응답 레코드 키). 신규 일기·댓글 저장과 조회 해석이 공유한다.
+  Map<String, dynamic> _currentAuthor() => {
+    'nickname': _user['nickname'],
+    'background': _user['background'],
+    'character': _user['character'],
+    'user_image': _user['image'],
   };
 
   ResponseBody _getComments(int diaryIdx) {
     // RN getComments: 특정 일기 댓글이 있으면 그것, 없으면 fallback 6건. 댓글 화면을 항상 채워 보여 준다.
-    return _json(200, {'status': 'success', 'resData': _commentsFor(diaryIdx)});
+    return _json(200, {'status': 'success', 'resData': _commentsFor(diaryIdx).map(_withCurrentAuthor).toList()});
   }
 
   ResponseBody _createComment(Object? data) {
@@ -441,13 +459,7 @@ class DemoApiAdapter implements HttpClientAdapter {
     // 새 댓글은 현재 로그인 사용자로 귀속한다(실서버 동작). fallback 6건을 보존한 뒤 새 댓글을 덧붙인다(RN [...getComments, new]).
     _commentsByDiary[diaryIdx] = [
       ..._commentsFor(diaryIdx),
-      _comment(
-        idx: idx,
-        text: text,
-        created: DateTime.now(),
-        nickname: _user['nickname'] as String,
-        character: _user['character'] as String,
-      ),
+      {..._comment(idx: idx, text: text, created: DateTime.now(), userIdx: _user['idx'] as int), ..._currentAuthor()},
     ];
     _progressMission('comment');
     return _json(200, {'status': 'success', 'resData': '$idx'});
@@ -601,15 +613,15 @@ class DemoApiAdapter implements HttpClientAdapter {
     });
   }
 
-  /// 미션 보상 규칙(미션 종류별 결정적). RN 서버 보상 계산 대응.
+  /// 미션 보상 규칙(미션 종류별 결정적). 원본 백엔드 router/mission.js `MISSION_REWARD` 값 그대로.
   Map<String, dynamic> _rewardFor(String type) {
     switch (type) {
       case 'diary':
-        return {'count': 2, 'item': 'watering'};
+        return {'count': 3, 'item': 'watering'};
       case 'visible':
-        return {'count': 1, 'item': 'watering'};
+        return {'count': 3, 'item': 'love'};
       case 'comment':
-        return {'count': 2, 'item': 'love'};
+        return {'count': 2, 'item': 'watering'};
       case 'like':
       default:
         return {'count': 1, 'item': 'love'};
@@ -628,10 +640,11 @@ class DemoApiAdapter implements HttpClientAdapter {
     }
   }
 
-  /// 시드 미션 — RN MOCK_MISSIONS. diary 5/5 완료 + comment/visible/like 진행중.
+  /// 시드 미션 — 목표(max_count)는 원본 백엔드 router/auth.js `MISSION_LIST`(diary 1·visible 1·like 5·comment 3).
+  /// diary 1/1 완료 + comment/visible/like 진행중.
   Map<String, List<Map<String, dynamic>>> _seedMissions() {
     return {
-      'completed': [_mission(idx: 1, type: 'diary', count: 5, maxCount: 5)],
+      'completed': [_mission(idx: 1, type: 'diary', count: 1, maxCount: 1)],
       'inProgress': [
         _mission(idx: 2, type: 'comment', count: 1, maxCount: 3),
         _mission(idx: 3, type: 'visible', count: 0, maxCount: 1),
@@ -697,7 +710,8 @@ class DemoApiAdapter implements HttpClientAdapter {
     };
   }
 
-  /// 데모 댓글 한 건(snake_case). 기본 작성자는 데모 사용자('새싹이')라 데모상 삭제 가능하다.
+  /// 데모 댓글 한 건(snake_case). [userIdx]가 없으면 타작성자 댓글이다 — 소유(삭제 가능)는 user_idx 가 데모 사용자일 때
+  /// [_withCurrentAuthor]가 입히는 현재 닉네임으로 판정되므로, 작성자 기본값은 소유와 무관하다.
   Map<String, dynamic> _comment({
     required int idx,
     required String text,
@@ -706,9 +720,11 @@ class DemoApiAdapter implements HttpClientAdapter {
     String character = 'Chick',
     String background = '',
     String userImage = '',
+    int? userIdx,
   }) {
     return {
       'idx': idx,
+      'user_idx': ?userIdx,
       'nickname': nickname,
       'background': background,
       'character': character,

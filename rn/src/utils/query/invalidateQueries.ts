@@ -22,7 +22,7 @@ const DIARIES_GROUP = [QUERY_KEYS.DIARIES, QUERY_KEYS.MONTHLY_DIARIES, QUERY_KEY
 const MISSION_GROUP = [QUERY_KEYS.MISSIONS, QUERY_KEYS.FLOWERPOT];
 
 export const invalidateQueries = {
-  // 일기 등록/편집(6) : [DIARY, diary.idx], DIARIES_GROUP, MISSION_GROUP
+  // 일기 등록(5) : DIARIES_GROUP, MISSION_GROUP / 편집(4) : [DIARY, diary.idx], DIARIES_GROUP
   diaryAction: (queryClient: QueryClient, diary?: MyDiaryDTO) => {
     if (!diary) {
       // 일기 신규 등록

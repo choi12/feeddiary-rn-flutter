@@ -6,6 +6,7 @@ import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/build_context_x.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_loading.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,7 +33,7 @@ class AppVersionScreen extends ConsumerWidget {
               latest.when(
                 data: (version) => _VersionNoti(latestVersion: version),
                 loading: () =>
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator()),
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: FeedLoading(compact: true)),
                 error: (_, _) => Text(
                   SettingStrings.currentVersion(AppInfo.version),
                   style: const TextStyle(color: FeedPalette.lightBlack),

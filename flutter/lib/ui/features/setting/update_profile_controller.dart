@@ -66,6 +66,9 @@ class UpdateProfileController extends _$UpdateProfileController {
 
   Timer? _timer;
 
+  /// 닉네임 검사 세대. 입력·검사마다 올려, 늦게 도착한 옛 입력의 중복검사 응답을 버린다.
+  int _nicknameCheck = 0;
+
   @override
   UpdateProfileState build() {
     ref.onDispose(() => _timer?.cancel());
@@ -91,12 +94,14 @@ class UpdateProfileController extends _$UpdateProfileController {
   void setNickname(String value) {
     state = state.copyWith(nickname: value, nicknameStatus: null);
     _timer?.cancel();
+    _nicknameCheck++;
     if (value.trim() == state.initialNickname) return;
     _timer = Timer(_debounce, () => validateNickname(value));
   }
 
   /// 닉네임 검증(디바운스 콜백·테스트 공유). 정규식 → 중복검사. RN `checkNicknameValidity`.
   Future<void> validateNickname(String value) async {
+    final check = ++_nicknameCheck;
     final trimmed = value.trim();
     if (trimmed.isEmpty || trimmed == state.initialNickname) {
       state = state.copyWith(nicknameStatus: null);
@@ -106,14 +111,18 @@ class UpdateProfileController extends _$UpdateProfileController {
       state = state.copyWith(nicknameStatus: NicknameStatus.regex);
       return;
     }
+    NicknameStatus? status;
     try {
       await ref.read(authRepositoryProvider).checkNickname(trimmed);
-      state = state.copyWith(nicknameStatus: NicknameStatus.success);
+      status = NicknameStatus.success;
     } on ConflictException {
-      state = state.copyWith(nicknameStatus: NicknameStatus.duplicate);
+      status = NicknameStatus.duplicate;
     } on AppException {
-      state = state.copyWith(nicknameStatus: null);
+      status = null;
     }
+    // 응답을 기다리는 사이 입력이 바뀌었으면(새 검사 시작) 옛 입력의 결과로 새 상태를 덮지 않는다.
+    if (check != _nicknameCheck) return;
+    state = state.copyWith(nicknameStatus: status);
   }
 
   /// 캐릭터 선택. 사진 모드를 해제한다(상호 배타 — RN ProfileImageSection).

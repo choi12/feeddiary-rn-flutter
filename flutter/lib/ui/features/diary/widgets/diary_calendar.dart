@@ -73,7 +73,8 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
           const SizedBox(height: 10),
           Expanded(
             child: monthly.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              // RN 처럼 로딩 중엔 비워 둔다 — 응답이 오면 카드가 FadeIn 하거나 빈 날 안내가 뜬다.
+              loading: () => const SizedBox.shrink(),
               error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(monthlyDiariesProvider(key))),
               data: (diaries) {
                 final daily = diariesOn(diaries, _selected);
