@@ -13,6 +13,7 @@ import useToast from '@/hooks/store/useToast';
 import useErrorToast from '@/hooks/ui/feedback/useErrorToast';
 import { AlertModalContent, BottomSheetModalContent } from '@/types/modal';
 import { invalidateQueries } from '@/utils/query/invalidateQueries';
+import { removeDiaryFromCaches, restoreQueriesData } from '@/utils/query/removeDiaryFromCaches';
 
 interface UseDiaryActionsProps {
   diary: CommunityDiaryDTO | undefined;
@@ -47,7 +48,13 @@ function useDiaryActions({ diary, isVisible, toggleVisibility }: UseDiaryActions
       };
       await APIDeleteDiary(params);
     },
-    onSuccess: () => invalidateQueries.deleteDiary(queryClient),
+    // 상세에서 goBack 했을 때 목록에 삭제한 카드가 refetch 전까지 남아 있다가 튀지 않도록 먼저 뺀다
+    onMutate: async () => {
+      if (!diary) return undefined;
+      return { snapshot: await removeDiaryFromCaches(queryClient, diary.idx) };
+    },
+    onError: (error, variables, context) => restoreQueriesData(queryClient, context?.snapshot),
+    onSettled: () => invalidateQueries.deleteDiary(queryClient),
   });
 
   // 모달 버튼의 isLoading 은 열 때 값으로 고정되므로, 연타로 DELETE 가 두 번 나가지 않게 진행 중 탭을 무시
