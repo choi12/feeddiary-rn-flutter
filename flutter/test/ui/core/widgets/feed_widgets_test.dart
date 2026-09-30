@@ -1,8 +1,10 @@
-// 핵심 chrome 위젯 단위 테스트 — FeedButton(활성/비활성/로딩)·FeedHeader(제목·뒤로)·FeedTabBar(탭 콜백) (widget test).
+// 핵심 chrome 위젯 단위 테스트 — FeedButton(활성/비활성/로딩)·FeedHeader(제목·뒤로)·FeedTabBar(탭 콜백)·FeedLoading (widget test).
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
+import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/widgets/feed_button.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_loading.dart';
 import 'package:feeddiary/ui/core/widgets/feed_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -96,6 +98,15 @@ void main() {
 
       await tester.tap(find.text('나의 일기'));
       expect(tappedIndex, 1);
+    });
+  });
+
+  group('FeedLoading', () {
+    testWidgets('연회색 인디케이터를 가운데 그린다(RN LoadingView)', (tester) async {
+      await tester.pumpWidget(_wrap(const FeedLoading()));
+      final indicator = tester.widget<CircularProgressIndicator>(find.byType(CircularProgressIndicator));
+      expect(indicator.color, FeedPalette.lightGray);
+      expect(find.ancestor(of: find.byType(CircularProgressIndicator), matching: find.byType(Center)), findsWidgets);
     });
   });
 }

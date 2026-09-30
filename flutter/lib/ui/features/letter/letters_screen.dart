@@ -11,6 +11,7 @@ import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_loading.dart';
 import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
 import 'package:feeddiary/ui/features/letter/letter_list_controller.dart';
@@ -130,7 +131,7 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
                     ),
                     Expanded(
                       child: state.when(
-                        loading: () => const Center(child: CircularProgressIndicator()),
+                        loading: () => const FeedLoading(),
                         error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(letterListProvider)),
                         data: (paged) {
                           if (paged.isEmpty) {
@@ -293,11 +294,7 @@ class _LetterBoard extends StatelessWidget {
               ),
             ],
           ),
-          if (!isEnd)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
-            ),
+          if (!isEnd) const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: FeedLoading(compact: true)),
         ],
       ),
     );

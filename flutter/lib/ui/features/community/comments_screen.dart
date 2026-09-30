@@ -3,6 +3,7 @@ import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_loading.dart';
 import 'package:feeddiary/ui/core/widgets/feed_text_field.dart';
 import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/community/comments_controller.dart';
@@ -29,7 +30,7 @@ class CommentsScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: comments.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const FeedLoading(),
               error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(commentsControllerProvider(diaryIdx))),
               data: (list) {
                 if (list.isEmpty) {

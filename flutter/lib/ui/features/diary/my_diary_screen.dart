@@ -6,6 +6,7 @@ import 'package:feeddiary/ui/core/icons/feed_icons.dart';
 import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
+import 'package:feeddiary/ui/core/widgets/feed_loading.dart';
 import 'package:feeddiary/ui/features/diary/diary_list_controller.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_calendar.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_card.dart';
@@ -198,7 +199,7 @@ class _CardViewState extends ConsumerState<_CardView> {
   Widget build(BuildContext context) {
     final state = ref.watch(diaryListProvider);
     return state.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const FeedLoading(),
       error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(diaryListProvider)),
       data: (paged) {
         if (paged.isEmpty) {
@@ -215,10 +216,7 @@ class _CardViewState extends ConsumerState<_CardView> {
             separatorBuilder: (_, _) => const SizedBox(height: 40),
             itemBuilder: (context, index) {
               if (index >= paged.items.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: FeedLoading(compact: true));
               }
               final diary = paged.items[index];
               return DiaryCard(

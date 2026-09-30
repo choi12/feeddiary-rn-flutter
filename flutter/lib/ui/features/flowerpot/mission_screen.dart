@@ -5,6 +5,7 @@ import 'package:feeddiary/ui/core/theme/tokens/color_primitives.dart';
 import 'package:feeddiary/ui/core/theme/tokens/dimens.dart';
 import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_loading.dart';
 import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/diary/widgets/diary_state_views.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
@@ -64,7 +65,7 @@ class _MissionScreenState extends ConsumerState<MissionScreen> {
       backgroundColor: FeedPalette.background,
       appBar: const FeedHeader(title: '오늘의 미션', hasCloseButton: true, backgroundColor: FeedPalette.background),
       body: missions.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const FeedLoading(),
         error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(missionsControllerProvider)),
         data: (result) {
           // 진행중이 비면 완료 탭으로 자동 전환(RN useMissions effect).

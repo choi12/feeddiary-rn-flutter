@@ -13,6 +13,7 @@ import 'package:feeddiary/ui/core/theme/tokens/font_family.dart';
 import 'package:feeddiary/ui/core/widgets/feed_alert_dialog.dart';
 import 'package:feeddiary/ui/core/widgets/feed_bottom_sheet.dart';
 import 'package:feeddiary/ui/core/widgets/feed_header.dart';
+import 'package:feeddiary/ui/core/widgets/feed_loading.dart';
 import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/community/diary_likes.dart';
 import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
@@ -55,7 +56,7 @@ class DiaryDetailScreen extends ConsumerWidget {
             : null,
       ),
       body: detail.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const FeedLoading(),
         error: (e, _) => DiaryErrorView(onRetry: () => ref.invalidate(diaryDetailControllerProvider(diaryIdx))),
         data: (value) => Column(
           children: [
