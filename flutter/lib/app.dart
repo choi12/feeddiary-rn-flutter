@@ -68,7 +68,8 @@ class _DemoBanner extends StatelessWidget {
   }
 }
 
-/// 웹 전용 폰 프레임 — 데스크톱처럼 넓은 화면에선 앱을 폰 폭(센터)으로 가두고 배경을 채운다.
+/// 웹 전용 폰 프레임 — 데스크톱처럼 넓은 화면에선 앱을 폰 크기(센터)로 가두고 배경을 채운다. 세로도 폰 높이까지만
+/// 써서 긴 모니터에서 화면이 위아래로 늘어나지 않게 한다(창이 더 낮으면 창 높이를 그대로 쓴다).
 /// RN 스크린샷이 폰 폭이라 비교가 맞고(폰 logical px = Flutter logical px), `MediaQuery.size`를 읽는
 /// 화면(화분 등)이 폰 폭으로 계산되도록 MediaQuery 도 함께 폰 폭으로 덮는다. 네이티브/좁은 화면은 그대로 통과.
 class _WebPhoneFrame extends StatelessWidget {
@@ -76,8 +77,9 @@ class _WebPhoneFrame extends StatelessWidget {
 
   final Widget child;
 
-  /// 데모용 폰 폭(iPhone 계열 logical width).
+  /// 데모용 폰 크기(iPhone 계열 logical 390×844).
   static const double _phoneWidth = 390;
+  static const double _phoneHeight = 844;
 
   @override
   Widget build(BuildContext context) {
@@ -86,14 +88,16 @@ class _WebPhoneFrame extends StatelessWidget {
     if (!kIsWeb || media.size.width <= _phoneWidth) {
       return child;
     }
+    final height = media.size.height < _phoneHeight ? media.size.height : _phoneHeight;
     return ColoredBox(
       color: FeedPalette.darkBlack,
       child: Center(
         child: ClipRect(
           child: SizedBox(
             width: _phoneWidth,
+            height: height,
             child: MediaQuery(
-              data: media.copyWith(size: Size(_phoneWidth, media.size.height)),
+              data: media.copyWith(size: Size(_phoneWidth, height)),
               child: child,
             ),
           ),
