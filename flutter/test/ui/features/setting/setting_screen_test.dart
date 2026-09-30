@@ -3,6 +3,7 @@ import 'package:feeddiary/data/models/user.dart';
 import 'package:feeddiary/domain/models/sign_in_type.dart';
 import 'package:feeddiary/routing/auth_state.dart';
 import 'package:feeddiary/ui/core/theme/app_theme.dart';
+import 'package:feeddiary/ui/features/setting/character_catalog.dart';
 import 'package:feeddiary/ui/features/setting/setting_screen.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
 import 'package:flutter/material.dart';
@@ -44,5 +45,28 @@ void main() {
     expect(find.text(SettingStrings.menuLicense), findsOneWidget);
     expect(find.text(SettingStrings.menuAppVersion), findsOneWidget);
     expect(find.text(SettingStrings.signOut), findsOneWidget);
+  });
+
+  testWidgets('프로필 캐릭터 아바타는 사용자의 배경색을 칠한다(RN ProfileImageBox)', (tester) async {
+    final container = ProviderContainer(retry: (_, _) => null);
+    addTearDown(container.dispose);
+    container.read(authControllerProvider.notifier).setUser(testUser.copyWith(background: '#ABCDEF'));
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(theme: buildAppTheme(), home: const SettingScreen()),
+      ),
+    );
+    await tester.pump();
+
+    final characterImage = find.byWidgetPredicate(
+      (w) =>
+          w is Image &&
+          w.image is AssetImage &&
+          (w.image as AssetImage).assetName == CharacterCatalog.assetFor('Chick'),
+    );
+    final circle = tester.widget<Container>(find.ancestor(of: characterImage, matching: find.byType(Container)).first);
+    expect((circle.decoration! as BoxDecoration).color, const Color(0xFFABCDEF));
   });
 }

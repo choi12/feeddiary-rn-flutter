@@ -20,6 +20,7 @@ import 'package:feeddiary/ui/core/widgets/feed_toast.dart';
 import 'package:feeddiary/ui/features/setting/character_catalog.dart';
 import 'package:feeddiary/ui/features/setting/local_avatar.dart';
 import 'package:feeddiary/ui/features/setting/setting_strings.dart';
+import 'package:feeddiary/ui/features/setting/widgets/profile_image_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -233,7 +234,7 @@ class _Avatar extends StatelessWidget {
       return Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(color: context.colors.background, shape: BoxShape.circle),
+        decoration: BoxDecoration(color: _backgroundColor(context), shape: BoxShape.circle),
         padding: const EdgeInsets.all(8),
         child: Image.asset(CharacterCatalog.assetFor(character)),
       );
@@ -241,8 +242,19 @@ class _Avatar extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: context.colors.background, shape: BoxShape.circle),
+      decoration: BoxDecoration(color: _backgroundColor(context), shape: BoxShape.circle),
       child: const Icon(FeedIcons.question, size: 40, color: FeedPalette.white),
     );
+  }
+
+  /// 사용자가 고른 배경색(RN ProfileImageBox `profile.background`). 비었거나 형식이 틀리면 앱 배경색.
+  Color _backgroundColor(BuildContext context) {
+    final hex = user?.background ?? '';
+    if (hex.isEmpty) return context.colors.background;
+    try {
+      return ProfileImageEditor.hexColor(hex);
+    } on FormatException {
+      return context.colors.background;
+    }
   }
 }
