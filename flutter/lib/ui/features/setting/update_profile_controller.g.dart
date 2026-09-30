@@ -43,7 +43,7 @@ final class UpdateProfileControllerProvider extends $NotifierProvider<UpdateProf
   }
 }
 
-String _$updateProfileControllerHash() => r'508625b2b3200b3d79fd58b45f6409c33c961a50';
+String _$updateProfileControllerHash() => r'6b9f9fba917f5663f7fb823b8de03b0cce0fc3a4';
 
 /// 프로필 수정 폼 컨트롤러. 닉네임은 디바운스 후 검증(CreateProfile 과 동일 로직 재사용)하고,
 /// 사진/캐릭터/배경 변경을 추적한다. RN `useUpdateProfile`(변경 감지·FormData) + `useCheckNickname` ViewModel.

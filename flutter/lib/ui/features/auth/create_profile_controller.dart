@@ -49,6 +49,9 @@ class CreateProfileController extends _$CreateProfileController {
 
   Timer? _timer;
 
+  /// 닉네임 검사 세대. 입력·검사마다 올려, 늦게 도착한 옛 입력의 중복검사 응답을 버린다.
+  int _nicknameCheck = 0;
+
   @override
   CreateProfileState build() {
     ref.onDispose(() => _timer?.cancel());
@@ -59,6 +62,7 @@ class CreateProfileController extends _$CreateProfileController {
   void setNickname(String value) {
     state = state.copyWith(nickname: value, nicknameStatus: null);
     _timer?.cancel();
+    _nicknameCheck++;
     _timer = Timer(_debounce, () => validateNickname(value));
   }
 
@@ -85,6 +89,7 @@ class CreateProfileController extends _$CreateProfileController {
   /// 닉네임 검증(디바운스 없이 즉시 — 디바운스 콜백·테스트가 공유). RN `checkNicknameValidity`.
   /// 빈값 → 상태 없음, 정규식 불일치 → regex, 통과 → 중복검사(성공 success / 409 duplicate / 그 외 에러는 상태 해제).
   Future<void> validateNickname(String value) async {
+    final check = ++_nicknameCheck;
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
       state = state.copyWith(nicknameStatus: null);
@@ -94,14 +99,18 @@ class CreateProfileController extends _$CreateProfileController {
       state = state.copyWith(nicknameStatus: NicknameStatus.regex);
       return;
     }
+    NicknameStatus? status;
     try {
       await ref.read(authRepositoryProvider).checkNickname(trimmed);
-      state = state.copyWith(nicknameStatus: NicknameStatus.success);
+      status = NicknameStatus.success;
     } on ConflictException {
-      state = state.copyWith(nicknameStatus: NicknameStatus.duplicate);
+      status = NicknameStatus.duplicate;
     } on AppException {
-      state = state.copyWith(nicknameStatus: null);
+      status = null;
     }
+    // 응답을 기다리는 사이 입력이 바뀌었으면(새 검사 시작) 옛 입력의 결과로 새 상태를 덮지 않는다.
+    if (check != _nicknameCheck) return;
+    state = state.copyWith(nicknameStatus: status);
   }
 
   /// 가입 — 프로필(사진 또는 캐릭터+배경)과 닉네임으로 회원가입 후 세션 아바타 override. RN useSignUp.handleSignUp.
