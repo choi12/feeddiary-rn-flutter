@@ -7,6 +7,15 @@ import 'package:feeddiary/data/repositories/auth_repository.dart';
 import 'package:feeddiary/data/services/token_storage.dart';
 import 'package:feeddiary/domain/exceptions/app_exception.dart';
 import 'package:feeddiary/domain/models/sign_in_type.dart';
+import 'package:feeddiary/ui/features/community/comments_controller.dart';
+import 'package:feeddiary/ui/features/community/community_list_controller.dart';
+import 'package:feeddiary/ui/features/community/diary_likes.dart';
+import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
+import 'package:feeddiary/ui/features/diary/diary_list_controller.dart';
+import 'package:feeddiary/ui/features/diary/monthly_diaries_provider.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/mission_controller.dart';
+import 'package:feeddiary/ui/features/letter/letter_list_controller.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -109,8 +118,28 @@ class AuthController extends _$AuthController {
     state = state.copyWith(user: user);
   }
 
-  /// 토큰 저장 + authenticated 전환. RN `completeSignIn`(잠금/프리페치는 데모 범위 밖 — 실 연동 시 추가).
+  /// 세션 동안 유지되는 사용자 데이터(keepAlive·수동 AsyncNotifierProvider·월별 캐시)를 무효화해 새 세션에
+  /// 이전 사용자의 목록·좋아요·화분이 남지 않게 한다. RN `useAuthCleanup` 의 queryClient.clear() 대응.
+  /// 일기 상세·댓글 family 도 `cacheFor(realtime)`로 구독자가 떠난 뒤 30초 남으므로 family 전체를 비운다 — 남으면
+  /// 이전 사용자 기준의 공개 여부·댓글(`nickname == 내 닉네임` 삭제 버튼)이 새 세션에 잠깐 보인다.
+  /// 로그아웃이 아닌 새 세션 시작에서 비운다 — 로그아웃 시점엔 아직 화면이 구독 중이라 invalidate 가 토큰 없이
+  /// 즉시 재조회하지만, 로그인 화면에서는 구독자가 없어 표시만 해 두고 새 토큰으로 처음 읽을 때 불러온다.
+  void _clearUserCache() {
+    ref
+      ..invalidate(diaryListProvider)
+      ..invalidate(monthlyDiariesProvider)
+      ..invalidate(diaryDetailControllerProvider)
+      ..invalidate(commentsControllerProvider)
+      ..invalidate(communityListProvider)
+      ..invalidate(diaryLikesProvider)
+      ..invalidate(letterListProvider)
+      ..invalidate(flowerpotControllerProvider)
+      ..invalidate(missionsControllerProvider);
+  }
+
+  /// 이전 세션 캐시 정리 + 토큰 저장 + authenticated 전환. RN `completeSignIn`(잠금/프리페치는 데모 범위 밖 — 실 연동 시 추가).
   Future<void> _completeSignIn(User user) async {
+    _clearUserCache();
     await ref.read(tokenStorageProvider).save(user.token);
     state = AuthState(status: AuthStatus.authenticated, user: user);
   }

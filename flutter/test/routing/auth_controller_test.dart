@@ -4,6 +4,10 @@ import 'package:feeddiary/data/services/dio_client.dart';
 import 'package:feeddiary/data/services/token_storage.dart';
 import 'package:feeddiary/domain/models/sign_in_type.dart';
 import 'package:feeddiary/routing/auth_state.dart';
+import 'package:feeddiary/ui/features/community/comments_controller.dart';
+import 'package:feeddiary/ui/features/community/diary_likes.dart';
+import 'package:feeddiary/ui/features/diary/diary_detail_controller.dart';
+import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -136,5 +140,108 @@ void main() {
     await container.read(authControllerProvider.notifier).signOut();
     expect(container.read(authControllerProvider).status, AuthStatus.unauthenticated);
     expect(tokenStorage.token, isNull);
+  });
+
+  test('로그아웃만으로는 재조회하지 않고, 다음 로그인에서 이전 세션의 좋아요·화분을 비우고 다시 불러온다', () async {
+    var flowerpotFetches = 0;
+    dio.interceptors.insert(
+      0,
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.path == '/flowerpot') flowerpotFetches++;
+          handler.next(options);
+        },
+      ),
+    );
+    adapter
+      ..onPost('/auth/sign-out', (server) => server.reply(200, {'status': 'success'}), data: Matchers.any)
+      ..onPost(
+        '/auth/sign-in',
+        (server) => server.reply(200, {'status': 'success', 'resData': userJson(token: 'newtok')}),
+        data: Matchers.any,
+      )
+      ..onPost(
+        '/diary/like',
+        (server) => server.reply(200, {
+          'status': 'success',
+          'resData': {'like_count': 1, 'isLike': true},
+        }),
+        data: Matchers.any,
+      )
+      ..onGet(
+        '/flowerpot',
+        (server) => server.reply(200, {
+          'status': 'success',
+          'resData': {'level': 1, 'exp': 0, 'max_exp': 100, 'watering_count': 1, 'love_count': 1, 'showBadge': false},
+        }),
+      );
+    final container = makeContainer();
+    // 화면이 구독 중인 상태를 흉내 낸다(구독자가 있으면 invalidate 가 즉시 재조회를 예약한다).
+    container.listen(flowerpotControllerProvider, (_, _) {});
+    await container.read(diaryLikesProvider.notifier).toggle(idx: 1, baseIsLike: false, baseLikeCount: 0);
+    await container.read(flowerpotControllerProvider.future);
+    final fetchesBeforeSignOut = flowerpotFetches;
+
+    await container.read(authControllerProvider.notifier).signOut();
+    await Future<void>.delayed(const Duration(milliseconds: 50)); // 예약된 재조회가 있었다면 요청까지 나갈 시간
+    expect(flowerpotFetches, fetchesBeforeSignOut);
+
+    await container.read(authControllerProvider.notifier).signIn(SignInType.google);
+    expect(container.read(diaryLikesProvider), isEmpty);
+    await container.read(flowerpotControllerProvider.future);
+    expect(flowerpotFetches, fetchesBeforeSignOut + 1);
+  });
+
+  test('다음 로그인에서 이전 세션이 본 일기 상세·댓글 캐시도 비우고 다시 불러온다', () async {
+    final fetched = <String>[];
+    dio.interceptors.insert(
+      0,
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          fetched.add(options.path);
+          handler.next(options);
+        },
+      ),
+    );
+    adapter
+      ..onPost(
+        '/auth/sign-in',
+        (server) => server.reply(200, {'status': 'success', 'resData': userJson(token: 'newtok')}),
+        data: Matchers.any,
+      )
+      ..onGet(
+        '/diary/1',
+        (server) => server.reply(200, {
+          'status': 'success',
+          'resData': {
+            'idx': 1,
+            'user_idx': 1,
+            'nickname': '새싹이',
+            'sticker': 'Star',
+            'text': '본문',
+            'image': '',
+            'created_time': '2026-06-01T00:00:00.000Z',
+            'updated_time': null,
+            'is_visible': 1,
+            'like_count': 0,
+            'commentCount': 0,
+            'user_image': '',
+            'background': '',
+            'character': 'Chick',
+            'isLike': false,
+          },
+        }),
+      )
+      ..onGet('/comment/list/1', (server) => server.reply(200, {'status': 'success', 'resData': <Object>[]}));
+    final container = makeContainer();
+    await container.read(diaryDetailControllerProvider(1).future);
+    await container.read(commentsControllerProvider(1).future);
+
+    await container.read(authControllerProvider.notifier).signIn(SignInType.google);
+    await container.read(diaryDetailControllerProvider(1).future);
+    await container.read(commentsControllerProvider(1).future);
+
+    expect(fetched.where((path) => path == '/diary/1'), hasLength(2));
+    expect(fetched.where((path) => path == '/comment/list/1'), hasLength(2));
   });
 }
