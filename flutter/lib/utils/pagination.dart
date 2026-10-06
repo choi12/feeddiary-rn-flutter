@@ -28,24 +28,34 @@ mixin OffsetPagination<T> on AsyncNotifier<PagedState<T>> {
   /// 주어진 offset([skip])부터 한 페이지를 가져온다. 구현체가 repository 호출로 채운다.
   Future<List<T>> fetchPage(int skip);
 
+  /// 처음부터 다시 받을 때마다(build 재실행·새로고침) 오른다. 늦게 끝난 [loadMore] 가 새 목록을 옛 목록으로 덮지 않게 비교한다.
+  int _generation = 0;
+
   /// 첫 페이지 로드. RN useInfiniteQuery initialPageParam 0.
   Future<PagedState<T>> loadFirst() async {
+    _generation++;
     final first = await fetchPage(0);
     return PagedState(items: first, isEnd: first.length < ApiConfig.itemsPerPage);
   }
 
-  /// 다음 페이지 로드(현재 누적 개수를 offset 으로). 로딩 중/끝/미초기화면 무시. RN getNextPageParam.
+  /// 다음 페이지 로드(현재 누적 개수를 offset 으로). 로딩 중/끝/미초기화/다시 받는 중이면 무시. RN getNextPageParam.
+  /// 응답이 오면 요청 시점이 아니라 지금 목록에 붙이고, 그사이 처음부터 다시 받았으면 버린다.
   Future<void> loadMore() async {
     final current = state.value;
-    if (current == null || current.isLoadingMore || current.isEnd) {
+    if (state.isLoading || current == null || current.isLoadingMore || current.isEnd) {
       return;
     }
+    final generation = _generation;
     state = AsyncData(current.copyWith(isLoadingMore: true));
     try {
       final next = await fetchPage(current.items.length);
+      final latest = state.value;
+      if (generation != _generation || latest == null) {
+        return;
+      }
       state = AsyncData(
-        current.copyWith(
-          items: [...current.items, ...next],
+        latest.copyWith(
+          items: [...latest.items, ...next],
           isLoadingMore: false,
           isEnd: next.length < ApiConfig.itemsPerPage,
         ),
@@ -53,7 +63,11 @@ mixin OffsetPagination<T> on AsyncNotifier<PagedState<T>> {
     } catch (error, stackTrace) {
       // 더 불러오기 실패 — 누적 항목은 유지하고 로딩만 해제(전체 에러로 떨구지 않음). RN useInfiniteQuery 거동.
       AppLogger.error('페이지 추가 로드 실패', error: error, stackTrace: stackTrace);
-      state = AsyncData(current.copyWith(isLoadingMore: false));
+      final latest = state.value;
+      if (generation != _generation || latest == null) {
+        return;
+      }
+      state = AsyncData(latest.copyWith(isLoadingMore: false));
     }
   }
 
