@@ -16,6 +16,7 @@ import 'package:feeddiary/ui/features/diary/monthly_diaries_provider.dart';
 import 'package:feeddiary/ui/features/flowerpot/flowerpot_controller.dart';
 import 'package:feeddiary/ui/features/flowerpot/mission_controller.dart';
 import 'package:feeddiary/ui/features/letter/letter_list_controller.dart';
+import 'package:feeddiary/utils/logger.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -63,7 +64,12 @@ class AuthController extends _$AuthController {
     try {
       final user = await ref.read(authRepositoryProvider).autoSignIn(accessToken: token);
       // 원본 서버는 자동 로그인마다 토큰을 새로 발급해 DB 에 넣고, 다음 자동 로그인은 그 토큰으로만 통과시킨다.
-      await ref.read(tokenStorageProvider).save(user.token);
+      // 보안 저장소 쓰기가 실패해도(Keystore 손상 등) 캐시는 이미 새 토큰이라 이번 세션은 그대로 진행한다.
+      try {
+        await ref.read(tokenStorageProvider).save(user.token);
+      } catch (error, stackTrace) {
+        AppLogger.error('자동 로그인 토큰 저장 실패', error: error, stackTrace: stackTrace);
+      }
       state = AuthState(status: AuthStatus.authenticated, user: user);
     } on UnauthorizedException {
       await ref.read(tokenStorageProvider).clear();

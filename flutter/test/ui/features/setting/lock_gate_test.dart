@@ -98,6 +98,53 @@ void main() {
     return router;
   }
 
+  /// Android predictive back 스와이프 제스처를 엔진처럼 흉내 낸다(flutter/backgesture 채널).
+  Future<void> swipeBack(WidgetTester tester) async {
+    Future<void> send(String method, [Object? args]) => tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'flutter/backgesture',
+      const StandardMethodCodec().encodeMethodCall(MethodCall(method, args)),
+      (_) {},
+    );
+    await send('startBackGesture', {
+      'touchOffset': [5.0, 300.0],
+      'progress': 0.0,
+      'swipeEdge': 0,
+    });
+    await tester.pump();
+    await send('updateBackGestureProgress', {
+      'touchOffset': [100.0, 300.0],
+      'progress': 0.5,
+      'swipeEdge': 0,
+    });
+    await tester.pump();
+    await send('commitBackGesture');
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('잠금 중 스와이프 뒤로가기(predictive back 제스처)도 오버레이 아래 화면을 빼지 않는다', (tester) async {
+    final router = await pumpLockedApp(tester);
+    unawaited(router.push('/detail'));
+    await tester.pumpAndSettle();
+
+    await swipeBack(tester);
+    expect(router.canPop(), isTrue);
+    expect(find.text(SettingStrings.unlockTitle), findsOneWidget);
+  });
+
+  testWidgets('해제한 뒤에는 스와이프 뒤로가기가 다시 화면을 뺀다', (tester) async {
+    final router = await pumpLockedApp(tester);
+    for (final d in '1234'.split('')) {
+      await tester.tap(find.text(d));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    unawaited(router.push('/detail'));
+    await tester.pumpAndSettle();
+
+    await swipeBack(tester);
+    expect(router.canPop(), isFalse);
+  });
+
   testWidgets('잠금 중 뒤로가기는 오버레이 아래 화면을 빼지 않는다', (tester) async {
     final router = await pumpLockedApp(tester);
     unawaited(router.push('/detail'));
