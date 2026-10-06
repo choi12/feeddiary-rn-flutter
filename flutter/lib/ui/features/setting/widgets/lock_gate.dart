@@ -82,7 +82,19 @@ class _LockGateState extends ConsumerState<LockGate> with WidgetsBindingObserver
       onNotification: _onNavigation,
       child: Stack(
         children: [
-          widget.child,
+          // Android 기본 전환(predictive back)은 스와이프 제스처를 라우트가 직접 가져가 didPopRoute 를 거치지 않는다.
+          // 잠금 중에만 일반 전환으로 바꿔 제스처도 위 didPopRoute 로 떨어지게 한다. 위젯 타입을 갈아 끼우면
+          // Router 아래가 다시 마운트돼 화면 스택이 날아가므로 Theme 은 늘 감싸 두고 값만 바꾼다.
+          Theme(
+            data: _showing
+                ? Theme.of(context).copyWith(
+                    pageTransitionsTheme: const PageTransitionsTheme(
+                      builders: {TargetPlatform.android: FadeForwardsPageTransitionsBuilder()},
+                    ),
+                  )
+                : Theme.of(context),
+            child: widget.child,
+          ),
           if (_locked && authenticated) LockOverlay(onUnlocked: () => setState(() => _locked = false)),
         ],
       ),
