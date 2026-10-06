@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 앱 잠금 해제 오버레이. 4자리 비밀번호가 채워지면 검증하고, 일치하면 [onUnlocked]를 호출한다.
-/// `PopScope(canPop:false)`로 뒤로가기를 막는다(RN Android `BackHandler` 차단 대응).
+/// 아래 `PopScope(canPop:false)` 는 라우트 안에 놓일 때만 듣는다. 앱에서는 Navigator 밖(builder)에 뜨므로 뒤로가기 차단은 `LockGate` 가 맡는다.
 class LockOverlay extends ConsumerStatefulWidget {
   const LockOverlay({required this.onUnlocked, super.key});
 

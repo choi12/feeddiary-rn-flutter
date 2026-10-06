@@ -32,7 +32,7 @@ RN 에서 React Query 가 맡아주던 **캐시 수명**이 Flutter 에서는 �
 
 2025년, 스토어에 나가 있던 앱을 **RN 0.72 에서 0.80 으로** 올렸습니다. 마이너 여덟 단계를 한 번에 건너뛰는 데다 React 18 → 19 전환까지 함께 걸려 있었고, 이미 쓰고 있는 사용자가 있어 깨뜨리지 않고 통과시켜야 했습니다. 정작 문제를 낸 건 그 전환 자체가 아니라 업그레이드에 딸려 온 두 가지, **targetSdk 상향(OS 쪽)과 Zustand 메이저 업(프레임워크 쪽)** 이었습니다.
 
-- **Android 15 Edge-to-Edge 강제 적용**: 0.80 으로 올려 배포한 뒤, **앱 코드는 한 줄도 안 건드렸는데 기기가 Android 15 로 올라가면서** 바텀탭이 내비게이션 바와 겹쳐 터치가 막혔습니다. targetSdk 35 이상인 앱은 Android 15부터 Edge-to-Edge 가 강제돼 시스템이 자동 오프셋을 넣지 않습니다. 그 조건은 0.80 업그레이드가 만들었고(앱이 0.72 때 쓰던 targetSdk 33 을 그때 35 로 상향), **원인은 기존 코드 쪽**이었습니다. iOS 가 아니면 inset 계산 자체를 건너뛰고 있었습니다(`if (!isiOS) return defaultTabBarStyle`). iOS 는 노치 대응을 이미 하고 있었으니 Android 가 시스템 오프셋에 의존하던 동안에는 이 분기가 드러나지 않다가, 시스템이 오프셋을 빼는 순간 Android 만 남은 것입니다. 조기 반환을 걷어내고 Android 분기를 추가해, 바텀탭 높이와 패딩에 실측 safe-area inset(못 읽으면 상수 폴백)을 더하도록 고쳤습니다. 3버튼 내비게이션이 제스처보다 크기 때문에 상수로는 부족합니다.
+- **Android 15 Edge-to-Edge 강제 적용**: 0.80 으로 올려 배포한 뒤, **앱 코드는 한 줄도 안 건드렸는데 기기가 Android 15 로 올라가면서** 바텀탭이 내비게이션 바와 겹쳐 터치가 막혔습니다. targetSdk 35 이상인 앱은 Android 15부터 Edge-to-Edge 가 강제돼 시스템이 자동 오프셋을 넣지 않습니다. 그 조건은 0.80 업그레이드가 만들었고(앱이 0.72 때 쓰던 targetSdk 를 그때 35 로 상향), **원인은 기존 코드 쪽**이었습니다. iOS 가 아니면 inset 계산 자체를 건너뛰고 있었습니다(`if (!isiOS) return defaultTabBarStyle`). iOS 는 노치 대응을 이미 하고 있었으니 Android 가 시스템 오프셋에 의존하던 동안에는 이 분기가 드러나지 않다가, 시스템이 오프셋을 빼는 순간 Android 만 남은 것입니다. 조기 반환을 걷어내고 Android 분기를 추가해, 바텀탭 높이와 패딩에 실측 safe-area inset(못 읽으면 상수 폴백)을 더하도록 고쳤습니다. 3버튼 내비게이션이 제스처보다 크기 때문에 상수로는 부족합니다.
 - **Zustand v5 selector 무한 루프**: `The result of getSnapshot should be cached to avoid an infinite loop` 경고와 함께 `Maximum update depth exceeded` 크래시가 났습니다. 객체를 반환하는 selector 는 매 렌더마다 새 객체를 만드는데, React 19 이행과 함께 올린 **Zustand v5** 가 `useSyncExternalStore` 를 직접 쓰면서 `Object.is` 참조 비교에 항상 변경으로 걸린 게 원인이었습니다(React 19 자체가 아니라 그때 같이 올린 v5 쪽입니다). 해법은 selector 를 필드 단위로 쪼개 참조를 안정화하는 것이었습니다. 이 레포도 같은 규칙이고, 여러 값을 묶어야 하는 스토어 훅 5개만 `useShallow` 로 감싸 얕은 비교를 겁니다.
 
 ## 기술 스택
@@ -115,7 +115,7 @@ lib/
 
 **같은 진입 분기, 선언적 redirect**: RN 의 `Update` 화면에 대응하는 진입점은 `SplashScreen` 입니다. splash 가 `AuthController.restore()`(저장된 토큰으로 세션 복원)를 트리거하고, GoRouter 의 `redirect` 가 `AuthStatus`(`unknown` / `unauthenticated` / `authenticated`)를 보고 splash·signIn·home 으로 **선언적으로** 분기합니다. RN 이 `Update` 한 화면에 모았던 셋 중 **인증만** 이 redirect 가 선언적으로 받고, 잠금은 `MaterialApp.builder` 의 `LockGate` 오버레이가 따로 덮으며, 버전 게이트는 아직 자리가 없습니다.
 
-**복귀할 때마다 다시 걸리는 잠금**: 잠금은 부팅 때 한 번이 아니라 앱이 백그라운드에서 돌아올 때마다 다시 걸리는데, 걸리는 지점이 다릅니다. RN 은 바텀탭 트리 안의 `LockScreenGuard` 가 `AppState` 전이를 보고 `LockScreen` 으로 `navigate` 하는 「또 하나의 화면」이고, Flutter 의 `LockGate` 는 `AppLifecycleListener(onResume)` 와 콜드스타트를 오버레이 하나로 합쳐 라우터 밖에서 Navigator 위를 덮습니다(뒤로가기 차단은 양쪽 다, Flutter 는 `PopScope(canPop: false)`).
+**복귀할 때마다 다시 걸리는 잠금**: 잠금은 부팅 때 한 번이 아니라 앱이 백그라운드에서 돌아올 때마다 다시 걸리는데, 걸리는 지점이 다릅니다. RN 은 바텀탭 트리 안의 `LockScreenGuard` 가 `AppState` 전이를 보고 `LockScreen` 으로 `navigate` 하는 「또 하나의 화면」이고, Flutter 의 `LockGate` 는 `AppLifecycleListener(onResume)` 와 콜드스타트를 오버레이 하나로 합쳐 라우터 밖에서 Navigator 위를 덮습니다(뒤로가기 차단은 양쪽 다, Flutter 는 오버레이가 Navigator 밖이라 `PopScope` 대신 `didPopRoute` 에서 소비).
 
 ## 핵심 구현 포인트
 
@@ -351,7 +351,7 @@ RN 에서는 라이브러리나 언어가 대신 해 주던 것을 Flutter 에�
 
 - **제네릭 페이지네이션**: RN 의 `useInfiniteQuery` 에 해당하는 것이 Riverpod 에 없어, 믹스인 `OffsetPagination<T>`(`utils/pagination.dart`) 하나로 끝 감지 · 누적 · `loadMore` 부분 실패 처리(3페이지가 실패해도 1~2페이지는 남습니다)를 일기·커뮤니티·편지 세 목록이 공유합니다. 각 컨트롤러는 `build()` 와 `fetchPage` 만 얹고, 나머지는 고유 로직입니다(편지는 작성·삭제와 하루 한 통 게이팅, 커뮤니티는 정렬 watch).
 - **정밀 리빌드**: 좋아요 글로벌 override 는 `LikeState` 를 `record` 로 둬 값으로 비교되게 하고, 각 카드가 `diaryLikesProvider.select((likes) => likes[idx])` 로 자기 idx 만 구독해 그 카드만 리빌드합니다. RN 은 좋아요마다 목록을 재조회하므로 대응하는 자리가 없습니다.
-- **타입 안전 에러 계층**: `sealed AppException` 으로 계층을 닫아, switch 가 빠뜨린 경우를 컴파일러가 잡습니다. RN 의 `types/errors.ts` + `formatAPIError` 에 대응하되 재라벨 방식이 갈립니다. RN 은 원본 객체의 `message` 를 덮어쓰고 그대로 다시 던지는 가변 방식이고, Dart 는 예외를 불변으로 뒀으니 `withOperation` 이 같은 서브클래스의 새 인스턴스를 반환합니다.
+- **타입 안전 에러 계층**: `sealed AppException` 으로 계층을 닫고 서브클래스를 `final class` 로 막아, 에러 종류가 다섯으로 고정됩니다. 화면은 `on ConflictException` 처럼 필요한 타입만 골라 받습니다. RN 의 `types/errors.ts` + `formatAPIError` 에 대응하되 재라벨 방식이 갈립니다. RN 은 원본 객체의 `message` 를 덮어쓰고 그대로 다시 던지는 가변 방식이고, Dart 는 예외를 불변으로 뒀으니 `withOperation` 이 같은 서브클래스의 새 인스턴스를 반환합니다.
 
 ## 회고
 
@@ -450,5 +450,5 @@ mock 이 세션 동안 들고 있는 상태도 두 스택이 같습니다. 일�
   - OAuth(Google/Apple): 데모는 `USE_MOCK` 우회 진입 (Flutter prod 빌드의 OAuth 는 실서버 연동 시 구현되는 스텁)
   - iOS: 시뮬레이터 빌드까지 검증 (실기기 E2E 아님)
 - **웹 데모 한정**: 시드의 외부 이미지(작성자 아바타 · 커뮤니티 일기 한 건의 본문 사진)는 CORS 헤더가 없어 웹에서는 로컬 캐릭터 이미지로 폴백하거나 접힙니다. 기능 차이는 없고 콘솔 경고만 남습니다.
-- **AI 공저작**. 원본 새싹일기는 2024~25년 AI 없이 만들어 운영한 앱입니다. 이 재구현에서 무엇을 보존하고 무엇을 고칠지, 데모 범위를 어디까지 둘지, 두 스택을 같은 시나리오로 돌려 비교·검증하는 일과 최종 결정은 직접 맡았고, 설계 판단과 원인 진단은 Claude Code 와 함께 했으며, 코드 작성은 두 트랙 모두 Claude Code 가 했습니다. RN 은 원본 코드를 기준으로 다시 조립한 것이라 코드 전체를 읽고 이해하고 있고, Flutter 는 이 프로젝트로 본격 시작해 코드는 전부 읽고 검토했습니다. 재구현 커밋에는 `Co-Authored-By` trailer 를 남겼습니다.
+- **AI 공저작**. 원본 새싹일기는 2024~25년 AI 없이 만들어 운영한 앱입니다. 이 재구현에서 무엇을 보존하고 무엇을 고칠지, 데모 범위를 어디까지 둘지, 두 스택을 같은 시나리오로 돌려 비교·검증하는 일과 최종 결정은 직접 맡았고, 설계 판단과 원인 진단은 Claude Code 와 함께 했으며, 코드 작성은 두 트랙 모두 Claude Code 가 했습니다. RN 은 원본 코드를 기준으로 다시 조립한 것이라 코드 전체를 읽고 이해하고 있고, Flutter 는 코드를 전부 읽고 검토했습니다. 재구현 커밋에는 `Co-Authored-By` trailer 를 남겼습니다.
 - 라이선스: 코드는 루트 [`LICENSE`](LICENSE) (MIT). 폰트·아이콘·이미지·Lottie 에셋은 MIT 적용 대상이 아니며, 출처와 라이선스는 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) 에 있습니다.

@@ -73,7 +73,7 @@ void main() {
     expect(container.read(authControllerProvider).status, AuthStatus.unauthenticated);
   });
 
-  test('restore: 토큰 있으면 autoSignIn → authenticated', () async {
+  test('restore: 토큰 있으면 autoSignIn → authenticated + 서버가 새로 준 토큰 저장', () async {
     adapter.onPost(
       '/auth/sign-in-auto/v2',
       (server) => server.reply(200, {'status': 'success', 'resData': userJson(nickname: '복원')}),
@@ -85,6 +85,8 @@ void main() {
     final state = container.read(authControllerProvider);
     expect(state.status, AuthStatus.authenticated);
     expect(state.user?.nickname, '복원');
+    // 원본 서버는 자동 로그인마다 토큰을 새로 발급하고 다음 자동 로그인은 그 토큰으로만 통과시킨다.
+    expect(container.read(tokenStorageProvider).token, 'tok');
   });
 
   test('restore: autoSignIn 실패 시 토큰 정리 + unauthenticated', () async {
@@ -95,6 +97,26 @@ void main() {
     await container.read(authControllerProvider.notifier).restore();
     expect(container.read(authControllerProvider).status, AuthStatus.unauthenticated);
     expect(tokenStorage.token, isNull);
+  });
+
+  test('restore: 네트워크 실패면 토큰을 남기고 unauthenticated (다음 실행에서 다시 시도)', () async {
+    adapter.onPost(
+      '/auth/sign-in-auto/v2',
+      (server) => server.throws(
+        0,
+        DioException.connectionError(
+          requestOptions: RequestOptions(path: '/auth/sign-in-auto/v2'),
+          reason: 'no internet',
+        ),
+      ),
+      data: Matchers.any,
+    );
+    final container = makeContainer();
+    final tokenStorage = container.read(tokenStorageProvider);
+    await tokenStorage.save('existing');
+    await container.read(authControllerProvider.notifier).restore();
+    expect(container.read(authControllerProvider).status, AuthStatus.unauthenticated);
+    expect(tokenStorage.token, 'existing');
   });
 
   test('signIn 성공 → authenticated + 토큰 저장', () async {

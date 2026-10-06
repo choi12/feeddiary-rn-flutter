@@ -52,7 +52,8 @@ class AuthController extends _$AuthController {
   AuthState build() => const AuthState(status: AuthStatus.unknown);
 
   /// 저장된 토큰으로 세션을 복원한다. RN `useSignIn.autoSignIn`(+ `Update` 진입).
-  /// 토큰이 없으면 unauthenticated, 있으면 자동 로그인 시도 후 authenticated. 실패 시 토큰을 비우고 unauthenticated.
+  /// 토큰이 없으면 unauthenticated, 있으면 자동 로그인 시도 후 authenticated.
+  /// 401 이면 토큰을 비우고, 네트워크·서버 오류면 토큰을 남긴 채 unauthenticated(다음 실행에서 다시 시도 — RN 과 같음).
   Future<void> restore() async {
     final token = ref.read(tokenStorageProvider).token;
     if (token == null || token.isEmpty) {
@@ -61,9 +62,13 @@ class AuthController extends _$AuthController {
     }
     try {
       final user = await ref.read(authRepositoryProvider).autoSignIn(accessToken: token);
+      // 원본 서버는 자동 로그인마다 토큰을 새로 발급해 DB 에 넣고, 다음 자동 로그인은 그 토큰으로만 통과시킨다.
+      await ref.read(tokenStorageProvider).save(user.token);
       state = AuthState(status: AuthStatus.authenticated, user: user);
-    } on AppException {
+    } on UnauthorizedException {
       await ref.read(tokenStorageProvider).clear();
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    } on AppException {
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
