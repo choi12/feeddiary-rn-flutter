@@ -342,9 +342,11 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
       return;
     }
     try {
-      await ref
+      final applied = await ref
           .read(diaryLikesProvider.notifier)
           .toggle(idx: widget.diary.idx, baseIsLike: like.isLike, baseLikeCount: like.likeCount);
+      // 앞 요청이 아직 떠 있어 무시된 탭이면 애니메이션도 띄우지 않는다.
+      if (!applied) return;
       // RN: response.isLike === true(좋아요 추가) 일 때만 하트 Lottie 를 500ms 노출. 취소 시 애니 없음.
       final updated = ref.read(diaryLikesProvider)[widget.diary.idx];
       if (mounted && updated != null && updated.isLike) {
