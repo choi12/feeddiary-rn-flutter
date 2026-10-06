@@ -19,6 +19,7 @@ void main() {
 
   const channel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
   final store = <String, String>{};
+  var failWrites = false;
 
   late Dio dio;
   late DioAdapter adapter;
@@ -45,6 +46,7 @@ void main() {
 
   setUp(() {
     store.clear();
+    failWrites = false;
     // flutter_secure_storage 채널을 인메모리로 mock (token_storage_test 패턴).
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       final args = (call.arguments as Map).cast<String, Object?>();
@@ -53,6 +55,7 @@ void main() {
         case 'read':
           return store[key];
         case 'write':
+          if (failWrites) throw PlatformException(code: 'keystore', message: '쓰기 실패');
           store[key!] = args['value'] as String;
           return null;
         case 'delete':
@@ -86,6 +89,20 @@ void main() {
     expect(state.status, AuthStatus.authenticated);
     expect(state.user?.nickname, '복원');
     // 원본 서버는 자동 로그인마다 토큰을 새로 발급하고 다음 자동 로그인은 그 토큰으로만 통과시킨다.
+    expect(container.read(tokenStorageProvider).token, 'tok');
+  });
+
+  test('restore: 새 토큰을 보안 저장소에 쓰다 실패해도 authenticated 로 진행한다(캐시는 새 토큰)', () async {
+    adapter.onPost(
+      '/auth/sign-in-auto/v2',
+      (server) => server.reply(200, {'status': 'success', 'resData': userJson(nickname: '복원')}),
+      data: Matchers.any,
+    );
+    final container = makeContainer();
+    await container.read(tokenStorageProvider).save('existing');
+    failWrites = true;
+    await container.read(authControllerProvider.notifier).restore();
+    expect(container.read(authControllerProvider).status, AuthStatus.authenticated);
     expect(container.read(tokenStorageProvider).token, 'tok');
   });
 
