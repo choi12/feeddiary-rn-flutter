@@ -18,12 +18,20 @@ typedef LikeState = ({bool isLike, int likeCount});
 /// 부분 재조회가 불가해 invalidate 시 1페이지로 리셋된다. override 방식이 리스트 누적·스크롤을 보존한다.
 @Riverpod(keepAlive: true)
 class DiaryLikes extends _$DiaryLikes {
+  /// 요청이 떠 있는 일기 idx. 서버가 방향 없는 토글 API 라 연타로 요청이 둘 나가면 서버도 두 번 뒤집히고,
+  /// 응답 순서에 따라 화면과 서버가 반대가 된다. RN LikeButton 의 `disabled={isPending}` 대응.
+  final _pending = <int>{};
+
   @override
   Map<int, LikeState> build() => {};
 
   /// 좋아요 토글(낙관). 현재값은 override 또는 위젯이 넘긴 서버 base 다. 낙관 flip 후 서버 결과로 보정하고,
   /// 실패 시 base 로 revert 한 뒤 rethrow 한다. RN useLikeDiary(useOptimistic + likeDiary).
-  Future<void> toggle({required int idx, required bool baseIsLike, required int baseLikeCount}) async {
+  /// 같은 idx 의 요청이 아직 떠 있으면 아무것도 하지 않고 false 를 돌려준다.
+  Future<bool> toggle({required int idx, required bool baseIsLike, required int baseLikeCount}) async {
+    if (!_pending.add(idx)) {
+      return false;
+    }
     final current = state[idx] ?? (isLike: baseIsLike, likeCount: baseLikeCount);
     final optimistic = (
       isLike: !current.isLike,
@@ -36,10 +44,13 @@ class DiaryLikes extends _$DiaryLikes {
       // 좋아요는 미션 진행(좋아요 미션)·화분을 교차 무효화한다(RN likeDiary → MISSION_GROUP).
       ref.invalidate(missionsControllerProvider);
       ref.invalidate(flowerpotControllerProvider);
+      return true;
     } catch (error, stackTrace) {
       AppLogger.error('좋아요 실패', error: error, stackTrace: stackTrace);
       state = {...state, idx: current};
       rethrow;
+    } finally {
+      _pending.remove(idx);
     }
   }
 }

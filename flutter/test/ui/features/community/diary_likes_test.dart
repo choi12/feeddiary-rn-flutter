@@ -80,4 +80,66 @@ void main() {
     expect(listView.isLike, true);
     expect(listView.likeCount, 4);
   });
+
+  group('요청 중 가드(토글 API 라 연타로 요청이 둘 나가면 서버가 두 번 뒤집힌다)', () {
+    late int calls;
+
+    setUp(() {
+      calls = 0;
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path.endsWith('/diary/like')) calls++;
+            handler.next(options);
+          },
+        ),
+      );
+    });
+
+    void replyLiked({Duration? delay}) => adapter.onPost(
+      '/diary/like',
+      (server) => server.reply(200, {
+        'status': 'success',
+        'resData': {'like_count': 6, 'isLike': true},
+      }, delay: delay),
+      data: Matchers.any,
+    );
+
+    test('같은 일기의 요청이 떠 있는 동안 다시 누르면 요청을 보내지 않고 false 를 돌려준다', () async {
+      replyLiked(delay: const Duration(milliseconds: 50));
+      final container = makeContainer();
+      final notifier = container.read(diaryLikesProvider.notifier);
+
+      final first = notifier.toggle(idx: 1, baseIsLike: false, baseLikeCount: 5);
+      final second = await notifier.toggle(idx: 1, baseIsLike: false, baseLikeCount: 5);
+
+      expect(second, isFalse);
+      expect(container.read(diaryLikesProvider)[1], (isLike: true, likeCount: 6)); // 낙관값 그대로(되뒤집히지 않음)
+      expect(await first, isTrue);
+      expect(calls, 1);
+      expect(container.read(diaryLikesProvider)[1], (isLike: true, likeCount: 6));
+    });
+
+    test('다른 일기는 막지 않고, 응답이 끝나면 같은 일기도 다시 누를 수 있다', () async {
+      replyLiked(delay: const Duration(milliseconds: 50));
+      final container = makeContainer();
+      final notifier = container.read(diaryLikesProvider.notifier);
+
+      final first = notifier.toggle(idx: 1, baseIsLike: false, baseLikeCount: 5);
+      expect(await notifier.toggle(idx: 2, baseIsLike: false, baseLikeCount: 0), isTrue);
+      await first;
+      expect(await notifier.toggle(idx: 1, baseIsLike: true, baseLikeCount: 6), isTrue);
+      expect(calls, 3);
+    });
+
+    test('실패해도 가드가 풀려 다시 누를 수 있다', () async {
+      adapter.onPost('/diary/like', (server) => server.reply(500, {'message': '실패'}), data: Matchers.any);
+      final container = makeContainer();
+      final notifier = container.read(diaryLikesProvider.notifier);
+
+      await expectLater(notifier.toggle(idx: 1, baseIsLike: false, baseLikeCount: 5), throwsA(isA<AppException>()));
+      await expectLater(notifier.toggle(idx: 1, baseIsLike: false, baseLikeCount: 5), throwsA(isA<AppException>()));
+      expect(calls, 2);
+    });
+  });
 }
