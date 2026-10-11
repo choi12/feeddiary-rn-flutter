@@ -4,20 +4,16 @@ import { useCallback } from 'react';
 
 import { APIGetFlowerpot } from '@/api/flowerpot/APIGetFlowerpot';
 import { QUERY_KEYS } from '@/constants';
-import { reportError } from '@/utils/error/reportError';
 
 function usePrefetchFlowerpot() {
   const queryClient = useQueryClient();
 
   return useCallback(async () => {
-    try {
-      await queryClient.prefetchQuery({
-        queryKey: [QUERY_KEYS.FLOWERPOT],
-        queryFn: APIGetFlowerpot,
-      });
-    } catch (error) {
-      reportError(error);
-    }
+    // prefetchQuery 는 실패해도 던지지 않는다 — 실패 보고는 App.tsx 의 QueryCache onError 가 맡는다
+    await queryClient.prefetchQuery({
+      queryKey: [QUERY_KEYS.FLOWERPOT],
+      queryFn: APIGetFlowerpot,
+    });
   }, [queryClient]);
 }
 
